@@ -16,6 +16,7 @@ defmodule Slipstream.MixProject do
       version: @version,
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: extra_compilers(Mix.env()) ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       preferred_cli_env: [
@@ -34,18 +35,33 @@ defmodule Slipstream.MixProject do
     ]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/fixtures"]
+  defp elixirc_paths(env) when env in [:dev, :test], do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
+  defp extra_compilers(env) when env in [:dev, :test], do: [:phoenix]
+  defp extra_compilers(_), do: []
+
   def application do
-    []
+    if Mix.env() in [:dev, :test] do
+      [
+        mod: {Slipstream.Application, []},
+        extra_applications: [:logger, :runtime_tools]
+      ]
+    else
+      []
+    end
   end
 
   defp deps do
     [
+      {:gun, "~> 1.3"},
+      {:cowlib, "~> 2.9", override: true},
       # docs
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       # test
+      {:phoenix, "~> 1.5", only: [:dev, :test]},
+      {:phoenix_pubsub, "~> 2.0", only: [:dev, :test]},
+      {:plug_cowboy, "~> 2.0", only: [:dev, :test]},
       {:bless, "~> 1.0"},
       {:convene, "~> 0.2", organization: "cuatro", only: [:dev, :test]},
       {:excoveralls, "~> 0.7", only: :test}
