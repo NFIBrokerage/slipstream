@@ -1,8 +1,10 @@
 defmodule SlipstreamWeb.UserSocket do
   use Phoenix.Socket
 
+  @moduledoc false
+
   ## Channels
-  channel "echo:*", SlipstreamWeb.PingChannel
+  channel("echo:*", SlipstreamWeb.PingChannel)
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

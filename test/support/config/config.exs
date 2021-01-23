@@ -10,8 +10,13 @@ use Mix.Config
 # Configures the endpoint
 config :slipstream, SlipstreamWeb.Endpoint,
   url: [host: "localhost"],
-  secret_key_base: "gce/NurgQlG1YfPhRdPW+TCmrZSOGd6e6Wt7E2Fb36ODjW1eB6vxT9whakCmYSnw",
-  render_errors: [view: SlipstreamWeb.ErrorView, accepts: ~w(json), layout: false],
+  secret_key_base:
+    "gce/NurgQlG1YfPhRdPW+TCmrZSOGd6e6Wt7E2Fb36ODjW1eB6vxT9whakCmYSnw",
+  render_errors: [
+    view: SlipstreamWeb.ErrorView,
+    accepts: ~w(json),
+    layout: false
+  ],
   pubsub_server: Slipstream.PubSub,
   live_view: [signing_salt: "396/yzq3"]
 

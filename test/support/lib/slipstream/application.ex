@@ -10,7 +10,8 @@ defmodule Slipstream.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Slipstream.PubSub},
       # Start the Endpoint (http/https)
-      SlipstreamWeb.Endpoint
+      SlipstreamWeb.Endpoint,
+      Slipstream.Example
       # Start a worker by calling: Slipstream.Worker.start_link(arg)
       # {Slipstream.Worker, arg}
     ]
