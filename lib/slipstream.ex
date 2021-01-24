@@ -40,7 +40,7 @@ defmodule Slipstream do
   ```
   """
   @doc since: "1.0.0"
-  @callback init(any()) ::
+  @callback init(init_arg :: any()) ::
               {:ok, any()}
               | {:ok, state, timeout() | :hibernate | {:continue, term()}}
               | :ignore
