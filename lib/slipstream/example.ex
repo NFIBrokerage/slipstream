@@ -24,7 +24,10 @@ defmodule Slipstream.Example do
 
   @impl Slipstream
   def init(_args) do
-    connect!(uri: "ws://localhost:4000/socket/websocket", heartbeat_interval_msec: 10_000)
+    connect!(
+      uri: "ws://localhost:4000/socket/websocket",
+      heartbeat_interval_msec: 10_000
+    )
 
     {:ok, %{}}
   end

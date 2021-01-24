@@ -35,25 +35,22 @@ defmodule Slipstream.Connection do
 
     state = %State{state | connection_configuration: configuration}
 
-    case :gun.open(
-           to_charlist(uri.host),
-           uri.port,
-           configuration.gun_open_options
-         ) do
-      {:ok, conn} ->
-        stream_ref =
-          :gun.ws_upgrade(
-            conn,
-            path(uri),
-            configuration.headers
-          )
+    {:ok, conn} =
+      :gun.open(
+        to_charlist(uri.host),
+        uri.port,
+        configuration.gun_open_options
+      )
 
-        {:noreply,
-         %State{state | connection_conn: conn, connection_ref: stream_ref}}
+    stream_ref =
+      :gun.ws_upgrade(
+        conn,
+        path(uri),
+        configuration.headers
+      )
 
-      e ->
-        raise e
-    end
+    {:noreply,
+     %State{state | connection_conn: conn, connection_ref: stream_ref}}
   end
 
   def handle_info(:reconnect, state) do
