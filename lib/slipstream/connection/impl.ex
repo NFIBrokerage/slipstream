@@ -156,8 +156,10 @@ defmodule Slipstream.Connection.Impl do
   # Slipstream.Connection's state. ofc we could reach into that state with
   # `:sys.get_state(self())`, but that's even grosser IMHO than the process
   # dictionary
+  def current_ref, do: Process.get({:slipstream_ref, 0)
+
   def next_ref do
-    ref = Process.get(:slipstream_ref, 0) + 1
+    ref = current_ref() + 1
     Process.put(:slipstream_ref, ref)
     to_string(ref)
   end

@@ -136,15 +136,21 @@ defmodule Slipstream do
   @doc """
   Invoked when a message is received on the websocket connection
 
+  ## Replies
+
   TODO docs on replying, implement replies
 
   ## Examples
 
       @impl Slipstream
-      def handle_message(event, message, state) do
-        IO.inspect({event, message}, label: "message received")
+      def handle_message("new:msg", params, state) do
+        MyApp.Msg.create(params)
 
         {:noreply, state}
+      end
+
+      def handle_message("ping", _payload, state) do
+        {:reply, :ok, state}
       end
   """
   @doc since: "1.0.0"
@@ -153,15 +159,17 @@ defmodule Slipstream do
               message :: any(),
               state :: term()
             ) ::
-              {:reply, reply, new_state}
-              | {:reply, reply, new_state,
+              {:reply, :ok | :error | {:ok | :error, reply}, new_state}
+              | {:reply, {:ok | :error, reply}, new_state,
                  timeout() | :hibernate | {:continue, term()}}
               | {:noreply, new_state}
               | {:noreply, new_state,
                  timeout() | :hibernate | {:continue, term()}}
               | {:stop, reason, reply, new_state}
               | {:stop, reason, new_state}
-            when reply: term(), new_state: term(), reason: term()
+            when reply: :ok | :error | {:ok, term()} | {:error, term()},
+                 new_state: term(),
+                 reason: term()
 
   @doc """
   Invoked when a message is received on the websocket connection which

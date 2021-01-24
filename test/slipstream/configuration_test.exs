@@ -13,7 +13,8 @@ defmodule Slipstream.ConfigurationTest do
       [uri: "ws://localhost/socket/websocket?foo=bar"]
     end
 
-    test "config with just URI passes, and ws protocol defaults to port 80", c do
+    test "config with just URI passes, and ws protocol defaults to port 80",
+         c do
       assert {:ok, %Config{} = config} = Config.validate(uri: c.uri)
 
       assert match?(%URI{port: 80, scheme: "ws"}, config.uri)
