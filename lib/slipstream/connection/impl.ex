@@ -72,12 +72,8 @@ defmodule Slipstream.Connection.Impl do
 
   def push_message(message, state) do
     payload =
-      %{
-        join_ref: state.join_ref |> to_string(),
-        ref: state.current_ref |> to_string(),
-        topic: state.topic
-      }
-      |> Map.merge(message)
+      message
+      |> Map.from_struct()
       |> encode_fn(state).()
 
     :gun.ws_send(state.connection_conn, {:binary, payload})
@@ -151,5 +147,18 @@ defmodule Slipstream.Connection.Impl do
     default = Enum.at(backoff_times, -1)
 
     Enum.at(backoff_times, try_number, default)
+  end
+
+  # N.B. this is storing the ref in the process dictionary, which is a
+  # historically crappy thing to do. We do it in slipstream because
+  # `Slipstream.push/2` needs to return a ref, although that function is only
+  # invoked from the implementor, who does not have access to the outer
+  # Slipstream.Connection's state. ofc we could reach into that state with
+  # `:sys.get_state(self())`, but that's even grosser IMHO than the process
+  # dictionary
+  def next_ref do
+    ref = Process.get(:slipstream_ref, 0) + 1
+    Process.put(:slipstream_ref, ref)
+    to_string(ref)
   end
 end

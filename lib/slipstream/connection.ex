@@ -23,9 +23,10 @@ defmodule Slipstream.Connection do
 
   @impl GenServer
   def init({callback_module, init_arg}) do
-    state = %State{implementor: callback_module}
+    state =
+      %State{implementor: callback_module, implementor_state: init_arg}
 
-    callback(state, :init, [init_arg])
+    callback(state, :init, [])
     |> map_genserver_return(state)
   end
 
@@ -65,11 +66,21 @@ defmodule Slipstream.Connection do
   end
 
   def handle_info({:join, topic, params}, state) do
-    state =
-      %State{state | topic: topic, join_params: params}
-      |> State.reset_refs()
+    ref = next_ref() |> to_string()
 
-    push_message(%{event: "phx_join", topic: topic, payload: params}, state)
+    state =
+      %State{state | topic: topic, join_params: params, join_ref: ref}
+
+    push_message(
+      %Message{
+        event: "phx_join",
+        topic: topic,
+        payload: params,
+        join_ref: ref,
+        ref: ref
+      },
+      state
+    )
 
     {:noreply, state}
   end
@@ -93,12 +104,24 @@ defmodule Slipstream.Connection do
   def handle_info(:send_heartbeat, state) do
     # TODO if there's a heartbeat_ref here, we're fucked
 
-    state =
-      state
-      |> State.put_next_ref()
-      |> State.copy_ref_to_heartbeat()
+    state = %State{state | heartbeat_ref: next_ref()}
 
     push_heartbeat(state)
+
+    {:noreply, state}
+  end
+
+  def handle_info({:push, ref, event, payload}, state) do
+    push_message(
+      %Message{
+        topic: state.topic,
+        event: event,
+        payload: payload,
+        ref: ref,
+        join_ref: nil
+      },
+      state
+    )
 
     {:noreply, state}
   end
@@ -132,7 +155,7 @@ defmodule Slipstream.Connection do
       :send_heartbeat
     )
 
-    callback(state, :handle_connect, [state.implementor_state])
+    callback(state, :handle_connect, [])
     |> map_novel_callback_return(state)
   end
 
@@ -146,7 +169,7 @@ defmodule Slipstream.Connection do
   end
 
   def handle_info(unknown_message, state) do
-    callback(state, :handle_info, [unknown_message, state.implementor_state])
+    callback(state, :handle_info, [unknown_message])
     |> map_genserver_return(state)
   end
 
@@ -164,15 +187,12 @@ defmodule Slipstream.Connection do
 
   defp handle_message({:close, _timeout, ""}, state) do
     state =
-      %State{state | connection_ref: nil}
+      %State{state | connection_ref: nil, join_ref: nil}
       |> State.cancel_heartbeat_timer()
 
     :gun.close(state.connection_conn)
 
-    callback(state, :handle_disconnect, [
-      :heartbeat_timeout,
-      state.implementor_state
-    ])
+    callback(state, :handle_disconnect, [:closed_by_remote_server])
     |> map_novel_callback_return(state)
   end
 
@@ -191,7 +211,33 @@ defmodule Slipstream.Connection do
         "error" -> {:failure, state}
       end
 
-    callback(state, :handle_join, [status, response, state.implementor_state])
+    callback(state, :handle_join, [status, response])
+    |> map_novel_callback_return(state)
+  end
+
+  defp handle_message(
+         %Message{
+           topic: topic,
+           event: "phx_reply",
+           payload: %{"response" => response, "status" => status},
+           ref: ref
+         },
+         %State{topic: topic} = state
+       ) when ref != nil do
+    callback(state, :handle_reply, [ref, {String.to_atom(status), response}])
+    |> map_novel_callback_return(state)
+  end
+
+  defp handle_message(
+         %Message{
+           topic: topic,
+           event: event,
+           payload: payload,
+           ref: ref
+         },
+         %State{topic: topic} = state
+       ) when ref == nil do
+    callback(state, :handle_message, [event, payload])
     |> map_novel_callback_return(state)
   end
 
@@ -204,25 +250,9 @@ defmodule Slipstream.Connection do
          },
          %State{topic: topic, join_ref: join_ref} = state
        ) do
-    callback(state, :handle_channel_close, [payload, state.implementor_state])
-    |> map_novel_callback_return(state)
-  end
+    state = %State{state | join_ref: nil}
 
-  defp handle_message(
-         %Message{
-           topic: topic,
-           event: "phx_error",
-           payload: payload,
-           ref: message_ref
-         },
-         %State{topic: topic} = state
-       ) do
-    _todo_something_with_this_ref = message_ref
-
-    callback(state, :handle_message, [
-      {:error, payload},
-      state.implementor_state
-    ])
+    callback(state, :handle_channel_close, [payload])
     |> map_novel_callback_return(state)
   end
 

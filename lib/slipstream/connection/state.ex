@@ -17,10 +17,9 @@ defmodule Slipstream.Connection.State do
     :join_params,
     :heartbeat_timer,
     :heartbeat_ref,
+    :join_ref,
     reconnect_try_number: 0,
-    rejoin_try_number: 0,
-    join_ref: "1",
-    current_ref: 1
+    rejoin_try_number: 0
   ]
 
   @known_callbacks Slipstream.behaviour_info(:callbacks)
@@ -32,7 +31,8 @@ defmodule Slipstream.Connection.State do
     # N.B. this assumes that arguments is a compile-time list
     # we don't **need** this, but it helps do some compile-time checks that are
     # helpful with development.
-    arity = length(arguments)
+    # the +1 is for the implementor state we inject at the end
+    arity = length(arguments) + 1
 
     unless known_callback?(callback_to_invoke, arity) do
       raise CompileError,
@@ -54,20 +54,15 @@ defmodule Slipstream.Connection.State do
           Slipstream.Default
         end
 
-      module_to_use.unquote(callback_to_invoke)(unquote_splicing(arguments))
+      module_to_use.unquote(callback_to_invoke)(
+        unquote_splicing(arguments),
+        unquote(state).implementor_state
+      )
     end
   end
 
   defp known_callback?(func, arity) do
     {func, arity} in @known_callbacks
-  end
-
-  def put_next_ref(state) do
-    increment(state, :current_ref)
-  end
-
-  def reset_refs(state) do
-    Map.merge(state, %{join_ref: "1", current_ref: 1})
   end
 
   def increment_reconnect_counter(state) do
@@ -88,10 +83,6 @@ defmodule Slipstream.Connection.State do
 
   defp increment(map, key) do
     Map.update(map, key, 1, &(&1 + 1))
-  end
-
-  def copy_ref_to_heartbeat(state) do
-    %__MODULE__{state | heartbeat_ref: state.current_ref |> to_string()}
   end
 
   def reset_heartbeat(state) do

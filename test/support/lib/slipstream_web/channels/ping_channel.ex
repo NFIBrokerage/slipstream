@@ -13,6 +13,8 @@ defmodule SlipstreamWeb.PingChannel do
   end
 
   def handle_in("foo", _params, socket) do
+    push(socket, "foo", %{"bar" => "baz"})
+
     {:noreply, socket}
   end
 

@@ -51,12 +51,21 @@ defmodule Slipstream.Example do
   def handle_join(status, response, state) do
     IO.inspect({self(), status, response}, label: "handle_join/3")
 
+    push("foo", %{})
+
     {:ok, state}
   end
 
   @impl Slipstream
-  def handle_message(message, state) do
-    IO.inspect(message, label: "handle_message/2")
+  def handle_message(event, message, state) do
+    IO.inspect({event, message}, label: "handle_message/2")
+
+    {:ok, state}
+  end
+
+  @impl Slipstream
+  def handle_reply(ref, reply, state) do
+    IO.inspect({ref, reply}, label: "handle_reply/3")
 
     {:ok, state}
   end

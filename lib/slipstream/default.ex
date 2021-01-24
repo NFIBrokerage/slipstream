@@ -30,7 +30,10 @@ defmodule Slipstream.Default do
   def handle_join(_success?, _response, state), do: {:ok, state}
 
   @impl Slipstream
-  def handle_message(_message, state), do: {:ok, state}
+  def handle_message(_event, _message, state), do: {:ok, state}
+
+  @impl Slipstream
+  def handle_reply(_ref, _reply, state), do: {:ok, state}
 
   @impl Slipstream
   def handle_channel_close(_message, state) do
