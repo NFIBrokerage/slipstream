@@ -154,9 +154,11 @@ defmodule Slipstream do
               state :: term()
             ) ::
               {:reply, reply, new_state}
-              | {:reply, reply, new_state, timeout() | :hibernate | {:continue, term()}}
+              | {:reply, reply, new_state,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:noreply, new_state}
-              | {:noreply, new_state, timeout() | :hibernate | {:continue, term()}}
+              | {:noreply, new_state,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:stop, reason, reply, new_state}
               | {:stop, reason, new_state}
             when reply: term(), new_state: term(), reason: term()
@@ -328,7 +330,11 @@ defmodule Slipstream do
   @spec join(topic :: String.t()) :: :ok
   @spec join(topic :: String.t(), params :: json_serializable()) :: :ok
   @spec join(server :: pid(), topic :: String.t()) :: :ok
-  @spec join(server :: pid(), topic :: String.t(), params :: json_serializable()) :: :ok
+  @spec join(
+          server :: pid(),
+          topic :: String.t(),
+          params :: json_serializable()
+        ) :: :ok
   def join(topic) when is_binary(topic) do
     join(self(), topic, %{})
   end

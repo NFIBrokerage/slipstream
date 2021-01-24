@@ -161,4 +161,20 @@ defmodule Slipstream.Connection.Impl do
     Process.put(:slipstream_ref, ref)
     to_string(ref)
   end
+
+  # this method of getting the path of a URI (including query) is maybe a bit
+  # unorthodox, but I think it's better than string manipulation
+  def path(%URI{} = uri) do
+    uri
+    |> Map.merge(%{
+      authority: nil,
+      host: nil,
+      port: nil,
+      scheme: nil,
+      userinfo: nil,
+      path: uri.path || "/"
+    })
+    |> URI.to_string()
+    |> to_charlist()
+  end
 end

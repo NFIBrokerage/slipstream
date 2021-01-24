@@ -53,6 +53,17 @@ defmodule Slipstream.Configuration do
       """,
       type: {:list, :non_neg_integer},
       default: [100, 500, 1_000, 2_000, 5_000, 10_000]
+    ],
+    gun_open_options: [
+      doc: """
+      A map of options to pass to `:gun.open/3`. See the `:gun` documentation
+      for more information. Note that `:gun` does not support websocket over
+      HTTP2 and that `:gun` naively prefers HTTP2 when connecting over TLS.
+      The `:protocols => [:http]` option will be merged in by default to allow
+      `"wss"` connections out of the box.
+      """,
+      type: {:custom, __MODULE__, :parse_gun_open_options, []},
+      default: %{protocols: [:http]}
     ]
   ]
 
@@ -81,7 +92,7 @@ defmodule Slipstream.Configuration do
           rejoin_after_msec: [non_neg_integer()]
         }
 
-  @known_protocols ~w[ws wss]
+  @known_schemes ~w[ws wss]
 
   @doc """
   Validates a proposed configuration
@@ -109,8 +120,8 @@ defmodule Slipstream.Configuration do
   def parse_uri(proposed_uri) do
     with true <- is_binary(proposed_uri),
          %URI{} = uri <- proposed_uri |> URI.parse() |> assume_port(),
-         {:protocol, protocol} when protocol in @known_protocols <-
-           {:protocol, uri.scheme},
+         {:scheme, scheme} when scheme in @known_schemes <-
+           {:scheme, uri.scheme},
          {:port, port} when is_integer(port) and port > 0 <- {:port, uri.port} do
       {:ok, uri}
     else
@@ -118,11 +129,9 @@ defmodule Slipstream.Configuration do
         {:error,
          "unparseable port value #{inspect(bad_port)}: please provide a positive-integer value"}
 
-      {:protocol, unknown_protocol} ->
+      {:scheme, scheme} ->
         {:error,
-         "unknown protocol #{inspect(unknown_protocol)}: only #{
-           inspect(@known_protocols)
-         } are accepted"}
+         "unknown scheme #{inspect(scheme)}: only #{inspect(@known_schemes)} are accepted"}
 
       _unparsed_value ->
         {:error, "could not parse #{inspect(proposed_uri)} with URI.parse/1"}
@@ -145,5 +154,14 @@ defmodule Slipstream.Configuration do
 
   def parse_pair_of_strings(unparsed) do
     {:error, "could not parse #{inspect(unparsed)} as a two-tuple of strings"}
+  end
+
+  @doc false
+  def parse_gun_open_options(options) when is_map(options) do
+    {:ok, Map.merge(%{protocols: [:http]}, options)}
+  end
+
+  def parse_gun_open_options(unknown) do
+    {:error, "gun options must be a map, got #{inspect(unknown)}"}
   end
 end

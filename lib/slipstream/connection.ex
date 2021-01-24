@@ -23,8 +23,7 @@ defmodule Slipstream.Connection do
 
   @impl GenServer
   def init({callback_module, init_arg}) do
-    state =
-      %State{implementor: callback_module, implementor_state: init_arg}
+    state = %State{implementor: callback_module, implementor_state: init_arg}
 
     callback(state, :init, [])
     |> map_genserver_return(state)
@@ -36,12 +35,16 @@ defmodule Slipstream.Connection do
 
     state = %State{state | connection_configuration: configuration}
 
-    case :gun.open(to_charlist(uri.host), uri.port) do
+    case :gun.open(
+           to_charlist(uri.host),
+           uri.port,
+           configuration.gun_open_options
+         ) do
       {:ok, conn} ->
         stream_ref =
           :gun.ws_upgrade(
             conn,
-            to_charlist(uri.path || "/"),
+            path(uri),
             configuration.headers
           )
 
@@ -68,8 +71,7 @@ defmodule Slipstream.Connection do
   def handle_info({:join, topic, params}, state) do
     ref = next_ref() |> to_string()
 
-    state =
-      %State{state | topic: topic, join_params: params, join_ref: ref}
+    state = %State{state | topic: topic, join_params: params, join_ref: ref}
 
     push_message(
       %Message{
@@ -134,7 +136,10 @@ defmodule Slipstream.Connection do
     {:noreply, state}
   end
 
-  def handle_info({:gun_down, conn, :ws, :closed, [], []}, %State{connection_conn: conn} = state) do
+  def handle_info(
+        {:gun_down, conn, :ws, :closed, [], []},
+        %State{connection_conn: conn} = state
+      ) do
     {:noreply, state}
   end
 
@@ -223,7 +228,8 @@ defmodule Slipstream.Connection do
            ref: ref
          },
          %State{topic: topic} = state
-       ) when ref != nil do
+       )
+       when ref != nil do
     callback(state, :handle_reply, [ref, {String.to_atom(status), response}])
     |> map_novel_callback_return(state)
   end
@@ -236,7 +242,8 @@ defmodule Slipstream.Connection do
            ref: ref
          },
          %State{topic: topic} = state
-       ) when ref == nil do
+       )
+       when ref == nil do
     callback(state, :handle_message, [event, payload])
     |> map_novel_callback_return(state)
   end
