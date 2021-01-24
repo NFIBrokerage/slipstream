@@ -444,10 +444,45 @@ defmodule Slipstream do
   @doc since: "1.0.0"
   @spec push(event :: String.t(), params :: json_serializable()) :: String.t()
   def push(event, params) do
-    ref = next_ref()
+    ref = current_ref()
 
     send(self(), {:push, ref, event, params})
 
     ref
+  end
+
+  @doc """
+  Replies to a message asynchronously
+
+  Similar to `Phoenix.Channel.reply/2`, `reply/3` allows one to reply to a
+  message asynchronously as opposed to replying with a return value in
+  `c:Slipstream.handle_message/3`. E.g. as from Phoenix:
+
+  ## Examples
+
+      @impl Slipstream
+      def handle_message("new:msg", payload, state) do
+        # instead of writing just this:
+        #     {:reply, {:ok, %{}}, state}
+        # do this:
+
+        Worker.perform(payload, current_ref())
+
+        {:noreply, state}
+      end
+
+      @impl Slipstream
+      def handle_info({:work_complete, result, ref}, state) do
+        Slipstream.reply(ref, {:ok, result})
+
+        {:noreply, socket}
+      end
+  """
+  @spec reply(ref :: String.t(), result :: :ok | :error | {:ok, json_serializable()} | {:error, json_serializable()}) :: :ok
+  @spec reply(server :: pid(), ref :: String.t(), result :: :ok | :error | {:ok, json_serializable()} | {:error, json_serializable()}) :: :ok
+  def reply(server \\ self(), ref, result) do
+    send(server, {:reply, ref, result})
+
+    :ok
   end
 end
