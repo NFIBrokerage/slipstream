@@ -31,6 +31,28 @@ defmodule Slipstream.Configuration do
       """,
       type: :atom,
       default: Jason
+    ],
+    reconnect_after_msec: [
+      doc: """
+      A list of times to reference for trying reconnection when
+      `Slipstreamm.reconnect/0` is used to request reconnection. The msec time
+      will be fetched based on its position in the list with
+      `Enum.at(reconnect_after_msec, try_number)`. If the number of tries
+      exceeds the length of the list, the final value will be repeated.
+      """,
+      type: {:list, :non_neg_integer},
+      default: [10, 50, 100, 150, 200, 250, 500, 1_000, 2_000, 5_000]
+    ],
+    rejoin_after_msec: [
+      doc: """
+      A list of times to reference for trying to rejoin a topic when
+      `Slipstreamm.rejoin/0` is used. The msec time
+      will be fetched based on its position in the list with
+      `Enum.at(rejoin_after_msec, try_number)`. If the number of tries
+      exceeds the length of the list, the final value will be repeated.
+      """,
+      type: {:list, :non_neg_integer},
+      default: [100, 500, 1_000, 2_000, 5_000, 10_000]
     ]
   ]
 
@@ -48,6 +70,17 @@ defmodule Slipstream.Configuration do
   Can be connected to at `/socket/websocket`.
   """
 
+  defstruct Keyword.keys(@definition)
+
+  @type t :: %__MODULE__{
+          uri: %URI{},
+          heartbeat_interval_msec: non_neg_integer(),
+          headers: [{String.t(), String.t()}],
+          json_parser: module(),
+          reconnect_after_msec: [non_neg_integer()],
+          rejoin_after_msec: [non_neg_integer()]
+        }
+
   @known_protocols ~w[ws wss]
 
   @doc """
@@ -55,14 +88,22 @@ defmodule Slipstream.Configuration do
   """
   @doc since: "1.0.0"
   @spec validate(Keyword.t()) ::
-          {:ok, Keyword.t()} | {:error, %NimbleOptions.ValidationError{}}
-  def validate(opts), do: NimbleOptions.validate(opts, @definition)
+          {:ok, t()} | {:error, %NimbleOptions.ValidationError{}}
+  def validate(opts) do
+    case NimbleOptions.validate(opts, @definition) do
+      {:ok, validated} -> {:ok, struct(__MODULE__, validated)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
   @doc """
   Validates a proposed configuration, raising on error
   """
-  @spec validate!(Keyword.t()) :: Keyword.t()
-  def validate!(opts), do: NimbleOptions.validate!(opts, @definition)
+  @spec validate!(Keyword.t()) :: t()
+  def validate!(opts) do
+    validated = NimbleOptions.validate!(opts, @definition)
+    struct(__MODULE__, validated)
+  end
 
   @doc false
   def parse_uri(proposed_uri) do

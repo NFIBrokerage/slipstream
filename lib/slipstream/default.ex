@@ -5,6 +5,8 @@ defmodule Slipstream.Default do
 
   @behaviour Slipstream
 
+  import Slipstream, only: [reconnect: 0, rejoin: 0]
+
   @impl Slipstream
   def init(args), do: {:ok, args}
 
@@ -15,8 +17,25 @@ defmodule Slipstream.Default do
   def handle_info(_message, state), do: {:noreply, state}
 
   @impl Slipstream
-  def handle_connect(state), do: {:noreply, state}
+  def handle_connect(state), do: {:ok, state}
 
   @impl Slipstream
-  def handle_join(_success?, _response, state), do: {:noreply, state}
+  def handle_disconnect(_reason, state) do
+    reconnect()
+
+    {:ok, state}
+  end
+
+  @impl Slipstream
+  def handle_join(_success?, _response, state), do: {:ok, state}
+
+  @impl Slipstream
+  def handle_message(_message, state), do: {:ok, state}
+
+  @impl Slipstream
+  def handle_channel_close(_message, state) do
+    rejoin()
+
+    {:ok, state}
+  end
 end

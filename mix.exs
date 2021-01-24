@@ -55,15 +55,15 @@ defmodule Slipstream.MixProject do
   defp deps do
     [
       {:gun, "~> 1.3"},
+      {:phoenix, "~> 1.0"},
       {:telemetry, "~> 0.4"},
       {:jason, "~> 1.0", optional: true},
       {:nimble_options, "~> 0.1"},
       # docs
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       # test
-      {:phoenix, "~> 1.5", only: [:dev, :test]},
       {:cowlib, "~> 2.9", override: true, only: [:dev, :test]},
-      {:phoenix_pubsub, "~> 2.0", only: [:dev, :test]},
+      {:phoenix_pubsub, "~> 2.0", override: true, only: [:dev, :test]},
       {:plug_cowboy, "~> 2.0", only: [:dev, :test]},
       {:bless, "~> 1.0"},
       {:convene, "~> 0.2", organization: "cuatro", only: [:dev, :test]},

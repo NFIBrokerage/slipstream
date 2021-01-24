@@ -24,7 +24,7 @@ defmodule Slipstream.Example do
 
   @impl Slipstream
   def init(_args) do
-    connect!(uri: "ws://localhost:4000/socket/websocket")
+    connect!(uri: "ws://localhost:4000/socket/websocket", heartbeat_interval_msec: 10_000)
 
     {:ok, %{}}
   end
@@ -35,14 +35,30 @@ defmodule Slipstream.Example do
 
     join("echo:foo")
 
-    {:noreply, state}
+    {:ok, state}
   end
 
   @impl Slipstream
-  def handle_join(success?, response, state) do
-    IO.inspect({self(), success?, response}, label: "handle_join/3")
+  def handle_disconnect(reason, state) do
+    IO.inspect(reason, label: "handle_disconnect/2")
 
-    {:noreply, state}
+    reconnect()
+
+    {:ok, state}
+  end
+
+  @impl Slipstream
+  def handle_join(status, response, state) do
+    IO.inspect({self(), status, response}, label: "handle_join/3")
+
+    {:ok, state}
+  end
+
+  @impl Slipstream
+  def handle_message(message, state) do
+    IO.inspect(message, label: "handle_message/2")
+
+    {:ok, state}
   end
 
   @impl Slipstream
@@ -50,5 +66,14 @@ defmodule Slipstream.Example do
     IO.inspect(message, label: "handle_info/2")
 
     {:noreply, state}
+  end
+
+  @impl Slipstream
+  def handle_channel_close(message, state) do
+    IO.inspect(message, label: "handle_channel_close/2")
+
+    rejoin()
+
+    {:ok, state}
   end
 end

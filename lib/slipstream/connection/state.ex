@@ -14,13 +14,20 @@ defmodule Slipstream.Connection.State do
     :connection_ref,
     :connection_conn,
     :topic,
-    join_ref: 0,
-    current_ref: 0,
-    heartbeat_ref: 0
+    :join_params,
+    :heartbeat_timer,
+    :heartbeat_ref,
+    reconnect_try_number: 0,
+    rejoin_try_number: 0,
+    join_ref: "1",
+    current_ref: 1
   ]
 
   @known_callbacks Slipstream.behaviour_info(:callbacks)
 
+  # a macro which wraps a call to the implementor's callbacks
+  # if the implementor does not implement the `callback_to_invoke`, the callback
+  # will be invoked by the default implementation defined in Slipstream.Default
   defmacro callback(state, callback_to_invoke, arguments) do
     # N.B. this assumes that arguments is a compile-time list
     # we don't **need** this, but it helps do some compile-time checks that are
@@ -40,7 +47,7 @@ defmodule Slipstream.Connection.State do
         if function_exported?(
              unquote(state).implementor,
              unquote(callback_to_invoke),
-             unquote(length(arguments))
+             unquote(arity)
            ) do
           unquote(state).implementor
         else
@@ -56,6 +63,46 @@ defmodule Slipstream.Connection.State do
   end
 
   def put_next_ref(state) do
-    update_in(state.current_ref, 1, &(&1 + 1))
+    increment(state, :current_ref)
+  end
+
+  def reset_refs(state) do
+    Map.merge(state, %{join_ref: "1", current_ref: 1})
+  end
+
+  def increment_reconnect_counter(state) do
+    increment(state, :reconnect_try_number)
+  end
+
+  def reset_reconnect_try_counter(state) do
+    put_in(state.reconnect_try_number, 0)
+  end
+
+  def increment_rejoin_counter(state) do
+    increment(state, :rejoin_try_number)
+  end
+
+  def reset_rejoin_try_counter(state) do
+    put_in(state.rejoin_try_number, 0)
+  end
+
+  defp increment(map, key) do
+    Map.update(map, key, 1, &(&1 + 1))
+  end
+
+  def copy_ref_to_heartbeat(state) do
+    %__MODULE__{state | heartbeat_ref: state.current_ref |> to_string()}
+  end
+
+  def reset_heartbeat(state) do
+    %__MODULE__{state | heartbeat_ref: nil}
+  end
+
+  def cancel_heartbeat_timer(state) do
+    if state.heartbeat_timer |> is_reference() do
+      :timer.cancel(state.heartbeat_timer)
+    end
+
+    state
   end
 end

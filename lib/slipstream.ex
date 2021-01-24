@@ -56,7 +56,7 @@ defmodule Slipstream do
   """
   @callback terminate(reason :: term(), state :: term()) :: term()
 
-  # callbacks unique to Slipstream
+  # callbacks unique to Slipstream ('novel' callbacks)
 
   @doc """
   Invoked when a connection has been established to a websocket server
@@ -72,36 +72,106 @@ defmodule Slipstream do
   """
   @doc since: "1.0.0"
   @callback handle_connect(state :: term()) ::
-              {:noreply, new_state}
-              | {:noreply, new_state,
-                 timeout() | :hibernate | {:continue, term()}}
+              {:ok, new_state}
               | {:stop, reason :: term(), new_state}
+            when new_state: term()
+
+  @doc """
+  Invoked when a connection has been terminated
+
+  The default implementation of this callback requests reconnection
+
+  ## Examples
+
+      @impl Slipstream
+      def handle_disconnect(_reason, state) do
+        reconnect()
+
+        {:ok, state}
+      end
+  """
+  @doc since: "1.0.0"
+  @callback handle_disconnect(reason :: term(), state :: term()) ::
+              {:ok, new_state}
+              | {:stop, stop_reason :: term(), new_state}
             when new_state: term()
 
   @doc """
   Invoked when the websocket server replies to the request to join
 
-  The `success?` flag declares whether the join was successful or not.
+  The `:status` field declares whether the join was successful or not with
+  values of `:success` or `:failure`
 
   ## Examples
 
       @impl Slipstream
-      def handle_join(_success? = true, %{}, state) do
+      def handle_join(:success, %{}, state) do
         push("echo", %{"ping" => 1})
 
         {:ok, state}
       end
   """
   @doc since: "1.0.0"
-  @callback handle_join(success? :: boolean(), response :: map() | binary() | any(), state :: term()) ::
-              {:noreply, new_state}
-              | {:noreply, new_state,
-                 timeout() | :hibernate | {:continue, term()}}
+  @callback handle_join(
+              :success | :failure,
+              response :: map() | binary() | any(),
+              state :: term()
+            ) ::
+              {:ok, new_state}
               | {:stop, reason :: term(), new_state}
             when new_state: term()
 
+  @doc """
+  Invoked when a message is received on the websocket connection
 
-  @optional_callbacks init: 1, handle_info: 2, terminate: 2, handle_connect: 1, handle_join: 3
+  ## Examples
+
+      @impl Slipstream
+      def handle_message(message, state) do
+        IO.inspect(message, label: "message received")
+
+        {:ok, state}
+      end
+  """
+  @doc since: "1.0.0"
+  # TODO add reply to spec?
+  @callback handle_message(
+              message :: any(),
+              state :: term()
+            ) ::
+              {:ok, new_state}
+              | {:stop, reason :: term(), new_state}
+            when new_state: term()
+
+  @doc """
+  Invoked when a channel has been closed by the remote server
+
+  The default implementation of this callback attempts to re-join the
+  last-joined topic.
+
+  ## Examples
+
+      @impl Slipstream
+      def handle_channel_close(_message, state) do
+        rejoin()
+
+        {:ok, state}
+      end
+  """
+  @doc since: "1.0.0"
+  @callback handle_channel_close(reason :: term(), state :: term()) ::
+              {:ok, new_state}
+              | {:stop, stop_reason :: term(), new_state}
+            when new_state: term()
+
+  @optional_callbacks init: 1,
+                      handle_info: 2,
+                      terminate: 2,
+                      handle_connect: 1,
+                      handle_disconnect: 2,
+                      handle_join: 3,
+                      handle_message: 2,
+                      handle_channel_close: 2
 
   @doc """
   Starts a slipstream client process
@@ -187,21 +257,41 @@ defmodule Slipstream do
     :ok
   end
 
-  # ---
+  @doc """
+  Requests that the last requested channel be joined
 
-  def handle_call(:heartbeat, _from, state) do
-    ws_send(
-      state.conn,
-      %{
-        ref: "1",
-        topic: "phoenix",
-        event: "heartbeat",
-        payload: %{}
-      }
-    )
+  If `params` is not provided, the previously used value will be sent.
 
-    {:reply, :ok, state}
+  Note that `params` must be a datastructure capable of being encoded as
+  JSON by the parser passed to the connection configuration's `:json_parser`
+  option. A failure to encode the message will result in an error.
+  """
+  @doc since: "1.0.0"
+  @spec rejoin() :: :ok
+  @spec rejoin(server :: pid()) :: :ok
+  @spec rejoin(params :: term()) :: :ok
+  @spec rejoin(server :: pid(), params :: term()) :: :ok
+  def rejoin do
+    rejoin(self())
   end
+
+  def rejoin(server) when is_pid(server) do
+    send(server, :rejoin)
+
+    :ok
+  end
+
+  def rejoin(params) do
+    rejoin(self(), params)
+  end
+
+  def rejoin(server, params) when is_pid(server) do
+    send(server, {:rejoin, params})
+
+    :ok
+  end
+
+  # ---
 
   def handle_call(:ping, _from, state) do
     ws_send(
