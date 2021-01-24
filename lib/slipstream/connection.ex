@@ -241,8 +241,14 @@ defmodule Slipstream.Connection do
          %State{topic: topic} = state
        )
        when ref == nil do
-    callback(state, :handle_message, [event, payload])
-    |> map_novel_callback_return(state)
+    {reply, return} =
+      callback(state, :handle_message, [event, payload])
+      |> map_novel_callback_return_maybe_with_reply(state)
+      |> split_reply_from_return()
+
+    if reply, do: Slipstream.reply(ref, reply)
+
+    return
   end
 
   defp handle_message(
