@@ -8,7 +8,7 @@ defmodule Slipstream.Connection do
   use GenServer
 
   alias __MODULE__.State
-  alias Phoenix.Socket.Message
+  alias Phoenix.Socket.{Message, Reply}
 
   import __MODULE__.Impl
   import State, only: [callback: 3]
@@ -102,10 +102,20 @@ defmodule Slipstream.Connection do
 
   def handle_info(:send_heartbeat, state) do
     # TODO if there's a heartbeat_ref here, we're fucked
+    # that means the server has not sent a reply to the last heartbeat we sent
+    # it
 
     state = %State{state | heartbeat_ref: next_ref()}
 
-    push_heartbeat(state)
+    push_message(
+      %Message{
+        event: "heartbeat",
+        topic: "phoenix",
+        ref: state.heartbeat_ref,
+        payload: %{}
+      },
+      state
+    )
 
     {:noreply, state}
   end
@@ -118,6 +128,22 @@ defmodule Slipstream.Connection do
         payload: payload,
         ref: ref,
         join_ref: nil
+      },
+      state
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_info({:reply, ref, {status, payload}}, state) do
+    push_message(
+      %Reply{
+        topic: state.topic,
+        event: event,
+        status: status,
+        payload: payload,
+        ref: ref,
+        join_ref: state.join_ref
       },
       state
     )
@@ -241,12 +267,14 @@ defmodule Slipstream.Connection do
          %State{topic: topic} = state
        )
        when ref == nil do
-    {reply, return} =
+    {return, reply} =
       callback(state, :handle_message, [event, payload])
-      |> map_novel_callback_return_maybe_with_reply(state)
-      |> split_reply_from_return()
+      |> map_novel_callback_return_and_split_reply(state)
 
-    if reply, do: Slipstream.reply(ref, reply)
+    if reply do
+      check_reply!(reply)
+      Slipstream.reply(ref, reply)
+    end
 
     return
   end

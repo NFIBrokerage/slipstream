@@ -9,7 +9,7 @@ defmodule Slipstream do
   - it emits telemetry (via `:telemetry`)
   """
 
-  import Slipstream.Connection.Impl, only: [next_ref: 0]
+  import Slipstream.Connection.Impl, only: [current_ref: 0]
 
   @typedoc """
   Any data structure capable of being serialized as JSON
@@ -159,9 +159,8 @@ defmodule Slipstream do
               message :: any(),
               state :: term()
             ) ::
-              {:reply, :ok | :error | {:ok | :error, reply}, new_state}
-              | {:reply, {:ok | :error, reply}, new_state,
-                 timeout() | :hibernate | {:continue, term()}}
+              {:reply, reply, new_state}
+              | {:reply, reply, new_state, timeout() | :hibernate | {:continue, term()}}
               | {:noreply, new_state}
               | {:noreply, new_state,
                  timeout() | :hibernate | {:continue, term()}}

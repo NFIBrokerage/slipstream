@@ -35,6 +35,7 @@ defmodule Slipstream.MixProject do
     ]
   end
 
+  defp elixirc_paths(:dev), do: ["lib", "test/support"]
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
@@ -65,7 +66,7 @@ defmodule Slipstream.MixProject do
       {:cowlib, "~> 2.9", override: true, only: [:dev, :test]},
       {:phoenix_pubsub, "~> 2.0", override: true, only: [:dev, :test]},
       {:plug_cowboy, "~> 2.0", only: [:dev, :test]},
-      {:mox, "~> 1.0", only: :test},
+      {:mox, "~> 1.0", only: [:dev, :test]},
       {:bless, "~> 1.0"},
       {:convene, "~> 0.2", organization: "cuatro", only: [:dev, :test]},
       {:excoveralls, "~> 0.7", only: :test}

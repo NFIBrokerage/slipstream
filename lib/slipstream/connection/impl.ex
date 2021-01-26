@@ -61,35 +61,88 @@ defmodule Slipstream.Connection.Impl do
     raise(ArgumentError,
       message:
         """
-        Unmatched signature #{inspect(unmatch_signature)}. Expected a return value
-        matching the spec:
+        Unmatched signature: #{inspect(unmatch_signature)}
+        Expected a return value matching the spec:
 
             {:ok, new_state} | {:stop, reason :: term(), new_state} when new_state: term()
         """
-        |> String.trim_leading()
+        |> String.trim()
+    )
+  end
+
+  # the `c:Slipstream.handle_message/3` callback allows one to reply to a
+  # message, expanding the acceptable spec above to also allow a return that
+  # specifies a reply
+  # this function matches those callback returns
+  def map_novel_callback_return_and_split_reply({:noreply, implementor_state}, state) do
+    {{:noreply, %State{state | implementor_state: implementor_state}}, nil}
+  end
+
+  def map_novel_callback_return_and_split_reply({:noreply, implementor_state, other_stuff}, state) do
+    {{:noreply, %State{state | implementor_state: implementor_state}, other_stuff}, nil}
+  end
+
+  def map_novel_callback_return_and_split_reply({:reply, reply, implementor_state}, state) do
+    {{:noreply, %State{state | implementor_state: implementor_state}}, reply}
+  end
+
+  def map_novel_callback_return_and_split_reply({:reply, reply, implementor_state, other_stuff}, state) do
+    {{:noreply, %State{state | implementor_state: implementor_state}, other_stuff}, reply}
+  end
+
+  def map_novel_callback_return_and_split_reply({:stop, reason, reply, implementor_state}, state) do
+    {{:stop, reason, %State{state | implementor_state: implementor_state}}, reply}
+  end
+
+  def map_novel_callback_return_and_split_reply({:stop, reason, implementor_state}, state) do
+    {{:stop, reason, %State{state | implementor_state: implementor_state}}, nil}
+  end
+
+  def map_novel_callback_return_and_split_reply(unmatch_signature, _state) do
+    raise(ArgumentError,
+      message:
+        """
+        Unmatched signature: #{inspect(unmatch_signature)}
+        Expected a return value matching the callback for `c:Slipstream.handle_message/3`
+        """
+        |> String.trim()
+    )
+  end
+
+  def check_reply!(:ok), do: :ok
+  def check_reply!(:error), do: :ok
+  def check_reply!({:ok, _payload}), do: :ok
+  def check_reply!({:error, _payload}), do: :ok
+  def check_reply!(unmatched) do
+    raise(ArgumentError,
+      message: """
+      invalid reply #{inspect(unmatched)}. replies may either take the form of
+      an `:ok` or `:error` atom or an `:ok` or `:error` tuple.
+      """
+      |> String.trim()
     )
   end
 
   def push_message(message, state) do
-    payload =
-      message
+    payload = message |> encode(state)
       |> Map.from_struct()
       |> encode_fn(state).()
 
     :gun.ws_send(state.connection_conn, {:binary, payload})
   end
 
-  def push_heartbeat(state) do
-    payload =
-      %{
-        event: "heartbeat",
-        topic: "phoenix",
-        ref: state.heartbeat_ref,
-        payload: %{}
-      }
-      |> encode_fn(state).()
+  defp encode(%Reply{} = reply, state) do
+    %Message{
+      topic: reply.topic,
+      event: "phy_reply",
+      ref: reply.ref,
+      payload: %{status: reply.status, response: reply.payload}
+    }
+    |> encode(state)
+  end
 
-    :gun.ws_send(state.connection_conn, {:binary, payload})
+  defp encode(%Message{} = message, state) do
+    
   end
 
   defp encode_fn(state) do
@@ -156,7 +209,7 @@ defmodule Slipstream.Connection.Impl do
   # Slipstream.Connection's state. ofc we could reach into that state with
   # `:sys.get_state(self())`, but that's even grosser IMHO than the process
   # dictionary
-  def current_ref, do: Process.get({:slipstream_ref, 0)
+  def current_ref, do: Process.get(:slipstream_ref, 0)
 
   def next_ref do
     ref = current_ref() + 1
