@@ -136,9 +136,12 @@ defmodule Slipstream do
   @doc """
   Invoked when a message is received on the websocket connection
 
-  ## Replies
+  This callback will not be invoked for a message which is a reply. Those
+  messages will be handled in `c:Slipstream.handle_reply/3`.
 
-  TODO docs on replying, implement replies
+  Note that while replying is supported on the server-side of the Phoenix
+  Channel protocol, it is not supported by a client. Messages sent from
+  the server cannot be directly replied to.
 
   ## Examples
 
@@ -146,11 +149,7 @@ defmodule Slipstream do
       def handle_message("new:msg", params, state) do
         MyApp.Msg.create(params)
 
-        {:noreply, state}
-      end
-
-      def handle_message("ping", _payload, state) do
-        {:reply, :ok, state}
+        {:ok, state}
       end
   """
   @doc since: "1.0.0"
@@ -159,16 +158,9 @@ defmodule Slipstream do
               message :: any(),
               state :: term()
             ) ::
-              {:reply, reply, new_state}
-              | {:reply, reply, new_state, timeout() | :hibernate | {:continue, term()}}
-              | {:noreply, new_state}
-              | {:noreply, new_state,
-                 timeout() | :hibernate | {:continue, term()}}
-              | {:stop, reason, reply, new_state}
-              | {:stop, reason, new_state}
-            when reply: :ok | :error | {:ok, term()} | {:error, term()},
-                 new_state: term(),
-                 reason: term()
+              {:ok, new_state}
+              | {:stop, reason :: term(), new_state}
+            when new_state: term()
 
   @doc """
   Invoked when a message is received on the websocket connection which
@@ -450,38 +442,5 @@ defmodule Slipstream do
     ref
   end
 
-  @doc """
-  Replies to a message asynchronously
-
-  Similar to `Phoenix.Channel.reply/2`, `reply/3` allows one to reply to a
-  message asynchronously as opposed to replying with a return value in
-  `c:Slipstream.handle_message/3`. E.g. as from Phoenix:
-
-  ## Examples
-
-      @impl Slipstream
-      def handle_message("new:msg", payload, state) do
-        # instead of writing just this:
-        #     {:reply, {:ok, %{}}, state}
-        # do this:
-
-        Worker.perform(payload, current_ref())
-
-        {:noreply, state}
-      end
-
-      @impl Slipstream
-      def handle_info({:work_complete, result, ref}, state) do
-        Slipstream.reply(ref, {:ok, result})
-
-        {:noreply, socket}
-      end
-  """
-  @spec reply(ref :: String.t(), result :: :ok | :error | {:ok, json_serializable()} | {:error, json_serializable()}) :: :ok
-  @spec reply(server :: pid(), ref :: String.t(), result :: :ok | :error | {:ok, json_serializable()} | {:error, json_serializable()}) :: :ok
-  def reply(server \\ self(), ref, result) do
-    send(server, {:reply, ref, result})
-
-    :ok
-  end
+  # TODO a function for awaiting reply
 end

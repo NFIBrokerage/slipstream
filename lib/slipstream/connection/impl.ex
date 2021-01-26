@@ -2,6 +2,7 @@ defmodule Slipstream.Connection.Impl do
   @moduledoc false
 
   alias Slipstream.Connection.State
+  alias Phoenix.Socket.Message
 
   # helper functions for the Connection
 
@@ -70,79 +71,19 @@ defmodule Slipstream.Connection.Impl do
     )
   end
 
-  # the `c:Slipstream.handle_message/3` callback allows one to reply to a
-  # message, expanding the acceptable spec above to also allow a return that
-  # specifies a reply
-  # this function matches those callback returns
-  def map_novel_callback_return_and_split_reply({:noreply, implementor_state}, state) do
-    {{:noreply, %State{state | implementor_state: implementor_state}}, nil}
-  end
-
-  def map_novel_callback_return_and_split_reply({:noreply, implementor_state, other_stuff}, state) do
-    {{:noreply, %State{state | implementor_state: implementor_state}, other_stuff}, nil}
-  end
-
-  def map_novel_callback_return_and_split_reply({:reply, reply, implementor_state}, state) do
-    {{:noreply, %State{state | implementor_state: implementor_state}}, reply}
-  end
-
-  def map_novel_callback_return_and_split_reply({:reply, reply, implementor_state, other_stuff}, state) do
-    {{:noreply, %State{state | implementor_state: implementor_state}, other_stuff}, reply}
-  end
-
-  def map_novel_callback_return_and_split_reply({:stop, reason, reply, implementor_state}, state) do
-    {{:stop, reason, %State{state | implementor_state: implementor_state}}, reply}
-  end
-
-  def map_novel_callback_return_and_split_reply({:stop, reason, implementor_state}, state) do
-    {{:stop, reason, %State{state | implementor_state: implementor_state}}, nil}
-  end
-
-  def map_novel_callback_return_and_split_reply(unmatch_signature, _state) do
-    raise(ArgumentError,
-      message:
-        """
-        Unmatched signature: #{inspect(unmatch_signature)}
-        Expected a return value matching the callback for `c:Slipstream.handle_message/3`
-        """
-        |> String.trim()
-    )
-  end
-
-  def check_reply!(:ok), do: :ok
-  def check_reply!(:error), do: :ok
-  def check_reply!({:ok, _payload}), do: :ok
-  def check_reply!({:error, _payload}), do: :ok
-  def check_reply!(unmatched) do
-    raise(ArgumentError,
-      message: """
-      invalid reply #{inspect(unmatched)}. replies may either take the form of
-      an `:ok` or `:error` atom or an `:ok` or `:error` tuple.
-      """
-      |> String.trim()
-    )
-  end
-
   def push_message(message, state) do
-    payload = message |> encode(state)
-      |> Map.from_struct()
-      |> encode_fn(state).()
-
-    :gun.ws_send(state.connection_conn, {:binary, payload})
-  end
-
-  defp encode(%Reply{} = reply, state) do
-    %Message{
-      topic: reply.topic,
-      event: "phy_reply",
-      ref: reply.ref,
-      payload: %{status: reply.status, response: reply.payload}
-    }
-    |> encode(state)
+    :gun.ws_send(state.connection_conn, {:text, encode(message, state)})
   end
 
   defp encode(%Message{} = message, state) do
-    
+    [
+      message.join_ref,
+      message.ref,
+      message.topic,
+      message.event,
+      message.payload
+    ]
+    |> encode_fn(state).()
   end
 
   defp encode_fn(state) do
@@ -165,8 +106,20 @@ defmodule Slipstream.Connection.Impl do
   def decode_message({encoding, message}, state)
       when encoding in [:text, :binary] and is_binary(message) do
     case decode_fn(state).(message) do
-      {:ok, decoded_json} -> Phoenix.Socket.Message.from_map!(decoded_json)
-      {:error, _any} -> message
+      {:ok, [join_ref, ref, topic, event, payload | _]} ->
+        %Message{
+          join_ref: join_ref,
+          ref: ref,
+          topic: topic,
+          event: event,
+          payload: payload
+        }
+
+      {:ok, decoded_json} when is_map(decoded_json) ->
+        Message.from_map!(decoded_json)
+
+      {:error, _any} ->
+        message
     end
   end
 
@@ -220,6 +173,9 @@ defmodule Slipstream.Connection.Impl do
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation
   def path(%URI{} = uri) do
+    # select the v2 JSON serialization pattern
+    query = URI.decode_query(uri.query || "", %{"vsn" => "2.0.0"})
+
     uri
     |> Map.merge(%{
       authority: nil,
@@ -227,7 +183,8 @@ defmodule Slipstream.Connection.Impl do
       port: nil,
       scheme: nil,
       userinfo: nil,
-      path: uri.path || "/"
+      path: uri.path || "/",
+      query: URI.encode_query(query)
     })
     |> URI.to_string()
     |> to_charlist()

@@ -60,14 +60,10 @@ defmodule Slipstream.Example do
   end
 
   @impl Slipstream
-  def handle_message("foo", %{"bar" => "baz"}, state) do
-    {:reply, {:ok, %{"bar" => "baz"}}, state}
-  end
-
   def handle_message(event, message, state) do
     IO.inspect({event, message}, label: "handle_message/2")
 
-    {:noreply, state}
+    {:ok, state}
   end
 
   @impl Slipstream

@@ -8,7 +8,7 @@ defmodule Slipstream.Connection do
   use GenServer
 
   alias __MODULE__.State
-  alias Phoenix.Socket.{Message, Reply}
+  alias Phoenix.Socket.Message
 
   import __MODULE__.Impl
   import State, only: [callback: 3]
@@ -135,22 +135,6 @@ defmodule Slipstream.Connection do
     {:noreply, state}
   end
 
-  def handle_info({:reply, ref, {status, payload}}, state) do
-    push_message(
-      %Reply{
-        topic: state.topic,
-        event: event,
-        status: status,
-        payload: payload,
-        ref: ref,
-        join_ref: state.join_ref
-      },
-      state
-    )
-
-    {:noreply, state}
-  end
-
   # this match on the `conn` var helps identify unclosed connections (leaks)
   # during development but should probably be removed when this library is
   # ready to ship, as we don't want implementors having to handle gun messages
@@ -267,16 +251,8 @@ defmodule Slipstream.Connection do
          %State{topic: topic} = state
        )
        when ref == nil do
-    {return, reply} =
-      callback(state, :handle_message, [event, payload])
-      |> map_novel_callback_return_and_split_reply(state)
-
-    if reply do
-      check_reply!(reply)
-      Slipstream.reply(ref, reply)
-    end
-
-    return
+    callback(state, :handle_message, [event, payload])
+    |> map_novel_callback_return(state)
   end
 
   defp handle_message(
