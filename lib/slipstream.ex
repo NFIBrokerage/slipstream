@@ -918,10 +918,16 @@ defmodule Slipstream do
 
       @impl Slipstream
       def handle_info({:__slipstream__, event}, socket) do
-        IO.inspect(event, label: "caught event")
-
-        {:noreply, socket}
+        case Slipstream.__handle_event__(event, socket) do
+          {:ok, socket} -> {:noreply, socket}
+          {:ok, socket, other_stuff} -> {:noreply, socket, other_stuff}
+          {:stop, _reason, _socket} = stop -> stop
+        end
       end
     end
+  end
+
+  def __handle_event__(event, socket) do
+    Slipstream.Callback.dispatch(event, Socket.apply_event(socket, event))
   end
 end
