@@ -8,61 +8,31 @@ defmodule Slipstream.Connection.State do
   # as the implementor
 
   defstruct [
-    :implementor,
-    :implementor_state,
-    :connection_configuration,
-    :connection_ref,
-    :connection_conn,
-    :topic,
+    :socket_pid,
+    :socket_ref,
+    :config,
+    :conn,
+    :stream_ref,
     :join_params,
     :heartbeat_timer,
     :heartbeat_ref,
-    :join_ref,
-    reconnect_try_number: 0,
-    rejoin_try_number: 0
+    joins: %{},
+    current_ref: 0,
+    current_ref_str: "0",
+    reconnect_try_number: 0
+    # rejoin_try_number: 0
   ]
 
-  @known_callbacks Slipstream.behaviour_info(:callbacks)
+  def next_ref(state) do
+    ref = state.current_ref + 1
 
-  # a macro which wraps a call to the implementor's callbacks
-  # if the implementor does not implement the `callback_to_invoke`, the callback
-  # will be invoked by the default implementation defined in Slipstream.Default
-  defmacro callback(state, callback_to_invoke, arguments) do
-    # N.B. this assumes that arguments is a compile-time list
-    # we don't **need** this, but it helps do some compile-time checks that are
-    # helpful with development.
-    # the +1 is for the implementor state we inject at the end
-    arity = length(arguments) + 1
-
-    unless known_callback?(callback_to_invoke, arity) do
-      raise CompileError,
-        line: __CALLER__.line,
-        file: __CALLER__.file,
-        description:
-          "cannot wrap unknown callback #{callback_to_invoke}/#{arity}"
-    end
-
-    quote do
-      module_to_use =
-        if function_exported?(
-             unquote(state).implementor,
-             unquote(callback_to_invoke),
-             unquote(arity)
-           ) do
-          unquote(state).implementor
-        else
-          Slipstream.Default
-        end
-
-      module_to_use.unquote(callback_to_invoke)(
-        unquote_splicing(arguments),
-        unquote(state).implementor_state
-      )
-    end
+    {to_string(ref), %__MODULE__{state | current_ref: ref}}
   end
 
-  defp known_callback?(func, arity) do
-    {func, arity} in @known_callbacks
+  def next_heartbeat_ref(state) do
+    {ref, state} = next_ref(state)
+
+    %__MODULE__{state | heartbeat_ref: ref}
   end
 
   def increment_reconnect_counter(state) do
@@ -96,4 +66,6 @@ defmodule Slipstream.Connection.State do
 
     state
   end
+
+  def join_ref?(%__MODULE__{joins: joins}, ref), do: ref in Map.values(joins)
 end

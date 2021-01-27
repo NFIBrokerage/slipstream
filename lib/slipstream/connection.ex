@@ -5,281 +5,135 @@ defmodule Slipstream.Connection do
   # Connection interfaces with :gun and any module that implements the
   # Slipstream behaviour to offer websocket client functionality
 
-  use GenServer
+  use GenServer, restart: :temporary
 
-  alias __MODULE__.State
+  import __MODULE__.Impl, only: [route_event: 2]
   alias Phoenix.Socket.Message
+  alias __MODULE__.{Impl, State}
+  alias Slipstream.{Events, Commands}
 
-  import __MODULE__.Impl
-  import State, only: [callback: 3]
-
-  def start_link(callback_module, init_arg, gen_server_options) do
-    GenServer.start_link(
-      __MODULE__,
-      {callback_module, init_arg},
-      gen_server_options
-    )
+  def start_link(init_arg) do
+    GenServer.start_link(__MODULE__, init_arg)
   end
 
   @impl GenServer
-  def init({callback_module, init_arg}) do
-    state = %State{implementor: callback_module, implementor_state: init_arg}
-
-    callback(state, :init, [])
-    |> map_genserver_return(state)
+  def init(%Commands.OpenConnection{socket: %Slipstream.Socket{socket_pid: socket_pid}, config: config}) do
+    {:ok, %State{socket_pid: socket_pid, config: config}, {:continue, :connect}}
   end
 
   @impl GenServer
-  def handle_info({:connect, configuration}, state) do
-    uri = configuration.uri
+  def handle_continue(:connect, state) do
+    state = %State{state | socket_ref: Process.monitor(state.socket_pid)}
 
-    state = %State{state | connection_configuration: configuration}
-
-    {:ok, conn} =
-      :gun.open(
-        to_charlist(uri.host),
-        uri.port,
-        configuration.gun_open_options
-      )
-
-    stream_ref =
-      :gun.ws_upgrade(
-        conn,
-        path(uri),
-        configuration.headers
-      )
-
-    {:noreply,
-     %State{state | connection_conn: conn, connection_ref: stream_ref}}
+    {:noreply, Impl.connect(state)}
   end
 
-  def handle_info(:reconnect, state) do
-    state = State.increment_reconnect_counter(state)
-
-    Process.send_after(
-      self(),
-      {:connect, state.connection_configuration},
-      retry_time(:reconnect, state)
-    )
-
-    {:noreply, state}
-  end
-
-  def handle_info({:join, topic, params}, state) do
-    ref = next_ref() |> to_string()
-
-    state = %State{state | topic: topic, join_params: params, join_ref: ref}
-
-    push_message(
-      %Message{
-        event: "phx_join",
-        topic: topic,
-        payload: params,
-        join_ref: ref,
-        ref: ref
-      },
-      state
-    )
-
-    {:noreply, state}
-  end
-
-  def handle_info(:rejoin, state) do
-    handle_info({:rejoin, state.join_params}, state)
-  end
-
-  def handle_info({:rejoin, params}, state) do
-    state = State.increment_rejoin_counter(state)
-
-    Process.send_after(
-      self(),
-      {:join, state.topic, params},
-      retry_time(:rejoin, state)
-    )
-
-    {:noreply, state}
-  end
-
-  def handle_info(:send_heartbeat, state) do
-    # TODO if there's a heartbeat_ref here, we're fucked
-    # that means the server has not sent a reply to the last heartbeat we sent
-    # it
-
-    state = %State{state | heartbeat_ref: next_ref()}
-
-    push_message(
-      %Message{
-        event: "heartbeat",
-        topic: "phoenix",
-        ref: state.heartbeat_ref,
-        payload: %{}
-      },
-      state
-    )
-
-    {:noreply, state}
-  end
-
-  def handle_info({:push, ref, event, payload}, state) do
-    push_message(
-      %Message{
-        topic: state.topic,
-        event: event,
-        payload: payload,
-        ref: ref,
-        join_ref: nil
-      },
-      state
-    )
-
-    {:noreply, state}
+  @impl GenServer
+  def handle_info({:DOWN, socket_ref, :process, socket_pid, reason}, %State{socket_ref: socket_ref, socket_pid: socket_pid} = state) do
+    {:stop, reason, state}
   end
 
   # this match on the `conn` var helps identify unclosed connections (leaks)
   # during development but should probably be removed when this library is
   # ready to ship, as we don't want implementors having to handle gun messages
   # _at all_ TODO
-  def handle_info({:gun_up, conn, _http}, %State{connection_conn: conn} = state) do
-    {:noreply, state}
-  end
-
-  def handle_info(
-        {:gun_down, conn, :ws, :closed, [], []},
-        %State{connection_conn: conn} = state
-      ) do
+  def handle_info({:gun_up, conn, _http}, %State{conn: conn} = state) do
     {:noreply, state}
   end
 
   def handle_info(
         {:gun_upgrade, conn, stream_ref, ["websocket"], resp_headers},
-        %State{connection_conn: conn, connection_ref: stream_ref} = state
+        %State{conn: conn, stream_ref: stream_ref} = state
       ) do
-    # use for telemetry?
-    _resp_headers = resp_headers
-
     state =
       state
       |> State.reset_reconnect_try_counter()
       |> State.reset_heartbeat()
 
     :timer.send_interval(
-      state.connection_configuration.heartbeat_interval_msec,
-      :send_heartbeat
+      state.config.heartbeat_interval_msec,
+      %Commands.SendHeartbeat{}
     )
 
-    callback(state, :handle_connect, [])
-    |> map_novel_callback_return(state)
+    route_event state, %Events.ChannelConnected{
+      pid: self(),
+      config: state.config,
+      response_headers: resp_headers
+    }
+
+    {:noreply, state}
+  end
+
+  def handle_info(
+        {:gun_down, conn, :ws, :closed, [], []},
+        %State{conn: conn} = state
+      ) do
+    route_event state, %Events.ChannelClosed{reason: :closed_by_remote_server}
+
+    {:noreply, state}
   end
 
   def handle_info(
         {:gun_ws, conn, stream_ref, message},
-        %State{connection_conn: conn, connection_ref: stream_ref} = state
+        %State{conn: conn, stream_ref: stream_ref} = state
       ) do
     message
-    |> decode_message(state)
-    |> handle_message(state)
+    |> Impl.decode_message(state)
+    |> IO.inspect(label: "incoming message")
+
+    {:noreply, state}
+  end
+
+  def handle_info(%Commands.SendHeartbeat{}, state) do
+    # TODO disconnect when there is a heartbeat_ref in state here
+
+    state = State.next_heartbeat_ref(state)
+
+    Impl.push_heartbeat(state)
+
+    {:noreply, state}
+  end
+
+  def handle_info(%Commands.PushMessage{} = cmd, state) do
+    {ref, state} = State.next_ref(state)
+
+    Impl.push_message(
+      %Message{
+        topic: cmd.topic,
+        event: cmd.event,
+        payload: cmd.payload,
+        ref: ref
+      },
+      state
+    )
+
+    {:reply, ref, state}
+  end
+
+  def handle_info(%_{} = cmd, state) do
+    IO.inspect(cmd, label: "connection heard cmd")
+    {:noreply, state}
   end
 
   def handle_info(unknown_message, state) do
-    callback(state, :handle_info, [unknown_message])
-    |> map_genserver_return(state)
-  end
-
-  # ---
-
-  defp handle_message(:ping, state) do
-    :gun.ws_send(state.connection_conn, :pong)
+    IO.inspect(unknown_message, label: "unknown message in #{inspect(__MODULE__)}")
 
     {:noreply, state}
   end
 
-  defp handle_message(:pong, state) do
-    {:noreply, state}
-  end
+  # TODO map join crash to event
+  # defp handle_message(
+         # %Message{
+           # topic: topic,
+           # event: "phx_error",
+           # payload: payload,
+           # ref: join_ref
+         # },
+         # %State{topic: topic, join_ref: join_ref} = state
+       # ) do
+    # state = %State{state | join_ref: nil}
 
-  defp handle_message({:close, _timeout, ""}, state) do
-    state =
-      %State{state | connection_ref: nil, join_ref: nil}
-      |> State.cancel_heartbeat_timer()
-
-    :gun.close(state.connection_conn)
-
-    callback(state, :handle_disconnect, [:closed_by_remote_server])
-    |> map_novel_callback_return(state)
-  end
-
-  defp handle_message(
-         %Message{
-           topic: topic,
-           event: "phx_reply",
-           payload: %{"response" => response, "status" => status},
-           ref: join_ref
-         },
-         %State{topic: topic, join_ref: join_ref} = state
-       ) do
-    {status, state} =
-      case status do
-        "ok" -> {:success, State.reset_rejoin_try_counter(state)}
-        "error" -> {:failure, state}
-      end
-
-    callback(state, :handle_join, [status, response])
-    |> map_novel_callback_return(state)
-  end
-
-  defp handle_message(
-         %Message{
-           topic: topic,
-           event: "phx_reply",
-           payload: %{"response" => response, "status" => status},
-           ref: ref
-         },
-         %State{topic: topic} = state
-       )
-       when ref != nil do
-    callback(state, :handle_reply, [ref, {String.to_atom(status), response}])
-    |> map_novel_callback_return(state)
-  end
-
-  defp handle_message(
-         %Message{
-           topic: topic,
-           event: event,
-           payload: payload,
-           ref: ref
-         },
-         %State{topic: topic} = state
-       )
-       when ref == nil do
-    callback(state, :handle_message, [event, payload])
-    |> map_novel_callback_return(state)
-  end
-
-  defp handle_message(
-         %Message{
-           topic: topic,
-           event: "phx_error",
-           payload: payload,
-           ref: join_ref
-         },
-         %State{topic: topic, join_ref: join_ref} = state
-       ) do
-    state = %State{state | join_ref: nil}
-
-    callback(state, :handle_channel_close, [payload])
-    |> map_novel_callback_return(state)
-  end
-
-  # heartbeat ack by remote server
-  defp handle_message(
-         %Message{
-           topic: "phoenix",
-           event: "phx_reply",
-           payload: %{"response" => %{}, "status" => "ok"},
-           ref: heartbeat_ref
-         },
-         %State{heartbeat_ref: heartbeat_ref} = state
-       ) do
-    {:noreply, State.reset_heartbeat(state)}
-  end
+    # callback(state, :handle_channel_close, [payload])
+    # |> map_novel_callback_return(state)
+  # end
 end

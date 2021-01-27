@@ -3,20 +3,9 @@ defmodule Slipstream.Example do
   An example slipstream socket client
   """
 
-  # use Slipstream
-  import Slipstream
+  use Slipstream
 
-  @behaviour Slipstream
-
-  def child_spec(opts) do
-    %{
-      id: __MODULE__,
-      start: {__MODULE__, :start_link, [opts]},
-      type: :worker,
-      restart: :permanent,
-      shutdown: 500
-    }
-  end
+  @topic "echo:foo"
 
   def start_link(opts) do
     Slipstream.start_link(__MODULE__, opts, name: __MODULE__)
@@ -24,68 +13,63 @@ defmodule Slipstream.Example do
 
   @impl Slipstream
   def init(_args) do
-    connect!(
+    # N.B. {:ok, socket} = connect(..), which is a valid return spec for init/1
+    connect(
       uri: "ws://localhost:4000/socket/websocket",
       heartbeat_interval_msec: 10_000
     )
-
-    {:ok, %{}}
   end
 
   @impl Slipstream
-  def handle_connect(state) do
-    IO.inspect(self(), label: "connected")
+  def handle_connect(socket) do
+    IO.puts("connected, joining...")
 
-    join("echo:foo")
-
-    {:ok, state}
+    {:ok, join(socket, @topic)}
   end
 
   @impl Slipstream
-  def handle_disconnect(reason, state) do
+  def handle_disconnect(reason, socket) do
     IO.inspect(reason, label: "handle_disconnect/2")
 
-    reconnect()
-
-    {:ok, state}
+    {:ok, reconnect(socket)}
   end
 
   @impl Slipstream
-  def handle_join(status, response, state) do
-    IO.inspect({self(), status, response}, label: "handle_join/3")
+  def handle_join(topic, response, socket) do
+    IO.inspect({self(), topic, response}, label: "handle_join/3")
 
-    push("foo", %{})
+    # _ref = push(socket, topic, "foo", %{})
 
-    {:ok, state}
+    # await_reply(socket, ref) |> IO.inspect(label: "sync reply")
+
+    {:ok, socket}
   end
 
   @impl Slipstream
-  def handle_message(event, message, state) do
-    IO.inspect({event, message}, label: "handle_message/2")
+  def handle_message(topic, event, message, socket) do
+    IO.inspect({topic, event, message}, label: "handle_message/4")
 
-    {:ok, state}
+    {:ok, socket}
   end
 
   @impl Slipstream
-  def handle_reply(ref, reply, state) do
+  def handle_reply(ref, reply, socket) do
     IO.inspect({ref, reply}, label: "handle_reply/3")
 
-    {:ok, state}
+    {:ok, socket}
   end
 
   @impl Slipstream
-  def handle_info(message, state) do
-    IO.inspect(message, label: "handle_info/2")
+  def handle_info(message, socket) do
+    IO.inspect(message, label: "example handle_info/2")
 
-    {:noreply, state}
+    {:noreply, socket}
   end
 
   @impl Slipstream
-  def handle_channel_close(message, state) do
-    IO.inspect(message, label: "handle_channel_close/2")
+  def handle_topic_close(topic, message, socket) do
+    IO.inspect(message, label: "handle_topic_close/2")
 
-    rejoin()
-
-    {:ok, state}
+    {:ok, rejoin(socket, topic)}
   end
 end

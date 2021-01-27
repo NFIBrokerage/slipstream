@@ -5,40 +5,36 @@ defmodule Slipstream.Default do
 
   @behaviour Slipstream
 
-  import Slipstream, only: [reconnect: 0, rejoin: 0]
+  import Slipstream, only: [reconnect: 1, rejoin: 2]
 
   @impl Slipstream
   def init(args), do: {:ok, args}
 
   @impl Slipstream
-  def terminate(_reason, _state), do: :ok
+  def terminate(_reason, _socket), do: :ok
 
   @impl Slipstream
-  def handle_info(_message, state), do: {:noreply, state}
+  def handle_info(_message, socket), do: {:noreply, socket}
 
   @impl Slipstream
-  def handle_connect(state), do: {:ok, state}
+  def handle_connect(socket), do: {:ok, socket}
 
   @impl Slipstream
-  def handle_disconnect(_reason, state) do
-    reconnect()
-
-    {:ok, state}
+  def handle_disconnect(_reason, socket) do
+    {:ok, _socket} = reconnect(socket)
   end
 
   @impl Slipstream
-  def handle_join(_success?, _response, state), do: {:ok, state}
+  def handle_join(_success?, _response, socket), do: {:ok, socket}
 
   @impl Slipstream
-  def handle_message(_event, _message, state), do: {:noreply, state}
+  def handle_message(_topic, _event, _message, socket), do: {:ok, socket}
 
   @impl Slipstream
-  def handle_reply(_ref, _reply, state), do: {:ok, state}
+  def handle_reply(_ref, _reply, socket), do: {:ok, socket}
 
   @impl Slipstream
-  def handle_channel_close(_message, state) do
-    rejoin()
-
-    {:ok, state}
+  def handle_topic_close(topic, _message, socket) do
+    {:ok, rejoin(socket, topic)}
   end
 end

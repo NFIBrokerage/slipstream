@@ -4,75 +4,44 @@ defmodule Slipstream.Connection.Impl do
   alias Slipstream.Connection.State
   alias Phoenix.Socket.Message
 
-  # helper functions for the Connection
+  def connect(%State{config: configuration} = state) do
+    uri = configuration.uri
 
-  # an enumeration of all valid return values for GenServer callbacks which
-  # declare new state
-  def map_genserver_return({:ok, implementor_state}, state) do
-    {:ok, %State{state | implementor_state: implementor_state}}
+    # N.B. I've _never_ seen this match fail
+    # if it does, please open an issue
+    {:ok, conn} =
+      :gun.open(
+        to_charlist(uri.host),
+        uri.port,
+        configuration.gun_open_options
+      )
+
+    stream_ref =
+      :gun.ws_upgrade(
+        conn,
+        path(uri),
+        configuration.headers
+      )
+
+    %State{state | conn: conn, stream_ref: stream_ref}
   end
 
-  def map_genserver_return({:ok, implementor_state, other_stuff}, state) do
-    {:ok, %State{state | implementor_state: implementor_state}, other_stuff}
-  end
-
-  def map_genserver_return({:reply, reply, implementor_state}, state) do
-    {:reply, reply, %State{state | implementor_state: implementor_state}}
-  end
-
-  def map_genserver_return(
-        {:reply, reply, implementor_state, other_stuff},
-        state
-      ) do
-    {:reply, reply, %State{state | implementor_state: implementor_state},
-     other_stuff}
-  end
-
-  def map_genserver_return({:noreply, implementor_state}, state) do
-    {:noreply, %State{state | implementor_state: implementor_state}}
-  end
-
-  def map_genserver_return({:noreply, implementor_state, other_stuff}, state) do
-    {:noreply, %State{state | implementor_state: implementor_state},
-     other_stuff}
-  end
-
-  def map_genserver_return({:stop, reason, reply, implementor_state}, state) do
-    {:stop, reason, reply, %State{state | implementor_state: implementor_state}}
-  end
-
-  def map_genserver_return({:stop, reason, implementor_state}, state) do
-    {:stop, reason, %State{state | implementor_state: implementor_state}}
-  end
-
-  def map_genserver_return(other, _state), do: other
-
-  # the slipstream-specific callbacks have their own return signature, usually
-  # in the form of
-  #   {:ok, new_state} | {:stop, reason :: term(), new_state} when new_state: term
-  def map_novel_callback_return({:ok, implementor_state}, state) do
-    {:noreply, %State{state | implementor_state: implementor_state}}
-  end
-
-  def map_novel_callback_return({:stop, reason, implementor_state}, state) do
-    {:stop, reason, %State{state | implementor_state: implementor_state}}
-  end
-
-  def map_novel_callback_return(unmatch_signature, _state) do
-    raise(ArgumentError,
-      message:
-        """
-        Unmatched signature: #{inspect(unmatch_signature)}
-        Expected a return value matching the spec:
-
-            {:ok, new_state} | {:stop, reason :: term(), new_state} when new_state: term()
-        """
-        |> String.trim()
-    )
+  def route_event(%State{socket_pid: pid}, event) do
+    send(pid, {:__slipstream__, event})
   end
 
   def push_message(message, state) do
-    :gun.ws_send(state.connection_conn, {:text, encode(message, state)})
+    :gun.ws_send(state.conn, {:text, encode(message, state)})
+  end
+
+  def push_heartbeat(state) do
+    %Message{
+      topic: "phoenix",
+      event: "heartbeat",
+      ref: state.heartbeat_ref,
+      payload: %{}
+    }
+    |> push_message(state)
   end
 
   defp encode(%Message{} = message, state) do
@@ -87,7 +56,7 @@ defmodule Slipstream.Connection.Impl do
   end
 
   defp encode_fn(state) do
-    module = state.connection_configuration.json_parser
+    module = state.config.json_parser
 
     if function_exported?(module, :encode_to_iodata!, 1) do
       &module.encode_to_iodata!/1
@@ -97,7 +66,7 @@ defmodule Slipstream.Connection.Impl do
   end
 
   defp decode_fn(state) do
-    module = state.connection_configuration.json_parser
+    module = state.config.json_parser
 
     &module.decode/1
   end
@@ -133,18 +102,18 @@ defmodule Slipstream.Connection.Impl do
   # does a retry with back-off based on the lists of backoff times stored
   # in the connection configuration
   def retry_time(:reconnect, %State{} = state) do
-    backoff_times = state.connection_configuration.reconnect_after_msec
+    backoff_times = state.config.reconnect_after_msec
     try_number = state.reconnect_try_number
 
     retry_time(backoff_times, try_number)
   end
 
-  def retry_time(:rejoin, %State{} = state) do
-    backoff_times = state.connection_configuration.rejoin_after_msec
-    try_number = state.rejoin_try_number
-
-    retry_time(backoff_times, try_number)
-  end
+  # def retry_time(:rejoin, %State{} = state) do
+    # backoff_times = state.config.rejoin_after_msec
+    # try_number = state.rejoin_try_number
+#
+    # retry_time(backoff_times, try_number)
+  # end
 
   def retry_time(backoff_times, try_number)
       when is_list(backoff_times) and is_integer(try_number) and try_number > 0 do
@@ -155,23 +124,9 @@ defmodule Slipstream.Connection.Impl do
     Enum.at(backoff_times, try_number, default)
   end
 
-  # N.B. this is storing the ref in the process dictionary, which is a
-  # historically crappy thing to do. We do it in slipstream because
-  # `Slipstream.push/2` needs to return a ref, although that function is only
-  # invoked from the implementor, who does not have access to the outer
-  # Slipstream.Connection's state. ofc we could reach into that state with
-  # `:sys.get_state(self())`, but that's even grosser IMHO than the process
-  # dictionary
-  def current_ref, do: Process.get(:slipstream_ref, 0)
-
-  def next_ref do
-    ref = current_ref() + 1
-    Process.put(:slipstream_ref, ref)
-    to_string(ref)
-  end
-
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation
+  @spec path(URI.t()) :: charlist()
   def path(%URI{} = uri) do
     # select the v2 JSON serialization pattern
     query = URI.decode_query(uri.query || "", %{"vsn" => "2.0.0"})

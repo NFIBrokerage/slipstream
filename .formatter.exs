@@ -1,10 +1,12 @@
-locals_without_parens = []
+locals_without_parens = [
+  route_event: 2
+]
 
 [
   inputs: ["mix.exs", "{config,lib,test}/**/*.{ex,exs}"],
   import_deps: [],
   locals_without_parens: locals_without_parens,
-  export: [locals_without_parens: locals_without_parens],
+  export: [],
   line_length: 80
 ]
 

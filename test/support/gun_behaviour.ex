@@ -1,5 +1,11 @@
 defmodule GunBehaviour do
-  @callback open(host :: charlist(), port :: :inet.portnumber(), opts :: map()) ::
+  @moduledoc false
+
+  @callback open(
+              host :: :inet.hostname(),
+              port :: :inet.port_number(),
+              opts :: map()
+            ) ::
               {:ok, conn :: pid()}
   @callback ws_upgrade(
               conn :: pid(),
