@@ -3,7 +3,14 @@ defmodule Slipstream.Connection.Impl do
 
   alias Slipstream.Connection.State
   alias Phoenix.Socket.Message
+  alias Slipstream.{Events, Commands}
 
+  @noop_event_types [
+    Events.PongReceived,
+    Events.HeartbeatAcknowledged
+  ]
+
+  @spec connect(%State{}) :: %State{}
   def connect(%State{config: configuration} = state) do
     uri = configuration.uri
 
@@ -26,9 +33,78 @@ defmodule Slipstream.Connection.Impl do
     %State{state | conn: conn, stream_ref: stream_ref}
   end
 
+  @spec route_event(%State{}, event :: struct()) :: term()
   def route_event(%State{socket_pid: pid}, event) do
     send(pid, {:__slipstream__, event})
   end
+
+  @spec handle_command(%State{}, command :: struct()) ::
+          {:noreply, new_state}
+          | {:noreply, new_state, :hibernate}
+          | {:reply, Slipstream.push_reference(), new_state}
+        when new_state: %State{}
+  def handle_command(state, command)
+
+  def handle_command(state, %Commands.SendHeartbeat{}) do
+    push_heartbeat(state)
+
+    {:noreply, state}
+  end
+
+  def handle_command(state, %Commands.PushMessage{} = cmd) do
+    ref = state.current_ref_str
+
+    push_message(
+      %Message{
+        topic: cmd.topic,
+        event: cmd.event,
+        payload: cmd.payload,
+        ref: ref
+      },
+      state
+    )
+
+    {:reply, ref, state}
+  end
+
+  def handle_command(state, %Commands.JoinTopic{} = cmd) do
+    push_message(
+      %Message{
+        topic: cmd.topic,
+        event: "phx_join",
+        payload: cmd.payload,
+        ref: state.current_ref_str,
+        join_ref: state.current_ref_str
+      },
+      state
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_command(state, _command), do: {:noreply, state}
+
+  # ---
+
+  @spec handle_event(%State{}, event :: struct()) :: {:noreply, %State{}}
+  def handle_event(state, event)
+
+  def handle_event(state, %Events.PingReceived{}) do
+    :gun.ws_send(state.conn, :pong)
+
+    {:noreply, state}
+  end
+
+  def handle_event(state, %type{}) when type in @noop_event_types,
+    do: {:noreply, state}
+
+  def handle_event(state, event) do
+    route_event state, event
+
+    {:noreply, state}
+  end
+
+  # ---
 
   def push_message(message, state) do
     :gun.ws_send(state.conn, {:text, encode(message, state)})

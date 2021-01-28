@@ -8,7 +8,9 @@ defmodule Slipstream.Socket do
   alias __MODULE__.Join
   alias Slipstream.Events
 
-  @derive {Inspect, only: [:assigns]}
+  if Version.match?(System.version(), ">= 1.8.0") do
+    @derive {Inspect, only: [:assigns]}
+  end
 
   defstruct [
     :channel_pid,

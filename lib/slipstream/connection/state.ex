@@ -1,6 +1,8 @@
 defmodule Slipstream.Connection.State do
   @moduledoc false
 
+  alias Slipstream.{Commands, Events}
+
   # a struct for storing the internal state of a Slipstream.Connection
   # process
 
@@ -26,13 +28,8 @@ defmodule Slipstream.Connection.State do
   def next_ref(state) do
     ref = state.current_ref + 1
 
-    {to_string(ref), %__MODULE__{state | current_ref: ref}}
-  end
-
-  def next_heartbeat_ref(state) do
-    {ref, state} = next_ref(state)
-
-    %__MODULE__{state | heartbeat_ref: ref}
+    {to_string(ref),
+     %__MODULE__{state | current_ref: ref, current_ref_str: to_string(ref)}}
   end
 
   def increment_reconnect_counter(state) do
@@ -68,4 +65,43 @@ defmodule Slipstream.Connection.State do
   end
 
   def join_ref?(%__MODULE__{joins: joins}, ref), do: ref in Map.values(joins)
+
+  # update the state given any command
+  # this is done before handling the command, so it's an appropriate place
+  # to take next_ref/1s
+  @spec apply_command(%__MODULE__{}, command :: struct()) :: %__MODULE__{}
+  def apply_command(state, command)
+
+  def apply_command(%__MODULE__{} = state, %Commands.SendHeartbeat{}) do
+    {ref, state} = next_ref(state)
+
+    %__MODULE__{state | heartbeat_ref: ref}
+  end
+
+  def apply_command(%__MODULE__{} = state, %Commands.PushMessage{}) do
+    {_ref, state} = next_ref(state)
+
+    state
+  end
+
+  def apply_command(%__MODULE__{} = state, %Commands.JoinTopic{} = cmd) do
+    {ref, state} = next_ref(state)
+
+    %__MODULE__{state | joins: Map.put(state.joins, cmd.topic, ref)}
+  end
+
+  def apply_command(state, _command), do: state
+
+  @spec apply_event(%__MODULE__{}, event :: struct()) :: %__MODULE__{}
+  def apply_event(state, event)
+
+  def apply_event(state, %type{} = event) when type in [Events.TopicJoinClosed, Events.TopicJoinFailed] do
+    %__MODULE__{state | joins: Map.delete(state.joins, event.topic)}
+  end
+
+  def apply_event(state, %Events.HeartbeatAcknowledged{}) do
+    reset_heartbeat(state)
+  end
+
+  def apply_event(state, _event), do: state
 end

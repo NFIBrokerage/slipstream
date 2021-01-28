@@ -8,9 +8,10 @@ defmodule Slipstream.Connection do
   use GenServer, restart: :temporary
 
   import __MODULE__.Impl, only: [route_event: 2]
-  alias Phoenix.Socket.Message
   alias __MODULE__.{Impl, State}
   alias Slipstream.{Events, Commands}
+
+  require Logger
 
   def start_link(init_arg) do
     GenServer.start_link(__MODULE__, init_arg)
@@ -83,65 +84,22 @@ defmodule Slipstream.Connection do
         {:gun_ws, conn, stream_ref, message},
         %State{conn: conn, stream_ref: stream_ref} = state
       ) do
-    message
-    |> Impl.decode_message(state)
-    |> IO.inspect(label: "incoming message")
+    event = message |> Impl.decode_message(state) |> Events.map(state)
 
-    {:noreply, state}
-  end
-
-  def handle_info(%Commands.SendHeartbeat{}, state) do
-    # TODO disconnect when there is a heartbeat_ref in state here
-
-    state = State.next_heartbeat_ref(state)
-
-    Impl.push_heartbeat(state)
-
-    {:noreply, state}
-  end
-
-  def handle_info(%Commands.PushMessage{} = cmd, state) do
-    {ref, state} = State.next_ref(state)
-
-    Impl.push_message(
-      %Message{
-        topic: cmd.topic,
-        event: cmd.event,
-        payload: cmd.payload,
-        ref: ref
-      },
-      state
-    )
-
-    {:reply, ref, state}
+    state
+    |> State.apply_event(event)
+    |> Impl.handle_event(event)
   end
 
   def handle_info(%_{} = cmd, state) do
-    IO.inspect(cmd, label: "connection heard cmd")
-    {:noreply, state}
+    state
+    |> State.apply_command(cmd)
+    |> Impl.handle_command(cmd)
   end
 
   def handle_info(unknown_message, state) do
-    IO.inspect(unknown_message,
-      label: "unknown message in #{inspect(__MODULE__)}"
-    )
+    Logger.error("unknown message #{inspect(unknown_message)}")
 
     {:noreply, state}
   end
-
-  # TODO map join crash to event
-  # defp handle_message(
-  # %Message{
-  # topic: topic,
-  # event: "phx_error",
-  # payload: payload,
-  # ref: join_ref
-  # },
-  # %State{topic: topic, join_ref: join_ref} = state
-  # ) do
-  # state = %State{state | join_ref: nil}
-
-  # callback(state, :handle_channel_close, [payload])
-  # |> map_novel_callback_return(state)
-  # end
 end

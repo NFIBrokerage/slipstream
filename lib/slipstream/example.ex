@@ -22,7 +22,7 @@ defmodule Slipstream.Example do
 
   @impl Slipstream
   def handle_connect(socket) do
-    IO.puts("connected, joining...")
+    IO.puts("#{inspect(__MODULE__)} connected, joining #{@topic}")
 
     {:ok, join(socket, @topic)}
   end

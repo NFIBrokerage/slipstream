@@ -12,15 +12,17 @@ defmodule Slipstream.Events do
     CloseRequestedByRemote,
     TopicJoinSucceeded,
     TopicJoinFailed,
-    TopicJoinClosed
+    TopicJoinClosed,
+    PingReceived,
+    PongReceived
   }
 
   alias Slipstream.Connection.State
 
   def map(server_message, connection_state)
 
-  def map(:ping, _state), do: :ping
-  def map(:pong, _state), do: :pong
+  def map(:ping, _state), do: %PingReceived{}
+  def map(:pong, _state), do: %PongReceived{}
   def map({:close, _, _}, _state), do: %CloseRequestedByRemote{}
 
   def map(
