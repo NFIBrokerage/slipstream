@@ -11,7 +11,8 @@ defmodule Slipstream.CommandRouter do
     OpenConnection,
     JoinTopic,
     LeaveTopic,
-    PushMessage
+    PushMessage,
+    CollectGarbage
   }
 
   alias Slipstream.Socket
@@ -20,7 +21,8 @@ defmodule Slipstream.CommandRouter do
 
   @forwarded_command_types [
     JoinTopic,
-    LeaveTopic
+    LeaveTopic,
+    CollectGarbage
   ]
 
   @spec route_command(struct()) :: any()

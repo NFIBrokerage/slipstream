@@ -52,6 +52,12 @@ defmodule Slipstream.Connection.Impl do
     {:noreply, state}
   end
 
+  def handle_command(state, %Commands.CollectGarbage{}) do
+    :erlang.garbage_collect(self())
+
+    {:noreply, state}
+  end
+
   def handle_command(state, %Commands.PushMessage{} = cmd) do
     ref = state.current_ref_str
 

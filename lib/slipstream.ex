@@ -757,6 +757,26 @@ defmodule Slipstream do
     end
   end
 
+  @doc """
+  Requests that the connection process undergoe garbage collection
+
+  If you're using Slipstream to send large messages, you may wish to flush
+  the process memory of the connection process between large messages. This
+  can be achieved through garbage collection.
+
+  ## Examples
+
+      iex> collect_garbage(socket)
+      :ok
+  """
+  @doc since: "1.0.0"
+  @spec collect_garbage(socket :: Socket.t()) :: :ok
+  def collect_garbage(socket) do
+    route_command %Commands.CollectGarbage{socket: socket}
+
+    :ok
+  end
+
   # --- await functionality
 
   @doc """
