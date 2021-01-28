@@ -1,5 +1,7 @@
 locals_without_parens = [
-  route_event: 2
+  route_event: 2,
+  route_command: 1,
+  callback: 2
 ]
 
 [

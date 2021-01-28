@@ -40,7 +40,8 @@ defmodule Slipstream do
   Where the second example invokes the `c:handle_call/3` callback.
   """
 
-  alias Slipstream.{Commands, Events, Socket, CommandRouter}
+  alias Slipstream.{Commands, Events, Socket}
+  import Slipstream.CommandRouter, only: [route_command: 1]
 
   # 5s default await timeout, same as GenServer calls
   @default_timeout 5_000
@@ -267,20 +268,20 @@ defmodule Slipstream do
   @doc """
   Invoked when a connection has been established to a websocket server
 
-  This callback provides a good place to join a `Phoenix.Channel`.
+  This callback provides a good place to `join/3`.
 
   ## Examples
 
       @impl Slipstream
-      def handle_connect(state) do
-        {:noreply, state}
+      def handle_connect(socket) do
+        {:noreply, socket}
       end
   """
   @doc since: "1.0.0"
-  @callback handle_connect(state :: term()) ::
-              {:ok, new_state}
-              | {:stop, reason :: term(), new_state}
-            when new_state: term()
+  @callback handle_connect(socket :: Socket.t()) ::
+              {:ok, new_socket}
+              | {:stop, reason :: term(), new_socket}
+            when new_socket: Socket.t()
 
   @doc """
   Invoked when a connection has been terminated
@@ -290,42 +291,37 @@ defmodule Slipstream do
   ## Examples
 
       @impl Slipstream
-      def handle_disconnect(_reason, state) do
-        reconnect()
-
-        {:ok, state}
+      def handle_disconnect(_reason, socket) do
+        {:ok, reconnect(socket)}
       end
   """
   @doc since: "1.0.0"
-  @callback handle_disconnect(reason :: term(), state :: term()) ::
-              {:ok, new_state}
-              | {:stop, stop_reason :: term(), new_state}
-            when new_state: term()
+  @callback handle_disconnect(reason :: term(), socket :: Socket.t()) ::
+              {:ok, new_socket}
+              | {:stop, stop_reason :: term(), new_socket}
+            when new_socket: Socket.t()
 
   @doc """
   Invoked when the websocket server replies to the request to join
 
-  The `:status` field declares whether the join was successful or not with
-  values of `:success` or `:failure`
-
   ## Examples
 
       @impl Slipstream
-      def handle_join(:success, %{}, state) do
-        push("echo", %{"ping" => 1})
+      def handle_join("rooms:echo", %{}, socket) do
+        push(socket, "rooms:echo", "echo", %{"ping" => 1})
 
-        {:ok, state}
+        {:ok, socket}
       end
   """
   @doc since: "1.0.0"
   @callback handle_join(
-              status :: :success | :failure,
+              topic :: String.t(),
               response :: json_serializable(),
-              state :: term()
+              socket :: Socket.t()
             ) ::
-              {:ok, new_state}
-              | {:stop, reason :: term(), new_state}
-            when new_state: term()
+              {:ok, new_socket}
+              | {:stop, reason :: term(), new_socket}
+            when new_socket: Socket.t()
 
   @doc """
   Invoked when a message is received on the websocket connection
@@ -340,10 +336,10 @@ defmodule Slipstream do
   ## Examples
 
       @impl Slipstream
-      def handle_message("room:lobby", "new:msg", params, state) do
+      def handle_message("room:lobby", "new:msg", params, socket) do
         MyApp.Msg.create(params)
 
-        {:ok, state}
+        {:ok, socket}
       end
   """
   @doc since: "1.0.0"
@@ -351,11 +347,11 @@ defmodule Slipstream do
               topic :: String.t(),
               event :: String.t(),
               message :: any(),
-              state :: term()
+              socket :: Socket.t()
             ) ::
-              {:ok, new_state}
-              | {:stop, reason :: term(), new_state}
-            when new_state: term()
+              {:ok, new_socket}
+              | {:stop, reason :: term(), new_socket}
+            when new_socket: Socket.t()
 
   @doc """
   Invoked when a message is received on the websocket connection which
@@ -367,28 +363,28 @@ defmodule Slipstream do
   ## Examples
 
       @impl Slipstream
-      def handle_join(:success, _params, state) do
-        my_req = push("msg:new", %{"foo" => "bar"})
+      def handle_join(topic, _params, socket) do
+        my_req = push(socket, topic, "msg:new", %{"foo" => "bar"})
 
-        {:ok, Map.put(state, :request, my_req)}
+        {:ok, assign(socket, :request, my_req)}
       end
 
       @impl Slipstream
-      def handle_reply(ref, reply, %{request: ref} = state) do
+      def handle_reply(ref, reply, %{assigns: %{request: ref}} = socket) do
         IO.inspect(reply, label: "reply to my request")
 
-        {:ok, state}
+        {:ok, socket}
       end
   """
   @doc since: "1.0.0"
   @callback handle_reply(
               ref :: push_reference(),
               message :: reply(),
-              state :: term()
+              socket :: Socket.t()
             ) ::
-              {:ok, new_state}
-              | {:stop, reason :: term(), new_state}
-            when new_state: term()
+              {:ok, new_socket}
+              | {:stop, reason :: term(), new_socket}
+            when new_socket: Socket.t()
 
   @doc """
   Invoked when a channel has been closed by the remote server
@@ -399,21 +395,19 @@ defmodule Slipstream do
   ## Examples
 
       @impl Slipstream
-      def handle_topic_close(topic, _message, state) do
-        rejoin(socket, topic)
-
-        {:ok, state}
+      def handle_topic_close(topic, _message, socket) do
+        {:ok, socket} = rejoin(socket, topic)
       end
   """
   @doc since: "1.0.0"
   @callback handle_topic_close(
               topic :: String.t(),
               reason :: term(),
-              state :: term()
+              socket :: Socket.t()
             ) ::
-              {:ok, new_state}
-              | {:stop, stop_reason :: term(), new_state}
-            when new_state: term()
+              {:ok, new_socket}
+              | {:stop, stop_reason :: term(), new_socket}
+            when new_socket: Socket.t()
 
   @optional_callbacks init: 1,
                       handle_info: 2,
@@ -478,8 +472,7 @@ defmodule Slipstream do
   def connect(socket \\ new_socket(), opts) do
     case Slipstream.Configuration.validate(opts) do
       {:ok, config} ->
-        %Commands.OpenConnection{config: config, socket: socket}
-        |> CommandRouter.route_command()
+        route_command %Commands.OpenConnection{config: config, socket: socket}
 
         {:ok, socket}
 
@@ -501,8 +494,7 @@ defmodule Slipstream do
   def connect!(socket \\ new_socket(), opts) do
     config = Slipstream.Configuration.validate!(opts)
 
-    %Commands.OpenConnection{config: config, socket: socket}
-    |> CommandRouter.route_command()
+    route_command %Commands.OpenConnection{config: config, socket: socket}
 
     socket
   end
@@ -540,8 +532,7 @@ defmodule Slipstream do
         :error
 
       config ->
-        %Commands.OpenConnection{config: config, socket: socket}
-        |> CommandRouter.route_command()
+        route_command %Commands.OpenConnection{config: config, socket: socket}
     end
 
     {:ok, socket}
@@ -565,8 +556,8 @@ defmodule Slipstream do
   ## Examples
 
       @impl Slipstream
-      def handle_connect(state) do
-        {:ok, join(socket, "rooms:lobby", %{user: 1})
+      def handle_connect(socket) do
+        {:ok, join(socket, "rooms:lobby", %{user: 1})}
       end
   """
   @doc since: "1.0.0"
@@ -579,8 +570,11 @@ defmodule Slipstream do
   def join(%Socket{} = socket, topic, params \\ %{}) when is_binary(topic) do
     if Socket.connected?(socket) and
          Socket.join_status(socket, topic) in [nil, :closed] do
-      %Commands.JoinTopic{socket: socket, topic: topic, payload: params}
-      |> CommandRouter.route_command()
+      route_command %Commands.JoinTopic{
+        socket: socket,
+        topic: topic,
+        payload: params
+      }
 
       Socket.put_join_config(socket, topic, params)
     else
@@ -634,12 +628,11 @@ defmodule Slipstream do
         {:ok, socket}
 
       {:ok, %{status: :closed} = prior_join} ->
-        %Commands.JoinTopic{
+        route_command %Commands.JoinTopic{
           socket: socket,
           topic: topic,
           payload: params || prior_join.params
         }
-        |> CommandRouter.route_command()
 
         {:ok, socket}
     end
@@ -663,8 +656,7 @@ defmodule Slipstream do
   @spec leave(socket :: Socket.t(), topic :: String.t()) :: Socket.t()
   def leave(%Socket{} = socket, topic) when is_binary(topic) do
     if Socket.joined?(socket, topic) do
-      %Commands.LeaveTopic{socket: socket, topic: topic}
-      |> CommandRouter.route_command()
+      route_command %Commands.LeaveTopic{socket: socket, topic: topic}
     end
 
     socket
@@ -723,14 +715,13 @@ defmodule Slipstream do
       )
       when is_binary(topic) and is_binary(event) do
     if Socket.joined?(socket, topic) do
-      %Commands.PushMessage{
+      route_command %Commands.PushMessage{
         socket: socket,
         topic: topic,
         event: event,
         payload: params,
         timeout: timeout
       }
-      |> CommandRouter.route_command()
     else
       {:error, :not_joined}
     end
@@ -928,35 +919,8 @@ defmodule Slipstream do
 
       @impl Slipstream
       def handle_info({:__slipstream__, event}, socket) do
-        Slipstream.__handle_event__(__MODULE__, event, socket)
+        Slipstream.Callback.dispatch(__MODULE__, event, socket)
       end
-    end
-  end
-
-  @doc false
-  @spec __handle_event__(
-          caller :: module(),
-          event :: struct(),
-          socket :: Socket.t()
-        ) ::
-          {:ok, new_socket}
-          | {:ok, new_socket, timeout() | :hibernate | {:continue, term()}}
-          | {:stop, reason :: term(), new_socket}
-        when new_socket: term()
-  def __handle_event__(caller, event, socket) do
-    {function, args} =
-      Slipstream.Callback.dispatch(event, Socket.apply_event(socket, event))
-
-    case apply(caller, function, args) do
-      {:ok, socket} ->
-        {:noreply, socket}
-
-      {:ok, socket, other_stuff} ->
-        {:noreply, socket, other_stuff}
-
-      {:stop, _reason, _socket} = stop ->
-        stop
-        # YARD catchall with a helpful error message?
     end
   end
 end
