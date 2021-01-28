@@ -4,6 +4,7 @@ defmodule Slipstream.Connection.Impl do
   alias Slipstream.Connection.State
   alias Phoenix.Socket.Message
   alias Slipstream.{Events, Commands}
+  import Slipstream.Events, only: [event: 1]
 
   @noop_event_types [
     Events.PongReceived,
@@ -35,7 +36,7 @@ defmodule Slipstream.Connection.Impl do
 
   @spec route_event(%State{}, event :: struct()) :: term()
   def route_event(%State{socket_pid: pid}, event) do
-    send(pid, {:__slipstream_event__ event})
+    send(pid, event(event))
   end
 
   @spec handle_command(%State{}, command :: struct()) ::

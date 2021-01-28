@@ -8,6 +8,7 @@ defmodule Slipstream.Connection do
   use GenServer, restart: :temporary
 
   import __MODULE__.Impl, only: [route_event: 2]
+  import Slipstream.Commands, only: [command: 1]
   alias __MODULE__.{Impl, State}
   alias Slipstream.{Events, Commands}
 
@@ -91,7 +92,7 @@ defmodule Slipstream.Connection do
     |> Impl.handle_event(event)
   end
 
-  def handle_info(%_{} = cmd, state) do
+  def handle_info(command(cmd), state) do
     state
     |> State.apply_command(cmd)
     |> Impl.handle_command(cmd)

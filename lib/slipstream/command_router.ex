@@ -16,6 +16,8 @@ defmodule Slipstream.CommandRouter do
 
   alias Slipstream.Socket
 
+  import Slipstream.Commands, only: [command: 1]
+
   @forwarded_command_types [
     JoinTopic,
     LeaveTopic
@@ -34,11 +36,11 @@ defmodule Slipstream.CommandRouter do
   # forward the commands to the connection process
   def route_command(%command_type{socket: socket} = cmd)
       when command_type in @forwarded_command_types do
-    Socket.send(socket, cmd)
+    Socket.send(socket, command(cmd))
   end
 
   # this one is a synchronous push with a reply from the connection process
   def route_command(%PushMessage{socket: socket} = cmd) do
-    Socket.call(socket, cmd, cmd.timeout)
+    Socket.call(socket, command(cmd), cmd.timeout)
   end
 end

@@ -42,6 +42,7 @@ defmodule Slipstream do
 
   alias Slipstream.{Commands, Events, Socket}
   import Slipstream.CommandRouter, only: [route_command: 1]
+  import Slipstream.Events, only: [event: 1]
 
   # 5s default await timeout, same as GenServer calls
   @default_timeout 5_000
@@ -768,10 +769,10 @@ defmodule Slipstream do
           {:ok, Socket.t()} | {:error, term()}
   def await_connect(socket, timeout \\ @default_timeout) do
     receive do
-      {:__slipstream_event__ %Events.ChannelConnected{} = event} ->
+      event(%Events.ChannelConnected{} = event) ->
         {:ok, Socket.apply_event(socket, event)}
 
-      {:__slipstream_event__ %Events.ChannelConnectFailed{} = event} ->
+      event(%Events.ChannelConnectFailed{} = event) ->
         {:error, Events.ChannelConnectFailed.to_reason(event)}
     after
       timeout -> {:error, :timeout}
@@ -803,10 +804,10 @@ defmodule Slipstream do
   def await_join(socket, topic, timeout \\ @default_timeout)
       when is_binary(topic) do
     receive do
-      {:__slipstream_event__ %Events.TopicJoinSucceeded{topic: ^topic} = event} ->
+      event(%Events.TopicJoinSucceeded{topic: ^topic} = event) ->
         {:ok, Socket.apply_event(socket, event)}
 
-      {:__slipstream_event__ %Events.TopicJoinFailed{topic: ^topic} = event} ->
+      event(%Events.TopicJoinFailed{topic: ^topic} = event) ->
         {:error, Events.TopicJoinFailed.to_reason(event)}
     after
       timeout -> {:error, :timeout}
@@ -838,7 +839,7 @@ defmodule Slipstream do
   def await_leave(socket, topic, timeout \\ @default_timeout)
       when is_binary(topic) do
     receive do
-      {:__slipstream_event__ %Events.TopicLeft{topic: ^topic} = event} ->
+      event(%Events.TopicLeft{topic: ^topic} = event) ->
         {:ok, Socket.apply_event(socket, event)}
     after
       timeout -> {:error, :timeout}
@@ -869,7 +870,7 @@ defmodule Slipstream do
 
   def await_reply({topic, ref}, timeout) do
     receive do
-      {:__slipstream_event__ %Events.ReplyReceived{ref: ^ref, topic: ^topic} = event} ->
+      event(%Events.ReplyReceived{ref: ^ref, topic: ^topic} = event) ->
         Events.ReplyReceived.to_reply(event)
     after
       timeout -> {:error, :timeout}
@@ -918,7 +919,7 @@ defmodule Slipstream do
       @behaviour Slipstream
 
       @impl Slipstream
-      def handle_info({:__slipstream_event__ event}, socket) do
+      def handle_info(event(event), socket) do
         Slipstream.Callback.dispatch(__MODULE__, event, socket)
       end
     end
