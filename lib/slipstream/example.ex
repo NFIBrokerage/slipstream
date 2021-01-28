@@ -36,9 +36,9 @@ defmodule Slipstream.Example do
 
   @impl Slipstream
   def handle_join(topic, response, socket) do
-    IO.inspect({self(), topic, response}, label: "handle_join/3")
+    IO.inspect({topic, response}, label: "handle_join/3")
 
-    # _ref = push(socket, topic, "foo", %{})
+    _ref = push(socket, topic, "foo", %{})
 
     # await_reply(socket, ref) |> IO.inspect(label: "sync reply")
 

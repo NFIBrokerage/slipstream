@@ -103,4 +103,11 @@ defmodule Slipstream.Connection do
 
     {:noreply, state}
   end
+
+  @impl GenServer
+  def handle_call(command(%Commands.PushMessage{} = cmd), _from, state) do
+    state
+    |> State.apply_command(cmd)
+    |> Impl.handle_command(cmd)
+  end
 end
