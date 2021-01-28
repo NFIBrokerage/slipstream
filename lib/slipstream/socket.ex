@@ -8,10 +8,13 @@ defmodule Slipstream.Socket do
   alias __MODULE__.Join
   alias Slipstream.Events
 
+  @derive {Inspect, only: [:assigns]}
+
   defstruct [
     :channel_pid,
     :socket_pid,
     :channel_config,
+    :response_headers,
     joins: %{},
     assigns: %{}
   ]

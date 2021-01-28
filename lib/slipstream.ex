@@ -914,20 +914,49 @@ defmodule Slipstream do
 
       import Slipstream
 
+      import Slipstream.Socket,
+        only: [
+          assign: 2,
+          assign: 3,
+          channel_pid: 1,
+          connected?: 1,
+          join_status: 2,
+          joined?: 2
+        ]
+
       @behaviour Slipstream
 
       @impl Slipstream
       def handle_info({:__slipstream__, event}, socket) do
-        case Slipstream.__handle_event__(event, socket) do
-          {:ok, socket} -> {:noreply, socket}
-          {:ok, socket, other_stuff} -> {:noreply, socket, other_stuff}
-          {:stop, _reason, _socket} = stop -> stop
-        end
+        Slipstream.__handle_event__(__MODULE__, event, socket)
       end
     end
   end
 
-  def __handle_event__(event, socket) do
-    Slipstream.Callback.dispatch(event, Socket.apply_event(socket, event))
+  @doc false
+  @spec __handle_event__(
+          caller :: module(),
+          event :: struct(),
+          socket :: Socket.t()
+        ) ::
+          {:ok, new_socket}
+          | {:ok, new_socket, timeout() | :hibernate | {:continue, term()}}
+          | {:stop, reason :: term(), new_socket}
+        when new_socket: term()
+  def __handle_event__(caller, event, socket) do
+    {function, args} =
+      Slipstream.Callback.dispatch(event, Socket.apply_event(socket, event))
+
+    case apply(caller, function, args) do
+      {:ok, socket} ->
+        {:noreply, socket}
+
+      {:ok, socket, other_stuff} ->
+        {:noreply, socket, other_stuff}
+
+      {:stop, _reason, _socket} = stop ->
+        stop
+        # YARD catchall with a helpful error message?
+    end
   end
 end

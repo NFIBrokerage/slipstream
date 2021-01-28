@@ -14,7 +14,9 @@ defmodule Slipstream.MixProject do
     [
       app: :slipstream,
       version: @version,
-      elixir: "~> 1.6",
+      # Slipstream makes use of the `@derive {Inspect, ..` feature introduced
+      # in elixir 1.8
+      elixir: "~> 1.8",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: extra_compilers(Mix.env()) ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,

@@ -109,10 +109,10 @@ defmodule Slipstream.Connection.Impl do
   end
 
   # def retry_time(:rejoin, %State{} = state) do
-    # backoff_times = state.config.rejoin_after_msec
-    # try_number = state.rejoin_try_number
-#
-    # retry_time(backoff_times, try_number)
+  # backoff_times = state.config.rejoin_after_msec
+  # try_number = state.rejoin_try_number
+  #
+  # retry_time(backoff_times, try_number)
   # end
 
   def retry_time(backoff_times, try_number)

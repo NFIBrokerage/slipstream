@@ -1,6 +1,8 @@
 defmodule Slipstream.Events.TopicJoinFailed do
   @moduledoc false
 
+  @derive {Slipstream.Callback, callback: :handle_join_failed, args: [:topic, :response]}
+
   # a message that says that a topic has failed to be joined
 
   defstruct [:topic, :response, :ref]

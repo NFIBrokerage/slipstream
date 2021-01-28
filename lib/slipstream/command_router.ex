@@ -32,7 +32,8 @@ defmodule Slipstream.CommandRouter do
   end
 
   # forward the commands to the connection process
-  def route_command(%command_type{socket: socket} = cmd) when command_type in @forwarded_command_types do
+  def route_command(%command_type{socket: socket} = cmd)
+      when command_type in @forwarded_command_types do
     Socket.send(socket, cmd)
   end
 

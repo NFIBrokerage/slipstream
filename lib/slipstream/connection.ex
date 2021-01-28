@@ -17,7 +17,10 @@ defmodule Slipstream.Connection do
   end
 
   @impl GenServer
-  def init(%Commands.OpenConnection{socket: %Slipstream.Socket{socket_pid: socket_pid}, config: config}) do
+  def init(%Commands.OpenConnection{
+        socket: %Slipstream.Socket{socket_pid: socket_pid},
+        config: config
+      }) do
     {:ok, %State{socket_pid: socket_pid, config: config}, {:continue, :connect}}
   end
 
@@ -29,7 +32,10 @@ defmodule Slipstream.Connection do
   end
 
   @impl GenServer
-  def handle_info({:DOWN, socket_ref, :process, socket_pid, reason}, %State{socket_ref: socket_ref, socket_pid: socket_pid} = state) do
+  def handle_info(
+        {:DOWN, socket_ref, :process, socket_pid, reason},
+        %State{socket_ref: socket_ref, socket_pid: socket_pid} = state
+      ) do
     {:stop, reason, state}
   end
 
@@ -116,24 +122,26 @@ defmodule Slipstream.Connection do
   end
 
   def handle_info(unknown_message, state) do
-    IO.inspect(unknown_message, label: "unknown message in #{inspect(__MODULE__)}")
+    IO.inspect(unknown_message,
+      label: "unknown message in #{inspect(__MODULE__)}"
+    )
 
     {:noreply, state}
   end
 
   # TODO map join crash to event
   # defp handle_message(
-         # %Message{
-           # topic: topic,
-           # event: "phx_error",
-           # payload: payload,
-           # ref: join_ref
-         # },
-         # %State{topic: topic, join_ref: join_ref} = state
-       # ) do
-    # state = %State{state | join_ref: nil}
+  # %Message{
+  # topic: topic,
+  # event: "phx_error",
+  # payload: payload,
+  # ref: join_ref
+  # },
+  # %State{topic: topic, join_ref: join_ref} = state
+  # ) do
+  # state = %State{state | join_ref: nil}
 
-    # callback(state, :handle_channel_close, [payload])
-    # |> map_novel_callback_return(state)
+  # callback(state, :handle_channel_close, [payload])
+  # |> map_novel_callback_return(state)
   # end
 end

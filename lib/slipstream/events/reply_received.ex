@@ -16,3 +16,9 @@ defmodule Slipstream.Events.ReplyReceived do
     {status, response}
   end
 end
+
+defimpl Slipstream.Callback, for: Slipstream.Events.ReplyReceived do
+  def dispatch(event, socket) do
+    {:handle_reply, [event.ref, Slipstream.Events.ReplyReceived.to_reply(event), socket]}
+  end
+end
