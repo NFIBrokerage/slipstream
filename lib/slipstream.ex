@@ -768,10 +768,10 @@ defmodule Slipstream do
           {:ok, Socket.t()} | {:error, term()}
   def await_connect(socket, timeout \\ @default_timeout) do
     receive do
-      {:__slipstream__, %Events.ChannelConnected{} = event} ->
+      {:__slipstream_event__ %Events.ChannelConnected{} = event} ->
         {:ok, Socket.apply_event(socket, event)}
 
-      {:__slipstream__, %Events.ChannelConnectFailed{} = event} ->
+      {:__slipstream_event__ %Events.ChannelConnectFailed{} = event} ->
         {:error, Events.ChannelConnectFailed.to_reason(event)}
     after
       timeout -> {:error, :timeout}
@@ -803,10 +803,10 @@ defmodule Slipstream do
   def await_join(socket, topic, timeout \\ @default_timeout)
       when is_binary(topic) do
     receive do
-      {:__slipstream__, %Events.TopicJoinSucceeded{topic: ^topic} = event} ->
+      {:__slipstream_event__ %Events.TopicJoinSucceeded{topic: ^topic} = event} ->
         {:ok, Socket.apply_event(socket, event)}
 
-      {:__slipstream__, %Events.TopicJoinFailed{topic: ^topic} = event} ->
+      {:__slipstream_event__ %Events.TopicJoinFailed{topic: ^topic} = event} ->
         {:error, Events.TopicJoinFailed.to_reason(event)}
     after
       timeout -> {:error, :timeout}
@@ -838,7 +838,7 @@ defmodule Slipstream do
   def await_leave(socket, topic, timeout \\ @default_timeout)
       when is_binary(topic) do
     receive do
-      {:__slipstream__, %Events.TopicLeft{topic: ^topic} = event} ->
+      {:__slipstream_event__ %Events.TopicLeft{topic: ^topic} = event} ->
         {:ok, Socket.apply_event(socket, event)}
     after
       timeout -> {:error, :timeout}
@@ -869,7 +869,7 @@ defmodule Slipstream do
 
   def await_reply({topic, ref}, timeout) do
     receive do
-      {:__slipstream__, %Events.ReplyReceived{ref: ^ref, topic: ^topic} = event} ->
+      {:__slipstream_event__ %Events.ReplyReceived{ref: ^ref, topic: ^topic} = event} ->
         Events.ReplyReceived.to_reply(event)
     after
       timeout -> {:error, :timeout}
@@ -918,7 +918,7 @@ defmodule Slipstream do
       @behaviour Slipstream
 
       @impl Slipstream
-      def handle_info({:__slipstream__, event}, socket) do
+      def handle_info({:__slipstream_event__ event}, socket) do
         Slipstream.Callback.dispatch(__MODULE__, event, socket)
       end
     end

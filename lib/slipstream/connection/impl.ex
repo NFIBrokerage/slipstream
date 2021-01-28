@@ -35,7 +35,7 @@ defmodule Slipstream.Connection.Impl do
 
   @spec route_event(%State{}, event :: struct()) :: term()
   def route_event(%State{socket_pid: pid}, event) do
-    send(pid, {:__slipstream__, event})
+    send(pid, {:__slipstream_event__ event})
   end
 
   @spec handle_command(%State{}, command :: struct()) ::
