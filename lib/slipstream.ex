@@ -17,7 +17,7 @@ defmodule Slipstream do
   of success, respectively). For all of these operations, though, you may
   await the outcome of the asynchronous request with `await_*` functions. E.g.
 
-      iex> ref = push(socket, "room:lobby", "msg:new", %{user: 1, msg: "foo"})
+      iex> {:ok, ref} = push(socket, "room:lobby", "msg:new", %{user: 1, msg: "foo"})
       iex> {:ok, %{"created" => true}} = await_reply(ref)
 
   Note that all `await_*` functions must be called from the slipstream process
@@ -35,6 +35,8 @@ defmodule Slipstream do
 
       defmodule MyClient do
         use Slipstream
+
+        require Logger
 
         def start_link(args) do
           Slipstream.start_link(__MODULE__, args, name: __MODULE__)
@@ -74,6 +76,27 @@ defmodule Slipstream do
       :hello
       iex> GenServer.call(MyClient, :foo)
       {:ok, :bar}
+
+  ## The `__using__/1` macro
+
+  Slipstream provides a `use Slipstream` macro that behaves similar to
+  GenServer's `use GenServer`. This does a few things:
+
+  - a default implementation of `child_spec/1`, which is used to start the
+    module as a GenServer. This may be overridden.
+  - imports for all documented functions in `Slipstream` and `Slipstream.Socket`
+  - a `c:GenServer.handle_info/2` function clause which matches incoming events
+    from the connection process and dispatches them to the various Sliptream
+    callbacks
+  - a `c:GenServer.handle_info/2` function clause which matches Slipstream
+    commands. This is used to implement back-off retry mechanisms for
+    `reconnect/1` and `rejoin/3`.
+
+  This provides a familiar and sleek interface for the common case of using
+  Slipstream: an asynchronous callback-based GenServer module.
+
+  It's not required to use this macro, though. Slipstream can be used in
+  synchronous mode (via the `await_*` family of functions).
   """
 
   alias Slipstream.{Commands, Events, Socket}
@@ -110,7 +133,7 @@ defmodule Slipstream do
 
       @impl Slipstream
       def handle_call({:new_message, params}, _from, socket) do
-        ref = push(socket, "rooms:lobby", "msg:new", params)
+        {:ok, ref} = push(socket, "rooms:lobby", "msg:new", params)
 
         {:reply, await_reply(ref), socket}
       end
