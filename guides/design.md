@@ -1,6 +1,6 @@
 # Design
 
-Slipstream is designed to be as extensible as it is <missing word here>
+Slipstream is designed to be as extensible as it is expedient to use.
 
 such and such about concurrency furthering that idea
 

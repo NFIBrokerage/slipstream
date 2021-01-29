@@ -54,10 +54,12 @@ defmodule Slipstream.Connection do
       |> State.reset_reconnect_try_counter()
       |> State.reset_heartbeat()
 
-    :timer.send_interval(
-      state.config.heartbeat_interval_msec,
-      command(%Commands.SendHeartbeat{})
-    )
+    unless state.config.heartbeat_interval_msec == 0 do
+      :timer.send_interval(
+        state.config.heartbeat_interval_msec,
+        command(%Commands.SendHeartbeat{})
+      )
+    end
 
     route_event state, %Events.ChannelConnected{
       pid: self(),

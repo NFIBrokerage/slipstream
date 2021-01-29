@@ -30,14 +30,50 @@ defmodule Slipstream do
 
   Note that Slipstream is in many ways a simple wrapper around a GenServer.
   As such, all GenServer functionality is possible with Slipstream servers,
-  such as `Kernel.send/2` or `GenServer.call/3`
+  such as `Kernel.send/2` or `GenServer.call/3`. For example, assume you have
+  a slipstream server written like so:
 
-      iex> MySlipstreamModule |> GenServer.whereis |> send(:hello)
+      defmodule MyClient do
+        use Slipstream
+
+        def start_link(args) do
+          Slipstream.start_link(__MODULE__, args, name: __MODULE__)
+        end
+
+        @impl Slipstream
+        def init(config), do: connect(config)
+
+        @impl Slipstream
+        def handle_cast(:ping, socket) do
+          Logger.info("pong")
+
+          {:noreply, socket}
+        end
+
+        @impl Slipstream
+        def handle_info(:hello, socket) do
+          Logger.info("hello")
+
+          {:noreply, socket}
+        end
+
+        @impl Slipstream
+        def handle_call(:foo, _from, socket) do
+          {:reply, {:ok, :bar}, socket}
+        end
+      end
+
+  This `MyClient` server is a GenServer, so the following are valid ways to
+  interact with `MyClient`:
+
+      iex> GenServer.cast(MyClient, :ping)
+      [info] pong
+      :ok
+      iex> MyClient |> GenServer.whereis |> send(:hello)
+      [info] hello
       :hello
-      iex> GenServer.call(MySlipstreamModule, {:send_message, message})
-      {:ok, %{sent?: true}}
-
-  Where the second example invokes the `c:handle_call/3` callback.
+      iex> GenServer.call(MyClient, :foo)
+      {:ok, :bar}
   """
 
   alias Slipstream.{Commands, Events, Socket}
@@ -145,7 +181,7 @@ defmodule Slipstream do
 
   # the family of GenServer-wrapping callbacks
 
-  @doc """
+  @doc ~S"""
   Invoked when the slipstream process in started
 
   Behaves the same as `c:GenServer.init/1`, but the return state must be a
@@ -176,11 +212,50 @@ defmodule Slipstream do
         {:noreply, socket}
       end
 
+  But a more minimalistic approach that still provides safety in cases of
+  configuration validation failures would be:
+
+      defmodule MySocketClient do
+        use Slipstream
+
+        def start_link(args) do
+          Slipstream.start_link(__MODULE__, args, name: __MODULE__)
+        end
+
+        @impl Slipstream
+        def init(_args) do
+          config = Application.fetch_env!(:my_app, __MODULE__)
+
+          case connect(config) do
+            {:ok socket} ->
+              {:ok, socket}
+
+            {:error, reason} ->
+              Logger.error("Could not start #{__MODULE__} because of " <>
+                "validation failure: #{inspect(reason)}")
+
+              :ignore
+          ned
+        end
+
+        ..
+      end
+
+  The configuration could be stored in application config:
+
+      # config/<env>.exs
+      config :my_app, MySocketClient,
+        uri: "ws://example.org/socket/websocket",
+        reconnect_after_msec: [200, 500, 1_000, 2_000]
+
+  And in cases where the configuration validation fails, the `MySocketClient`
+  process will not crash the application's supervision tree.
+
   ## Examples
 
       @impl Slipstream
       def init(config) do
-        {:ok, connect(config)}
+        connect(config)
       end
   """
   @doc since: "1.0.0"
