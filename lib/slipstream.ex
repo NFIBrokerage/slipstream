@@ -66,12 +66,25 @@ defmodule Slipstream do
 
   ## Examples
 
+  This approach treats the websocket connection as an RPC: some other process
+  in the service does a `GenServer.call/3` to the slipstream server process,
+  which sends a push to the remote websocket server, waits for a reply
+  (synchronously) and then sends that back to the caller. All-in-all, this
+  appears completely synchronous for the caller.
+
       @impl Slipstream
       def handle_call({:new_message, params}, _from, socket) do
         ref = push(socket, "rooms:lobby", "msg:new", params)
 
         {:reply, await_reply(ref), socket}
       end
+
+  This approach is written in a more asynchronous fashion. An info message
+  arriving from any other process triggers the slipstream server to push a
+  work message to the remote websocket server. When the remote websocket server
+  replies with the result, the slipstream server sends off the result to be
+  dealt with else-where. No process in this scenario blocks, so they are all
+  capable of receiving other messages while the work is being completed.
 
       @impl Slipstream
       def handle_info(:do_work, socket) do
@@ -262,6 +275,7 @@ defmodule Slipstream do
   Note that this callback is not always invoked as the process shuts down.
   See `c:GenServer.terminate/2` for more information.
   """
+  @doc since: "1.0.0"
   @callback terminate(reason :: term(), state :: term()) :: term()
 
   # callbacks unique to Slipstream ('novel' callbacks)
