@@ -6,7 +6,7 @@ defmodule Slipstream do
   Slipstream is a bit different from existing websocket implementations in that:
 
   - it's backed by `:gun` instead of `:websocket_client`
-  - it emits telemetry (via `:telemetry`)
+  - it has an `await_*` interface for performing actions synchronously
 
   ## Synchronicity
 
