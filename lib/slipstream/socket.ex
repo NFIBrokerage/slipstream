@@ -17,6 +17,7 @@ defmodule Slipstream.Socket do
     :socket_pid,
     :channel_config,
     :response_headers,
+    reconnect_counter: 0,
     joins: %{},
     assigns: %{}
   ]
@@ -182,11 +183,18 @@ defmodule Slipstream.Socket do
   def apply_event(socket, event)
 
   def apply_event(socket, %Events.ChannelConnected{} = event) do
-    %__MODULE__{socket | channel_pid: event.pid, channel_config: event.config}
+    %__MODULE__{
+      socket
+      | channel_pid: event.pid,
+        channel_config: event.config,
+        reconnect_counter: 0
+    }
   end
 
   def apply_event(socket, %Events.TopicJoinSucceeded{topic: topic}) do
-    put_in(socket, [Access.key(:joins), topic, Access.key(:status)], :joined)
+    socket
+    |> put_in([Access.key(:joins), topic, Access.key(:status)], :joined)
+    |> put_in([Access.key(:joins), topic, Access.key(:rejoin_counter)], 0)
   end
 
   def apply_event(socket, %event{topic: topic})
@@ -198,5 +206,55 @@ defmodule Slipstream.Socket do
     put_in(socket, [Access.key(:joins), topic, Access.key(:status)], :closed)
   end
 
+  def apply_event(socket, %Events.ChannelClosed{}) do
+    %__MODULE__{
+      socket
+      | channel_pid: nil,
+        joins: Enum.into(socket.joins, %{}, fn {topic, join} ->
+          {topic, %Join{join | status: :closed}}
+        end)
+    }
+  end
+
   def apply_event(socket, _event), do: socket
+
+  @doc false
+  @spec next_reconnect_time(t()) :: {non_neg_integer(), t()}
+  def next_reconnect_time(%__MODULE__{} = socket) do
+    socket = update_in(socket, [Access.key(:reconnect_counter)], &(&1 + 1))
+
+    time =
+      retry_time(
+        socket.channel_config.reconnect_after_msec,
+        socket.reconnect_counter - 1
+      )
+
+    {time, socket}
+  end
+
+  @doc false
+  @spec next_rejoin_time(t(), String.t()) :: {non_neg_integer(), t()}
+  def next_rejoin_time(socket, topic) do
+    socket =
+      update_in(
+        socket,
+        [Access.key(:joins), topic, Access.key(:rejoin_counter)],
+        &(&1 + 1)
+      )
+
+    time =
+      retry_time(
+        socket.channel_config.rejoin_after_msec,
+        socket.joins[topic].rejoin_counter - 1
+      )
+
+    {time, socket}
+  end
+
+  defp retry_time(backoff_times, try_number) do
+    # when we hit the end of the list, we repeat the last value in the list
+    default = Enum.at(backoff_times, -1)
+
+    Enum.at(backoff_times, try_number, default)
+  end
 end

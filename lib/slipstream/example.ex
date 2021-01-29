@@ -41,8 +41,8 @@ defmodule Slipstream.Example do
     push!(socket, topic, "ping", %{})
     # |> await_reply!() |> IO.inspect(label: "response")
 
-    # Process.send_after(self(), :leave, 3_000)
-    Process.send_after(self(), :disconnect, 3_000)
+    Process.send_after(self(), :leave, 3_000)
+    # Process.send_after(self(), :disconnect, 3_000)
 
     {:ok, socket}
   end

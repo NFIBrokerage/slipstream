@@ -105,6 +105,10 @@ defmodule Slipstream.Connection.Impl do
   def handle_command(state, %Commands.CloseConnection{}) do
     :gun.close(state.conn)
 
+    route_event state, %Events.ChannelClosed{
+      reason: :client_disconnect_requested
+    }
+
     {:stop, {:shutdown, :disconnected}, state}
   end
 

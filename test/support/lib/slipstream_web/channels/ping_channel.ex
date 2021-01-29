@@ -27,7 +27,7 @@ defmodule SlipstreamWeb.PingChannel do
   end
 
   def terminate(_reason, _socket) do
-    # IO.puts "#{inspect(__MODULE__)} shutting down"
+    IO.puts("#{inspect(__MODULE__)} shutting down")
 
     :ok
   end
