@@ -1,3 +1,5 @@
 use Mix.Config
 
-import_config "../test/support/config/config.exs"
+if Mix.env() == :test do
+  import_config "../test/support/config/config.exs"
+end
