@@ -45,14 +45,10 @@ defmodule Slipstream.MixProject do
   defp extra_compilers(_), do: []
 
   def application do
-    if Mix.env() in [:dev, :test] do
-      [
-        mod: {Slipstream.Application, []},
-        extra_applications: [:logger, :runtime_tools]
-      ]
-    else
-      []
-    end
+    [
+      mod: {Slipstream.Application, []},
+      extra_applications: []
+    ]
   end
 
   defp deps do
