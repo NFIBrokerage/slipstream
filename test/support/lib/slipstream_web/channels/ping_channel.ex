@@ -1,11 +1,14 @@
-defmodule SlipstreamWeb.PingChannel do
+defmodule SlipstreamWeb.TestChannel do
   use SlipstreamWeb, :channel
 
   @moduledoc false
 
-  def join("echo:" <> _, _payload, socket) do
-    # {:error, %{"bad" => "join"}}
+  def join("test:good", _payload, socket) do
     {:ok, socket}
+  end
+
+  def join("test:crash", _payload, _socket) do
+    {:error, %{"bad" => "join"}}
   end
 
   def handle_in("ping", _params, socket) do

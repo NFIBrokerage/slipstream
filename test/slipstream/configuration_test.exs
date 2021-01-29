@@ -32,7 +32,9 @@ defmodule Slipstream.ConfigurationTest do
       uri = String.replace(c.uri, ~r/^ws/, "http")
 
       assert {:error, reason} = Config.validate(uri: uri)
-      assert %NimbleOptions.ValidationError{key: :uri, message: message} = reason
+
+      assert %NimbleOptions.ValidationError{key: :uri, message: message} =
+               reason
 
       assert message =~ ~s(unknown scheme "http")
     end

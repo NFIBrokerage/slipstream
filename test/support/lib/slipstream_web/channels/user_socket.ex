@@ -4,7 +4,7 @@ defmodule SlipstreamWeb.UserSocket do
   @moduledoc false
 
   ## Channels
-  channel("echo:*", SlipstreamWeb.PingChannel)
+  channel("test:*", SlipstreamWeb.TestChannel)
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After
