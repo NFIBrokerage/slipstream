@@ -41,10 +41,6 @@ defmodule Slipstream.Connection do
     {:stop, reason, state}
   end
 
-  # this match on the `conn` var helps identify unclosed connections (leaks)
-  # during development but should probably be removed when this library is
-  # ready to ship, as we don't want implementors having to handle gun messages
-  # _at all_ TODO
   def handle_info({:gun_up, conn, _http}, %State{conn: conn} = state) do
     {:noreply, state}
   end
