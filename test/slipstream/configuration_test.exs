@@ -16,6 +16,7 @@ defmodule Slipstream.ConfigurationTest do
     test "config with just URI passes, and ws protocol defaults to port 80",
          c do
       assert {:ok, %Config{} = config} = Config.validate(uri: c.uri)
+      assert %Config{} = ^config = Config.validate!(uri: c.uri)
 
       assert match?(%URI{port: 80, scheme: "ws"}, config.uri)
     end
@@ -25,6 +26,15 @@ defmodule Slipstream.ConfigurationTest do
       assert {:ok, %Config{} = config} = Config.validate(uri: uri)
 
       assert match?(%URI{port: 443, scheme: "wss"}, config.uri)
+    end
+
+    test "HTTP fails validation", c do
+      uri = String.replace(c.uri, ~r/^ws/, "http")
+
+      assert {:error, reason} = Config.validate(uri: uri)
+      assert %NimbleOptions.ValidationError{key: :uri, message: message} = reason
+
+      assert message =~ ~s(unknown scheme "http")
     end
   end
 end
