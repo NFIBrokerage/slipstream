@@ -18,7 +18,7 @@ defmodule Slipstream.CommandRouter do
 
   alias Slipstream.Socket
 
-  import Slipstream.Commands, only: [command: 1]
+  import Slipstream.Signatures, only: [command: 1]
 
   @forwarded_command_types [
     JoinTopic,

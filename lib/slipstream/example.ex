@@ -63,13 +63,13 @@ defmodule Slipstream.Example do
 
   @impl Slipstream
   def handle_info(:leave, socket) do
-    IO.puts "leaving the topic"
+    IO.puts("leaving the topic")
 
     {:noreply, leave(socket, @topic)}
   end
 
   def handle_info(:disconnect, socket) do
-    IO.puts "disconnecting..."
+    IO.puts("disconnecting...")
 
     {:noreply, disconnect(socket)}
   end

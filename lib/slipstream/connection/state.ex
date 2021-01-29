@@ -68,7 +68,8 @@ defmodule Slipstream.Connection.State do
 
   def join_ref?(%__MODULE__{joins: joins}, ref), do: ref in Map.values(joins)
 
-  def leave_ref?(%__MODULE__{leaves: leaves}, ref), do: ref in Map.values(leaves)
+  def leave_ref?(%__MODULE__{leaves: leaves}, ref),
+    do: ref in Map.values(leaves)
 
   # update the state given any command
   # this is done before handling the command, so it's an appropriate place

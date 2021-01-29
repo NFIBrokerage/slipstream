@@ -8,7 +8,7 @@ defmodule Slipstream.Connection do
   use GenServer, restart: :temporary
 
   import __MODULE__.Impl, only: [route_event: 2]
-  import Slipstream.Commands, only: [command: 1]
+  import Slipstream.Signatures, only: [command: 1]
   alias __MODULE__.{Impl, State}
   alias Slipstream.{Events, Commands}
 

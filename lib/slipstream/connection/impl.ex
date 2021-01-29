@@ -4,7 +4,7 @@ defmodule Slipstream.Connection.Impl do
   alias Slipstream.Connection.State
   alias Phoenix.Socket.Message
   alias Slipstream.{Events, Commands}
-  import Slipstream.Events, only: [event: 1]
+  import Slipstream.Signatures, only: [event: 1]
 
   @noop_event_types [
     Events.PongReceived,

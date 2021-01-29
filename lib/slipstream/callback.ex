@@ -5,6 +5,8 @@ defmodule Slipstream.Callback do
 
   alias Slipstream.{Events, Socket}
 
+  @known_callbacks [{:__no_op__, 2} | Slipstream.behaviour_info(:callbacks)]
+
   # dispatch an incoming event to a module's callback implementations
   # if the module does not implement the callback, it will be sent instead to
   # the default implementation in Slipstream.Default
@@ -13,8 +15,8 @@ defmodule Slipstream.Callback do
           event :: struct(),
           socket :: Socket.t()
         ) ::
-          {:ok, new_socket}
-          | {:ok, new_socket, timeout() | :hibernate | {:continue, term()}}
+          {:noreply, new_socket}
+          | {:noreply, new_socket, timeout() | :hibernate | {:continue, term()}}
           | {:stop, reason :: term(), new_socket}
         when new_socket: term()
   def dispatch(module, event, socket) do
@@ -28,27 +30,30 @@ defmodule Slipstream.Callback do
         Slipstream.Default
       end
 
-    case apply(dispatch_module, function, args) do
-      {:ok, socket} -> {:noreply, socket}
-
-      {:ok, socket, other_stuff} -> {:noreply, socket, other_stuff}
-
-      {:noreply, _socket} = return -> return
-
-      {:noreply, _socket, _other_stuff} = return -> return
-
-      {:stop, _reason, _socket} = stop -> stop
-      # YARD catchall with a helpful error message?
-    end
+    apply(dispatch_module, function, args)
+    |> handle_callback_return()
   end
 
+  defp handle_callback_return({:ok, %Socket{} = socket}), do: {:noreply, socket}
+
+  defp handle_callback_return({:ok, %Socket{} = socket, others}),
+    do: {:noreply, socket, others}
+
+  defp handle_callback_return({:noreply, %Socket{}} = return), do: return
+
+  defp handle_callback_return({:noreply, %Socket{}, _others} = return),
+    do: return
+
+  defp handle_callback_return({:stop, _reason, %Socket{}} = return), do: return
+
   # ensures at compile-time that the callback exists. useful for development
+  @spec callback(atom(), [any()]) :: {atom(), [any() | Socket.t()]}
   defmacrop callback(name, args) do
     # add one for the socket
     # note that `args` needs to be a compile-time list for this to work
     arity = length(args) + 1
 
-    unless {name, arity} in Slipstream.behaviour_info(:callbacks) do
+    unless {name, arity} in @known_callbacks do
       raise CompileError,
         file: __CALLER__.file,
         line: __CALLER__.line,
@@ -60,7 +65,7 @@ defmodule Slipstream.Callback do
     end
   end
 
-  @spec determine_callback(event :: struct(), socket :: Slipstream.Socket.t()) ::
+  @spec determine_callback(event :: struct(), socket :: Socket.t()) ::
           {atom(), list(any())}
   def determine_callback(event, socket) do
     {name, args} = _determine_callback(event)

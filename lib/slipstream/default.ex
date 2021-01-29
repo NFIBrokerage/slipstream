@@ -38,6 +38,5 @@ defmodule Slipstream.Default do
     {:ok, _socket} = rejoin(socket, topic)
   end
 
-  @impl Slipstream
   def __no_op__(_event, socket), do: {:ok, socket}
 end

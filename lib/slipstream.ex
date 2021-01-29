@@ -42,7 +42,7 @@ defmodule Slipstream do
 
   alias Slipstream.{Commands, Events, Socket}
   import Slipstream.CommandRouter, only: [route_command: 1]
-  import Slipstream.Events, only: [event: 1]
+  import Slipstream.Signatures, only: [event: 1, command: 1]
 
   # 5s default await timeout, same as GenServer calls
   @default_timeout 5_000
@@ -424,9 +424,6 @@ defmodule Slipstream do
               | {:stop, stop_reason :: term(), new_socket}
             when new_socket: Socket.t()
 
-  @doc false
-  @callback __no_op__(event :: struct(), socket :: Socket.t()) :: {:ok, Socket.t()}
-
   @optional_callbacks init: 1,
                       handle_info: 2,
                       handle_cast: 2,
@@ -438,8 +435,7 @@ defmodule Slipstream do
                       handle_join: 3,
                       handle_message: 4,
                       handle_reply: 3,
-                      handle_topic_close: 3,
-                      __no_op__: 2
+                      handle_topic_close: 3
 
   # --- core functionality
 
@@ -546,15 +542,20 @@ defmodule Slipstream do
   @doc since: "1.0.0"
   @spec reconnect(socket :: Socket.t()) :: {:ok, Socket.t()} | :error
   def reconnect(socket) do
-    case socket.channel_config do
-      nil ->
-        :error
+    with %Slipstream.Configuration{} = config <- socket.channel_config,
+         {time, socket} <- Socket.next_reconnect_time(socket) do
+      command = %Commands.OpenConnection{socket: socket, config: config}
 
-      config ->
-        route_command %Commands.OpenConnection{config: config, socket: socket}
+      Process.send_after(
+        socket.socket_pid,
+        command(command),
+        time
+      )
+
+      {:ok, socket}
+    else
+      nil -> :error
     end
-
-    {:ok, socket}
   end
 
   @doc """
@@ -638,22 +639,25 @@ defmodule Slipstream do
           params :: json_serializable()
         ) :: {:ok, Socket.t()} | {:error, :never_joined}
   def rejoin(%Socket{} = socket, topic, params \\ nil) when is_binary(topic) do
-    case Map.fetch(socket.joins, topic) do
-      :error ->
-        {:error, :never_joined}
+    with {:ok, %{status: :closed} = prior_join} <-
+           Map.fetch(socket.joins, topic),
+         {time, socket} <- Socket.next_rejoin_time(socket, topic) do
+      command = %Commands.JoinTopic{
+        socket: socket,
+        topic: topic,
+        payload: params || prior_join.params
+      }
 
+      Process.send_after(socket.socket_pid, command(command), time)
+
+      {:ok, socket}
+    else
       {:ok, %{status: already_joined}}
       when already_joined in [:requested, :joined] ->
         {:ok, socket}
 
-      {:ok, %{status: :closed} = prior_join} ->
-        route_command %Commands.JoinTopic{
-          socket: socket,
-          topic: topic,
-          payload: params || prior_join.params
-        }
-
-        {:ok, socket}
+      :error ->
+        {:error, :never_joined}
     end
   end
 
@@ -893,9 +897,14 @@ defmodule Slipstream do
   @spec await_disconnect!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_disconnect!(socket, timeout \\ @default_timeout) do
     case await_disconnect(socket, timeout) do
-      {:ok, socket} -> socket
-      {:error, reason} when is_atom(reason) -> exit(reason)
-      {:error, reason} -> raise "Could not await disconnection: #{inspect(reason)}"
+      {:ok, socket} ->
+        socket
+
+      {:error, reason} when is_atom(reason) ->
+        exit(reason)
+
+      {:error, reason} ->
+        raise "Could not await disconnection: #{inspect(reason)}"
     end
   end
 
@@ -1010,6 +1019,8 @@ defmodule Slipstream do
 
       defoverridable child_spec: 1
 
+      require Slipstream.Signatures
+
       import Slipstream
 
       import Slipstream.Socket,
@@ -1025,8 +1036,16 @@ defmodule Slipstream do
       @behaviour Slipstream
 
       @impl Slipstream
-      def handle_info(event(event), socket) do
+      def handle_info(Slipstream.Signatures.event(event), socket) do
         Slipstream.Callback.dispatch(__MODULE__, event, socket)
+      end
+
+      # this matches on time-delay commands like those emitted from
+      # reconnect/1 and rejoin/3
+      def handle_info(Slipstream.Signatures.command(command), socket) do
+        Slipstream.CommandRouter.route_command(command)
+
+        {:noreply, socket}
       end
     end
   end
