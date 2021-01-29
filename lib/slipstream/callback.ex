@@ -84,6 +84,10 @@ defmodule Slipstream.Callback do
     ]
   end
 
+  defp _determine_callback(%Events.TopicJoinClosed{} = event) do
+    callback :handle_topic_close, [event.topic, event.reason]
+  end
+
   defp _determine_callback(%Events.TopicLeft{} = event) do
     callback :handle_topic_close, [event.topic, :left]
   end

@@ -4,7 +4,7 @@ defmodule SlipstreamWeb.PingChannel do
   @moduledoc false
 
   def join("echo:" <> _, _payload, socket) do
-    IO.inspect(self(), label: inspect(__MODULE__))
+    # {:error, %{"bad" => "join"}}
     {:ok, socket}
   end
 
@@ -12,14 +12,23 @@ defmodule SlipstreamWeb.PingChannel do
     {:reply, {:ok, %{"pong" => "pong"}}, socket}
   end
 
-  def handle_in("foo", _params, socket) do
+  def handle_in("push to me", _params, socket) do
     push(socket, "foo", %{"bar" => "baz"})
 
     {:noreply, socket}
   end
 
-  def terminate(reason, socket) do
-    IO.inspect(reason, label: "#{inspect(__MODULE__)} crashing")
-    {:ok, socket}
+  def handle_in("error tuple", _params, socket) do
+    {:reply, {:error, %{"failure?" => true}}, socket}
+  end
+
+  def handle_in("raise", _params, socket) do
+    raise "oooooooohnnnnnnnnnnnnnoooooooooooooooooooooooooooooo"
+  end
+
+  def terminate(_reason, socket) do
+    # IO.puts "#{inspect(__MODULE__)} shutting down"
+
+    :ok
   end
 end
