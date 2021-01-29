@@ -1,4 +1,2 @@
-- reconnect and rejoin backoff
 - move application tree into test/test_helper.exs and make library sup tree
 - telemetry integration
-- icon
