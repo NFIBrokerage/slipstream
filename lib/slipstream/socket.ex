@@ -30,6 +30,7 @@ defmodule Slipstream.Socket do
           channel_pid: nil | pid(),
           socket_pid: pid(),
           channel_config: Slipstream.Configuration.t() | nil,
+          reconnect_counter: non_neg_integer(),
           assigns: map(),
           joins: %{String.t() => %Join{}}
         }
@@ -210,9 +211,10 @@ defmodule Slipstream.Socket do
     %__MODULE__{
       socket
       | channel_pid: nil,
-        joins: Enum.into(socket.joins, %{}, fn {topic, join} ->
-          {topic, %Join{join | status: :closed}}
-        end)
+        joins:
+          Enum.into(socket.joins, %{}, fn {topic, join} ->
+            {topic, %Join{join | status: :closed}}
+          end)
     }
   end
 
