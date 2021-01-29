@@ -35,6 +35,9 @@ defmodule Slipstream.Default do
 
   @impl Slipstream
   def handle_topic_close(topic, _message, socket) do
-    {:ok, rejoin(socket, topic)}
+    {:ok, _socket} = rejoin(socket, topic)
   end
+
+  @impl Slipstream
+  def __no_op__(_event, socket), do: {:ok, socket}
 end

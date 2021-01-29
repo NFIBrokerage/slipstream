@@ -6,8 +6,8 @@ defmodule Slipstream.Events.ReplyReceived do
 
   defstruct [:topic, :status, :response, :ref]
 
-  def to_reply(%__MODULE__{status: status, response: %{}})
-      when status in [:ok, :error] do
+  def to_reply(%__MODULE__{status: status, response: response})
+      when status in [:ok, :error] and map_size(response) == 0 do
     status
   end
 
@@ -16,9 +16,3 @@ defmodule Slipstream.Events.ReplyReceived do
     {status, response}
   end
 end
-
-# defimpl Slipstream.Callback, for: Slipstream.Events.ReplyReceived do
-# def dispatch(event, socket) do
-# {:handle_reply, [event.ref, Slipstream.Events.ReplyReceived.to_reply(event), socket]}
-# end
-# end

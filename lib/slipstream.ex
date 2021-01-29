@@ -410,6 +410,9 @@ defmodule Slipstream do
               | {:stop, stop_reason :: term(), new_socket}
             when new_socket: Socket.t()
 
+  @doc false
+  @callback __no_op__(event :: struct(), socket :: Socket.t()) :: {:ok, Socket.t()}
+
   @optional_callbacks init: 1,
                       handle_info: 2,
                       handle_cast: 2,
@@ -421,7 +424,8 @@ defmodule Slipstream do
                       handle_join: 3,
                       handle_message: 4,
                       handle_reply: 3,
-                      handle_topic_close: 3
+                      handle_topic_close: 3,
+                      __no_op__: 2
 
   # --- core functionality
 
@@ -715,16 +719,21 @@ defmodule Slipstream do
         timeout \\ @default_timeout
       )
       when is_binary(topic) and is_binary(event) do
-    if Socket.joined?(socket, topic) do
-      route_command %Commands.PushMessage{
-        socket: socket,
-        topic: topic,
-        event: event,
-        payload: params,
-        timeout: timeout
-      }
+    command = %Commands.PushMessage{
+      socket: socket,
+      topic: topic,
+      event: event,
+      payload: params,
+      timeout: timeout
+    }
+
+    with true <- Socket.joined?(socket, topic),
+         {:ok, ref} <- route_command(command) do
+      {:ok, {topic, ref}}
     else
-      {:error, :not_joined}
+      false -> {:error, :not_joined}
+      # e.g. if the genserver call fails by timeout
+      other_return -> other_return
     end
   end
 

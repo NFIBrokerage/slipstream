@@ -41,7 +41,6 @@ defmodule Slipstream.Connection.Impl do
 
   @spec handle_command(%State{}, command :: struct()) ::
           {:noreply, new_state}
-          | {:noreply, new_state, :hibernate}
           | {:reply, Slipstream.push_reference(), new_state}
         when new_state: %State{}
   def handle_command(state, command)
@@ -89,17 +88,46 @@ defmodule Slipstream.Connection.Impl do
     {:noreply, state}
   end
 
-  def handle_command(state, _command), do: {:noreply, state}
+  def handle_command(state, %Commands.LeaveTopic{} = cmd) do
+    push_message(
+      %Message{
+        topic: cmd.topic,
+        event: "phx_leave",
+        payload: %{},
+        ref: state.current_ref_str
+        # join_ref: state.joins[cmd.topic]
+      },
+      state
+    )
+
+    {:noreply, state}
+  end
+
+  def handle_command(state, command) do
+    IO.inspect(command, label: "unhandled command")
+
+    {:noreply, state}
+  end
 
   # ---
 
-  @spec handle_event(%State{}, event :: struct()) :: {:noreply, %State{}}
+  @spec handle_event(%State{}, event :: struct()) ::
+          {:noreply, new_state} | {:stop, reason :: term(), new_state}
+        when new_state: %State{}
   def handle_event(state, event)
 
   def handle_event(state, %Events.PingReceived{}) do
     :gun.ws_send(state.conn, :pong)
 
     {:noreply, state}
+  end
+
+  def handle_event(state, %Events.ChannelClosed{} = event) do
+    :gun.close(state.conn)
+
+    route_event state, event
+
+    {:stop, :normal, state}
   end
 
   def handle_event(state, %type{}) when type in @noop_event_types,

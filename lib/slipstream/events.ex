@@ -9,10 +9,11 @@ defmodule Slipstream.Events do
     MessageReceived,
     ReplyReceived,
     HeartbeatAcknowledged,
-    CloseRequestedByRemote,
     TopicJoinSucceeded,
     TopicJoinFailed,
     TopicJoinClosed,
+    TopicLeft,
+    TopicLeaveAccepted,
     PingReceived,
     PongReceived
   }
@@ -34,7 +35,6 @@ defmodule Slipstream.Events do
 
   def map(:ping, _state), do: %PingReceived{}
   def map(:pong, _state), do: %PongReceived{}
-  def map({:close, _, _}, _state), do: %CloseRequestedByRemote{}
 
   def map(
         %Message{
@@ -51,6 +51,36 @@ defmodule Slipstream.Events do
 
   def map(
         %Message{
+          topic: "phoenix",
+          event: "phx_reply",
+          payload: %{"response" => response, "status" => "ok"},
+          ref: ref
+        },
+        _state
+      )
+      when map_size(response) == 0 do
+    %HeartbeatAcknowledged{ref: ref}
+  end
+
+  # a reply in which join_ref == ref is a reply to a request to join a topic
+  def map(
+        %Message{
+          topic: topic,
+          event: "phx_reply",
+          payload: %{"response" => response, "status" => status},
+          ref: ref,
+          join_ref: join_ref
+        },
+        _state
+      )
+      when ref != nil and ref == join_ref do
+    type = if status == "ok", do: TopicJoinSucceeded, else: TopicJoinFailed
+
+    struct(type, topic: topic, ref: ref, response: response)
+  end
+
+  def map(
+        %Message{
           topic: topic,
           event: "phx_reply",
           payload: %{"response" => response, "status" => status},
@@ -59,33 +89,16 @@ defmodule Slipstream.Events do
         state
       )
       when ref != nil do
-    with true <- State.join_ref?(state, ref),
-         "ok" <- status do
-      %TopicJoinSucceeded{topic: topic, ref: ref, response: response}
+    if State.leave_ref?(state, ref) do
+      %TopicLeaveAccepted{topic: topic}
     else
-      "error" ->
-        %TopicJoinFailed{topic: topic, ref: ref, response: response}
-
-      false ->
-        %ReplyReceived{
-          topic: topic,
-          status: String.to_atom(status),
-          response: response,
-          ref: ref
-        }
+      %ReplyReceived{
+        topic: topic,
+        status: String.to_atom(status),
+        response: response,
+        ref: ref
+      }
     end
-  end
-
-  def map(
-        %Message{
-          topic: "phoenix",
-          event: "phx_reply",
-          payload: %{"response" => %{}, "status" => "ok"},
-          ref: ref
-        },
-        _state
-      ) do
-    %HeartbeatAcknowledged{ref: ref}
   end
 
   def map(
@@ -107,13 +120,15 @@ defmodule Slipstream.Events do
           topic: topic,
           event: "phx_close",
           payload: payload,
-          ref: ref
+          ref: _ref
         },
-        state
+        _state
       ) do
-    true = State.join_ref?(state, ref)
+    if map_size(payload) > 0 do
+      IO.inspect(payload, label: "phx_close payload Events.map/1")
+    end
 
-    %TopicJoinClosed{topic: topic, reason: {:closed, payload}, ref: ref}
+    %TopicLeft{topic: topic}
   end
 
   def map(message, _state) do

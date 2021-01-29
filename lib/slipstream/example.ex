@@ -31,16 +31,18 @@ defmodule Slipstream.Example do
   def handle_disconnect(reason, socket) do
     IO.inspect(reason, label: "handle_disconnect/2")
 
-    {:ok, reconnect(socket)}
+    {:ok, _socket} = reconnect(socket)
   end
 
   @impl Slipstream
   def handle_join(topic, response, socket) do
     IO.inspect({topic, response}, label: "handle_join/3")
 
-    _ref = push(socket, topic, "foo", %{})
+    # push!(socket, topic, "ping", %{})
+    # |> await_reply!()
+    # |> IO.inspect(label: "response")
 
-    # await_reply(socket, ref) |> IO.inspect(label: "sync reply")
+    Process.send_after(self(), :leave, 3_000)
 
     {:ok, socket}
   end
@@ -60,6 +62,12 @@ defmodule Slipstream.Example do
   end
 
   @impl Slipstream
+  def handle_info(:leave, socket) do
+    IO.puts "heard :leaving"
+
+    {:noreply, leave(socket, @topic)}
+  end
+
   def handle_info(message, socket) do
     IO.inspect(message, label: "example handle_info/2")
 
@@ -68,8 +76,8 @@ defmodule Slipstream.Example do
 
   @impl Slipstream
   def handle_topic_close(topic, message, socket) do
-    IO.inspect(message, label: "handle_topic_close/2")
+    IO.inspect({topic, message}, label: "handle_topic_close/2")
 
-    {:ok, rejoin(socket, topic)}
+    {:ok, _socket} = rejoin(socket, topic)
   end
 end

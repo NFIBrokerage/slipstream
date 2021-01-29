@@ -29,15 +29,16 @@ defmodule Slipstream.Callback do
       end
 
     case apply(dispatch_module, function, args) do
-      {:ok, socket} ->
-        {:noreply, socket}
+      {:ok, socket} -> {:noreply, socket}
 
-      {:ok, socket, other_stuff} ->
-        {:noreply, socket, other_stuff}
+      {:ok, socket, other_stuff} -> {:noreply, socket, other_stuff}
 
-      {:stop, _reason, _socket} = stop ->
-        stop
-        # YARD catchall with a helpful error message?
+      {:noreply, _socket} = return -> return
+
+      {:noreply, _socket, _other_stuff} = return -> return
+
+      {:stop, _reason, _socket} = stop -> stop
+      # YARD catchall with a helpful error message?
     end
   end
 
@@ -87,6 +88,10 @@ defmodule Slipstream.Callback do
     callback :handle_topic_close, [event.topic, :left]
   end
 
+  defp _determine_callback(%Events.TopicLeaveAccepted{} = event) do
+    callback :__no_op__, [event]
+  end
+
   defp _determine_callback(%Events.ReplyReceived{} = event) do
     callback :handle_reply, [
       {event.topic, event.ref},
@@ -96,10 +101,6 @@ defmodule Slipstream.Callback do
 
   defp _determine_callback(%Events.MessageReceived{} = event) do
     callback :handle_message, [event.topic, event.event, event.payload]
-  end
-
-  defp _determine_callback(%Events.CloseRequestedByRemote{} = _event) do
-    callback :handle_disconnect, [:closed_by_remote]
   end
 
   defp _determine_callback(%Events.ChannelConnectFailed{} = event) do

@@ -18,7 +18,9 @@ defmodule Slipstream.Connection.State do
     :join_params,
     :heartbeat_timer,
     :heartbeat_ref,
+    status: :opened,
     joins: %{},
+    leaves: %{},
     current_ref: 0,
     current_ref_str: "0",
     reconnect_try_number: 0
@@ -66,6 +68,8 @@ defmodule Slipstream.Connection.State do
 
   def join_ref?(%__MODULE__{joins: joins}, ref), do: ref in Map.values(joins)
 
+  def leave_ref?(%__MODULE__{leaves: leaves}, ref), do: ref in Map.values(leaves)
+
   # update the state given any command
   # this is done before handling the command, so it's an appropriate place
   # to take next_ref/1s
@@ -90,17 +94,36 @@ defmodule Slipstream.Connection.State do
     %__MODULE__{state | joins: Map.put(state.joins, cmd.topic, ref)}
   end
 
+  def apply_command(%__MODULE__{} = state, %Commands.LeaveTopic{} = cmd) do
+    {ref, state} = next_ref(state)
+
+    %__MODULE__{state | leaves: Map.put(state.leaves, cmd.topic, ref)}
+  end
+
   def apply_command(state, _command), do: state
 
   @spec apply_event(%__MODULE__{}, event :: struct()) :: %__MODULE__{}
   def apply_event(state, event)
 
-  def apply_event(state, %type{} = event) when type in [Events.TopicJoinClosed, Events.TopicJoinFailed] do
+  def apply_event(state, %type{} = event)
+      when type in [Events.TopicJoinClosed, Events.TopicJoinFailed] do
     %__MODULE__{state | joins: Map.delete(state.joins, event.topic)}
+  end
+
+  def apply_event(state, %Events.TopicLeaveAccepted{} = event) do
+    %__MODULE__{state | leaves: Map.delete(state.leaves, event.topic)}
   end
 
   def apply_event(state, %Events.HeartbeatAcknowledged{}) do
     reset_heartbeat(state)
+  end
+
+  def apply_event(state, %Events.ChannelConnected{}) do
+    %__MODULE__{state | status: :connected}
+  end
+
+  def apply_event(state, %Events.ChannelClosed{}) do
+    %__MODULE__{state | status: :terminating}
   end
 
   def apply_event(state, _event), do: state

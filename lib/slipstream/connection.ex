@@ -60,7 +60,7 @@ defmodule Slipstream.Connection do
 
     :timer.send_interval(
       state.config.heartbeat_interval_msec,
-      %Commands.SendHeartbeat{}
+      command(%Commands.SendHeartbeat{})
     )
 
     route_event state, %Events.ChannelConnected{
@@ -76,8 +76,17 @@ defmodule Slipstream.Connection do
         {:gun_down, conn, :ws, :closed, [], []},
         %State{conn: conn} = state
       ) do
-    route_event state, %Events.ChannelClosed{reason: :closed_by_remote_server}
+    event = %Events.ChannelClosed{reason: :closed_by_remote}
 
+    state
+    |> State.apply_event(event)
+    |> Impl.handle_event(event)
+  end
+
+  def handle_info(
+        {:gun_ws, conn, stream_ref, {:close, _, _}},
+        %State{conn: conn, stream_ref: stream_ref} = state
+      ) do
     {:noreply, state}
   end
 
