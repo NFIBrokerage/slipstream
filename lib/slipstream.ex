@@ -86,7 +86,7 @@ defmodule Slipstream do
     module as a GenServer. This may be overridden.
   - imports for all documented functions in `Slipstream` and `Slipstream.Socket`
   - a `c:GenServer.handle_info/2` function clause which matches incoming events
-    from the connection process and dispatches them to the various Sliptream
+    from the connection process and dispatches them to the various Slipstream
     callbacks
   - a `c:GenServer.handle_info/2` function clause which matches Slipstream
     commands. This is used to implement back-off retry mechanisms for
