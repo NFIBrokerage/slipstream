@@ -4,7 +4,7 @@
 
 ![Actions CI](https://github.com/NFIBrokerage/slipstream/workflows/Actions%20CI/badge.svg)
 
-a websocket client for Phoenix channels
+A slick websocket client for Phoenix channels
 
 ## Installation
 

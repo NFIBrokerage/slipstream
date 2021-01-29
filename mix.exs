@@ -37,11 +37,10 @@ defmodule Slipstream.MixProject do
     ]
   end
 
-  defp elixirc_paths(:dev), do: ["lib", "test/support"]
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(:test), do: ["lib", "test/support", "test/fixtures"]
   defp elixirc_paths(_), do: ["lib"]
 
-  defp extra_compilers(env) when env in [:dev, :test], do: [:phoenix]
+  defp extra_compilers(env) when env in [:test], do: [:phoenix]
   defp extra_compilers(_), do: []
 
   def application do
@@ -82,7 +81,7 @@ defmodule Slipstream.MixProject do
   end
 
   defp description do
-    "a websocket client"
+    "A slick websocket client for Phoenix channels"
   end
 
   defp docs do
