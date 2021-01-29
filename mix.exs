@@ -98,6 +98,7 @@ defmodule Slipstream.MixProject do
       extras: [
         "CHANGELOG.md"
       ],
+      logo: "guides/koi.png",
       groups_for_extras: [
         Guides: Path.wildcard("guides/*.md")
       ]
