@@ -22,11 +22,11 @@ defmodule SlipstreamWeb.PingChannel do
     {:reply, {:error, %{"failure?" => true}}, socket}
   end
 
-  def handle_in("raise", _params, socket) do
+  def handle_in("raise", _params, _socket) do
     raise "oooooooohnnnnnnnnnnnnnoooooooooooooooooooooooooooooo"
   end
 
-  def terminate(_reason, socket) do
+  def terminate(_reason, _socket) do
     # IO.puts "#{inspect(__MODULE__)} shutting down"
 
     :ok

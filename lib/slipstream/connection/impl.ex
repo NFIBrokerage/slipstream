@@ -95,12 +95,17 @@ defmodule Slipstream.Connection.Impl do
         event: "phx_leave",
         payload: %{},
         ref: state.current_ref_str
-        # join_ref: state.joins[cmd.topic]
       },
       state
     )
 
     {:noreply, state}
+  end
+
+  def handle_command(state, %Commands.CloseConnection{}) do
+    :gun.close(state.conn)
+
+    {:stop, {:shutdown, :disconnected}, state}
   end
 
   def handle_command(state, command) do

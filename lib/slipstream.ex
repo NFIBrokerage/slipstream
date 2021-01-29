@@ -64,7 +64,7 @@ defmodule Slipstream do
   in `c:handle_reply/3`. They are also used to match messages
   for `await_reply/2`.
 
-  ## Examples
+  ## Synchronicity
 
   This approach treats the websocket connection as an RPC: some other process
   in the service does a `GenServer.call/3` to the slipstream server process,
@@ -800,6 +800,38 @@ defmodule Slipstream do
     :ok
   end
 
+  @doc """
+  Requests that an open connection be closed
+
+  This function will no-op when the socket is not currently connected to
+  any remote websocket server.
+
+  Note that you do not need to use `disconnect/1` to clean up a connection.
+  The connection process monitors the slipstream server process and will shut
+  down when it detects that the process has terminated.
+
+  Disconnection may be awaited synchronously with `await_disconnect/2`
+
+  ## Examples
+
+      @impl Slipstream
+      def handle_info(:chaos_monkey, socket) do
+        {:ok, socket} =
+          socket
+          |> disconnect()
+          |> await_disconnect()
+
+        {:noreply, reconnect(socket)}
+      end
+  """
+  @doc since: "1.0.0"
+  @spec disconnect(socket :: Socket.t()) :: Socket.t()
+  def disconnect(socket) do
+    route_command %Commands.CloseConnection{socket: socket}
+
+    socket
+  end
+
   # --- await functionality
 
   @doc """
@@ -833,6 +865,37 @@ defmodule Slipstream do
       {:ok, socket} -> socket
       {:error, reason} when is_atom(reason) -> exit(reason)
       {:error, reason} -> raise "Could not await connection: #{inspect(reason)}"
+    end
+  end
+
+  @doc """
+  Awaits a pending disconnection request synchronously
+  """
+  @doc since: "1.0.0"
+  @spec await_disconnect(socket :: Socket.t()) ::
+          {:ok, Socket.t()} | {:error, term()}
+  @spec await_disconnect(socket :: Socket.t(), timeout()) ::
+          {:ok, Socket.t()} | {:error, term()}
+  def await_disconnect(socket, timeout \\ @default_timeout) do
+    receive do
+      event(%Events.ChannelClosed{} = event) ->
+        {:ok, Socket.apply_event(socket, event)}
+    after
+      timeout -> {:error, :timeout}
+    end
+  end
+
+  @doc """
+  Awaits a pending disconnection request synchronously, raising on failure
+  """
+  @doc since: "1.0.0"
+  @spec await_disconnect!(socket :: Socket.t()) :: Socket.t()
+  @spec await_disconnect!(socket :: Socket.t(), timeout()) :: Socket.t()
+  def await_disconnect!(socket, timeout \\ @default_timeout) do
+    case await_disconnect(socket, timeout) do
+      {:ok, socket} -> socket
+      {:error, reason} when is_atom(reason) -> exit(reason)
+      {:error, reason} -> raise "Could not await disconnection: #{inspect(reason)}"
     end
   end
 
