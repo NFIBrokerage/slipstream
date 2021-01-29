@@ -1,1 +1,0 @@
-- move application tree into test/test_helper.exs and make library sup tree
