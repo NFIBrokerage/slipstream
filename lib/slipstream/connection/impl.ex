@@ -1,3 +1,8 @@
+# we should use Application.compile_env/3 because it's available to us, but
+# this is a library which may be used by projects with elixir versions <= 1.9.0
+# and we really only use the application-config-to-module-attribute thing for
+# testing. In addition, we really _want_ this to be a compile-time config.
+# credo:disable-for-this-file Credo.Check.Warning.ApplicationConfigInModuleAttribute
 defmodule Slipstream.Connection.Impl do
   @moduledoc false
 
@@ -7,10 +12,13 @@ defmodule Slipstream.Connection.Impl do
   import Slipstream.Signatures, only: [event: 1]
   require Logger
 
-  if Version.match?(System.version(), ">= 1.10.0") do
-    @gun Application.compile_env(:slipstream, :gun_client, :gun)
+  # in test mode, we want to be able to swap out `:gun` for a mock
+  # in dev/prod mode, we want to compile in `:gun` as the gun-client
+  if Mix.env() == :test do
+    def gun, do: Application.get_env(:slipstream, :gun_client, :gun)
   else
     @gun Application.get_env(:slipstream, :gun_client, :gun)
+    def gun, do: @gun
   end
 
   @noop_event_types [
@@ -25,17 +33,18 @@ defmodule Slipstream.Connection.Impl do
     # N.B. I've _never_ seen this match fail
     # if it does, please open an issue
     {:ok, conn} =
-      @gun.open(
+      gun().open(
         to_charlist(uri.host),
         uri.port,
         configuration.gun_open_options
       )
 
     stream_ref =
-      @gun.ws_upgrade(
+      gun().ws_upgrade(
         conn,
         path(uri),
-        configuration.headers
+        configuration.headers,
+        _opts = %{}
       )
 
     %State{state | conn: conn, stream_ref: stream_ref}
@@ -110,7 +119,7 @@ defmodule Slipstream.Connection.Impl do
   end
 
   def handle_command(state, %Commands.CloseConnection{}) do
-    @gun.close(state.conn)
+    gun().close(state.conn)
 
     route_event state, %Events.ChannelClosed{
       reason: :client_disconnect_requested
@@ -142,13 +151,13 @@ defmodule Slipstream.Connection.Impl do
   def handle_event(state, event)
 
   def handle_event(state, %Events.PingReceived{}) do
-    @gun.ws_send(state.conn, :pong)
+    gun().ws_send(state.conn, :pong)
 
     {:noreply, state}
   end
 
   def handle_event(state, %Events.ChannelClosed{} = event) do
-    @gun.close(state.conn)
+    gun().close(state.conn)
 
     route_event state, event
 
@@ -167,7 +176,7 @@ defmodule Slipstream.Connection.Impl do
   # ---
 
   def push_message(message, state) do
-    @gun.ws_send(state.conn, {:text, encode(message, state)})
+    gun().ws_send(state.conn, {:text, encode(message, state)})
   end
 
   def push_heartbeat(state) do
@@ -197,7 +206,10 @@ defmodule Slipstream.Connection.Impl do
     if function_exported?(module, :encode_to_iodata!, 1) do
       &module.encode_to_iodata!/1
     else
+      # coveralls-ignore-start
       &module.encode!/1
+
+      # coveralls-ignore-stop
     end
   end
 
@@ -233,7 +245,7 @@ defmodule Slipstream.Connection.Impl do
       {:error, _any} ->
         message
 
-      # coveralls-ignore-stop
+        # coveralls-ignore-stop
     end
   end
 

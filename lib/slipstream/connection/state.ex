@@ -1,6 +1,7 @@
 defmodule Slipstream.Connection.State do
   @moduledoc false
 
+  import Slipstream.Signatures, only: [command: 1]
   alias Slipstream.{Commands, Events}
 
   # a struct for storing the internal state of a Slipstream.Connection
@@ -90,12 +91,24 @@ defmodule Slipstream.Connection.State do
   end
 
   def apply_event(state, %Events.ChannelConnected{}) do
-    %__MODULE__{state | status: :connected}
+    timer =
+      if state.config.heartbeat_interval_msec != 0 do
+        :timer.send_interval(
+          state.config.heartbeat_interval_msec,
+          command(%Commands.SendHeartbeat{})
+        )
+      end
+
+    %__MODULE__{state | status: :connected, heartbeat_timer: timer}
+    |> reset_heartbeat()
   end
 
   def apply_event(state, %Events.ChannelClosed{}) do
     if state.heartbeat_timer |> is_reference() do
+      # coveralls-ignore-start
       :timer.cancel(state.heartbeat_timer)
+
+      # coveralls-ignore-stop
     end
 
     %__MODULE__{state | status: :terminating}

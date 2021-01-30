@@ -15,9 +15,8 @@ defmodule Slipstream.MixProject do
       app: :slipstream,
       version: @version,
       # Slipstream makes use of the `@derive {Inspect, ..` feature introduced
-      # in elixir 1.8 and the Application.compile_env/3 function introduced in
-      # elixir 1.10, but it only uses these features if it detects that the
-      # current elixir version meets those requiremens.
+      # in elixir 1.8, but it only uses the feature if it detects that the
+      # current elixir version meets the requirements.
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: extra_compilers(Mix.env()) ++ Mix.compilers(),
@@ -65,9 +64,9 @@ defmodule Slipstream.MixProject do
       {:cowlib, "~> 2.9", override: true, only: [:dev, :test]},
       {:phoenix_pubsub, "~> 2.0", override: true, only: [:dev, :test]},
       {:plug_cowboy, "~> 2.0", only: [:dev, :test]},
-      {:mox, "~> 1.0", only: [:dev, :test]},
-      {:bless, "~> 1.0"},
-      {:convene, "~> 0.2", organization: "cuatro", only: [:dev, :test]},
+      {:mox, "~> 1.0", only: :test},
+      {:credo, "~> 1.5", only: :test},
+      {:bless, "~> 1.0", only: :test},
       {:excoveralls, "~> 0.7", only: :test}
     ]
   end

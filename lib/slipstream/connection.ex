@@ -49,22 +49,15 @@ defmodule Slipstream.Connection do
         {:gun_upgrade, conn, stream_ref, ["websocket"], resp_headers},
         %State{conn: conn, stream_ref: stream_ref} = state
       ) do
-    state = state |> State.reset_heartbeat()
-
-    unless state.config.heartbeat_interval_msec == 0 do
-      :timer.send_interval(
-        state.config.heartbeat_interval_msec,
-        command(%Commands.SendHeartbeat{})
-      )
-    end
-
-    route_event state, %Events.ChannelConnected{
+    event = %Events.ChannelConnected{
       pid: self(),
       config: state.config,
       response_headers: resp_headers
     }
 
-    {:noreply, state}
+    state
+    |> State.apply_event(event)
+    |> Impl.handle_event(event)
   end
 
   def handle_info(

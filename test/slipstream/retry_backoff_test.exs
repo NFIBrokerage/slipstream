@@ -27,11 +27,12 @@ defmodule Slipstream.RetryBackoffTest do
       [socket: c.config |> connect!() |> await_connect!()]
     end
 
-    test "when disconnected, a connection may be reestablished with reconnect/1", c do
+    test "when disconnected, a connection may be reestablished with reconnect/1",
+         c do
       assert {:ok, socket} =
-        c.socket
-        |> disconnect()
-        |> await_disconnect()
+               c.socket
+               |> disconnect()
+               |> await_disconnect()
 
       refute connected?(socket)
 
@@ -67,7 +68,8 @@ defmodule Slipstream.RetryBackoffTest do
       [socket: socket, topic: topic, params: params]
     end
 
-    test "rejoining cannot be performed on a topic which is currently joined", c do
+    test "rejoining cannot be performed on a topic which is currently joined",
+         c do
       socket = c.socket
 
       assert joined?(socket, c.topic)
@@ -86,7 +88,8 @@ defmodule Slipstream.RetryBackoffTest do
       refute_receive command(%Commands.JoinTopic{})
     end
 
-    test "once left, a topic may be rejoined with the same params passed during join", c do
+    test "once left, a topic may be rejoined with the same params passed during join",
+         c do
       topic = c.topic
       payload = c.params
 
@@ -101,7 +104,11 @@ defmodule Slipstream.RetryBackoffTest do
 
       # N.B. we have to set the timeout on this assert_receive a bit higher
       # because the first rejoin time in default configuration is 100ms
-      assert_receive command(%Commands.JoinTopic{topic: ^topic, payload: ^payload} = command), 500
+      assert_receive command(
+                       %Commands.JoinTopic{topic: ^topic, payload: ^payload} =
+                         command
+                     ),
+                     500
 
       CommandRouter.route_command(command)
 

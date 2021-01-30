@@ -24,4 +24,4 @@ config :phoenix, :json_library, Jason
 config :slipstream, Slipstream.GoodExample,
   uri: "ws://localhost:4001/socket/websocket"
 
-config :slipstream, :gun_client, GunMock
+config :slipstream, :gun_client, :gun
