@@ -34,6 +34,7 @@ defmodule Slipstream.Callback do
     |> handle_callback_return()
   end
 
+  # coveralls-ignore-start
   defp handle_callback_return({:ok, %Socket{} = socket}), do: {:noreply, socket}
 
   defp handle_callback_return({:ok, %Socket{} = socket, others}),
@@ -45,6 +46,8 @@ defmodule Slipstream.Callback do
     do: return
 
   defp handle_callback_return({:stop, _reason, %Socket{}} = return), do: return
+
+  # coveralls-ignore-stop
 
   # ensures at compile-time that the callback exists. useful for development
   @spec callback(atom(), [any()]) :: {atom(), [any() | Socket.t()]}
@@ -85,7 +88,7 @@ defmodule Slipstream.Callback do
   defp _determine_callback(%Events.TopicJoinFailed{} = event) do
     callback :handle_topic_close, [
       event.topic,
-      {:failed_to_join, event.response}
+      Events.TopicJoinFailed.to_reason(event)
     ]
   end
 

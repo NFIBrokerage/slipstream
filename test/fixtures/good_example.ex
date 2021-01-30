@@ -97,6 +97,12 @@ defmodule Slipstream.GoodExample do
     {:ok, socket}
   end
 
+  def handle_topic_close(topic, reason, socket) do
+    send(socket.assigns.test_proc, {__MODULE__, :topic_closed, topic, reason})
+
+    {:ok, socket}
+  end
+
   @impl Slipstream
   def handle_disconnect(reason, socket) do
     send(socket.assigns.test_proc, {__MODULE__, :disconnected, reason})

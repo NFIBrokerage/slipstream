@@ -1,6 +1,8 @@
 defmodule SlipstreamWeb.TestChannel do
   use SlipstreamWeb, :channel
 
+  import Slipstream.PidHelpers
+
   require Logger
 
   @moduledoc false
@@ -14,13 +16,16 @@ defmodule SlipstreamWeb.TestChannel do
     {:ok, socket}
   end
 
-  def join("test:crash", _payload, _socket) do
+  def join("test:bad", _payload, _socket) do
     {:error, %{"bad" => "join"}}
   end
 
   # just swallows the request
   def handle_in("quicksand", params, socket) do
-    send(socket.assigns.test_proc, {__MODULE__, :in, socket.assigns.topic, "quicksand", params})
+    send(
+      socket.assigns.test_proc,
+      {__MODULE__, :in, socket.assigns.topic, "quicksand", params}
+    )
 
     {:noreply, socket}
   end
@@ -42,11 +47,15 @@ defmodule SlipstreamWeb.TestChannel do
     {:reply, {:error, %{"failure?" => true}}, socket}
   end
 
+  def handle_in("ack", _params, socket) do
+    {:reply, :ok, socket}
+  end
+
   def handle_in("raise", _params, _socket) do
     raise "oooooooohnnnnnnnnnnnnnoooooooooooooooooooooooooooooo"
   end
 
-  # N.B. this is a re-implementation of Iex.Helpers.pid/1
-  # I thought this was a Kernel function :P
-  defp pid(str), do: :erlang.list_to_pid('<#{str}>')
+  def handle_in("stop", _params, socket) do
+    {:stop, :normal, socket}
+  end
 end

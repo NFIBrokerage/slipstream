@@ -185,6 +185,10 @@ defmodule Slipstream.Connection.Impl do
     end
   end
 
+  def decode(message, state) do
+    decode_fn(state).(message)
+  end
+
   defp decode_fn(state) do
     module = state.config.json_parser
 
@@ -204,45 +208,28 @@ defmodule Slipstream.Connection.Impl do
           payload: payload
         }
 
+      # coveralls-ignore-start
+      # this may occur if the remote websocket server does not support the v2
+      # transport packets
       {:ok, decoded_json} when is_map(decoded_json) ->
         Message.from_map!(decoded_json)
 
       {:error, _any} ->
         message
+
+      # coveralls-ignore-stop
     end
   end
 
   def decode_message(:ping, _state), do: :ping
   def decode_message(:pong, _state), do: :pong
 
+  # coveralls-ignore-start
   def decode_message({:close, timeout, reason}, _state) do
     {:close, timeout, reason}
   end
 
-  # does a retry with back-off based on the lists of backoff times stored
-  # in the connection configuration
-  def retry_time(:reconnect, %State{} = state) do
-    backoff_times = state.config.reconnect_after_msec
-    try_number = state.reconnect_try_number
-
-    retry_time(backoff_times, try_number)
-  end
-
-  # def retry_time(:rejoin, %State{} = state) do
-  # backoff_times = state.config.rejoin_after_msec
-  # try_number = state.rejoin_try_number
-  #
-  # retry_time(backoff_times, try_number)
-  # end
-
-  def retry_time(backoff_times, try_number)
-      when is_list(backoff_times) and is_integer(try_number) and try_number > 0 do
-    # if the index goes beyond the length of the list, we always return
-    # the final element in the list
-    default = Enum.at(backoff_times, -1)
-
-    Enum.at(backoff_times, try_number, default)
-  end
+  # coveralls-ignore-stop
 
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation

@@ -22,9 +22,7 @@ defmodule Slipstream.Connection.State do
     joins: %{},
     leaves: %{},
     current_ref: 0,
-    current_ref_str: "0",
-    reconnect_try_number: 0
-    # rejoin_try_number: 0
+    current_ref_str: "0"
   ]
 
   def next_ref(state) do
@@ -34,36 +32,8 @@ defmodule Slipstream.Connection.State do
      %__MODULE__{state | current_ref: ref, current_ref_str: to_string(ref)}}
   end
 
-  def increment_reconnect_counter(state) do
-    increment(state, :reconnect_try_number)
-  end
-
-  def reset_reconnect_try_counter(state) do
-    put_in(state.reconnect_try_number, 0)
-  end
-
-  def increment_rejoin_counter(state) do
-    increment(state, :rejoin_try_number)
-  end
-
-  def reset_rejoin_try_counter(state) do
-    put_in(state.rejoin_try_number, 0)
-  end
-
-  defp increment(map, key) do
-    Map.update(map, key, 1, &(&1 + 1))
-  end
-
   def reset_heartbeat(state) do
     %__MODULE__{state | heartbeat_ref: nil}
-  end
-
-  def cancel_heartbeat_timer(state) do
-    if state.heartbeat_timer |> is_reference() do
-      :timer.cancel(state.heartbeat_timer)
-    end
-
-    state
   end
 
   def join_ref?(%__MODULE__{joins: joins}, ref), do: ref in Map.values(joins)
@@ -124,6 +94,10 @@ defmodule Slipstream.Connection.State do
   end
 
   def apply_event(state, %Events.ChannelClosed{}) do
+    if state.heartbeat_timer |> is_reference() do
+      :timer.cancel(state.heartbeat_timer)
+    end
+
     %__MODULE__{state | status: :terminating}
   end
 

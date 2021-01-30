@@ -5,6 +5,8 @@
   },
   "skip_files": [
     "^test",
-    "^deps"
+    "^deps",
+    "^lib/slipstream/events/",
+    "^lib/slipstream/commands/"
   ]
 }

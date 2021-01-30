@@ -6,7 +6,6 @@ defmodule Slipstream.Events.TopicJoinFailed do
   defstruct [:topic, :response, :ref]
 
   def to_reason(%__MODULE__{} = event) do
-    # TODO implement
-    inspect(event)
+    {:failed_to_join, event.response}
   end
 end

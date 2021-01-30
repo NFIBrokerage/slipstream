@@ -49,10 +49,7 @@ defmodule Slipstream.Connection do
         {:gun_upgrade, conn, stream_ref, ["websocket"], resp_headers},
         %State{conn: conn, stream_ref: stream_ref} = state
       ) do
-    state =
-      state
-      |> State.reset_reconnect_try_counter()
-      |> State.reset_heartbeat()
+    state = state |> State.reset_heartbeat()
 
     unless state.config.heartbeat_interval_msec == 0 do
       :timer.send_interval(
@@ -89,6 +86,32 @@ defmodule Slipstream.Connection do
   end
 
   def handle_info(
+        {:gun_response, conn, stream_ref, :nofin, status_code, resp_headers},
+        %State{conn: conn, stream_ref: stream_ref} = state
+      ) do
+    receive do
+      {:gun_data, ^conn, {:websocket, ^stream_ref, request_id, _, _}, :fin,
+       response} ->
+        response =
+          case Impl.decode(response, state) do
+            {:ok, json} -> json
+            _ -> response
+          end
+
+        route_event state, %Events.ChannelConnectFailed{
+          request_id: request_id,
+          status_code: status_code,
+          resp_headers: resp_headers,
+          response: response
+        }
+    after
+      5_000 -> exit(:timeout)
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_info(
         {:gun_ws, conn, stream_ref, message},
         %State{conn: conn, stream_ref: stream_ref} = state
       ) do
@@ -105,11 +128,19 @@ defmodule Slipstream.Connection do
     |> Impl.handle_command(cmd)
   end
 
+  # coveralls-ignore-start
   def handle_info(unknown_message, state) do
-    Logger.error("unknown message #{inspect(unknown_message)}")
+    Logger.error("""
+    unknown message #{inspect(unknown_message)}
+    heard in #{inspect(__MODULE__)}
+    please open an issue in NFIBrokerage/slipstream with this message and
+    any available information.
+    """)
 
     {:noreply, state}
   end
+
+  # coveralls-ignore-stop
 
   @impl GenServer
   def handle_call(command(%Commands.PushMessage{} = cmd), _from, state) do

@@ -22,8 +22,11 @@ defmodule Slipstream.Events do
 
   def map(server_message, connection_state)
 
+  # coveralls-ignore-start
   def map(:ping, _state), do: %PingReceived{}
   def map(:pong, _state), do: %PongReceived{}
+
+  # coveralls-ignore-stop
 
   def map(
         %Message{
@@ -112,18 +115,18 @@ defmodule Slipstream.Events do
           ref: _ref
         },
         _state
-      ) do
-    if map_size(payload) > 0 do
-      IO.inspect(payload, label: "phx_close payload Events.map/1")
-    end
-
+      )
+      when map_size(payload) == 0 do
     %TopicLeft{topic: topic}
   end
 
   def map(message, _state) do
+    # coveralls-ignore-start
     Logger.debug(
       "#{inspect(__MODULE__)} received unknown message #{inspect(message)}"
     )
+
+    # coveralls-ignore-stop
 
     nil
   end

@@ -847,14 +847,17 @@ defmodule Slipstream do
          {:ok, ref} <- route_command(command) do
       {:ok, {topic, ref}}
     else
-      false -> {:error, :not_joined}
+      false ->
+        {:error, :not_joined}
+
       # e.g. if the genserver call fails by timeout
       # we're not gonna test that though. imagine how big the message would have
       # to be
       # coveralls-ignore-start
-      other_return -> other_return
+      other_return ->
+        other_return
 
-      # coveralls-ignore-stop
+        # coveralls-ignore-stop
     end
   end
 
@@ -882,8 +885,11 @@ defmodule Slipstream do
       {:ok, ref} ->
         ref
 
+      # coveralls-ignore-start
       {:error, reason} ->
         raise "could not push!/4 message: #{inspect(reason)}"
+
+        # coveralls-ignore-stop
     end
   end
 
@@ -945,8 +951,6 @@ defmodule Slipstream do
   Awaits a pending connection request synchronously
   """
   @doc since: "1.0.0"
-  @spec await_connect(socket :: Socket.t()) ::
-          {:ok, Socket.t()} | {:error, term()}
   @spec await_connect(socket :: Socket.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_connect(socket, timeout \\ @default_timeout) do
@@ -965,13 +969,20 @@ defmodule Slipstream do
   Awaits a pending connection request synchronously, raising on failure
   """
   @doc since: "1.0.0"
-  @spec await_connect!(socket :: Socket.t()) :: Socket.t()
   @spec await_connect!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_connect!(socket, timeout \\ @default_timeout) do
     case await_connect(socket, timeout) do
-      {:ok, socket} -> socket
-      {:error, reason} when is_atom(reason) -> exit(reason)
-      {:error, reason} -> raise "Could not await connection: #{inspect(reason)}"
+      {:ok, socket} ->
+        socket
+
+      # coveralls-ignore-start
+      {:error, reason} when is_atom(reason) ->
+        exit(reason)
+
+      {:error, reason} ->
+        raise "Could not await connection: #{inspect(reason)}"
+
+        # coveralls-ignore-stop
     end
   end
 
@@ -979,8 +990,6 @@ defmodule Slipstream do
   Awaits a pending disconnection request synchronously
   """
   @doc since: "1.0.0"
-  @spec await_disconnect(socket :: Socket.t()) ::
-          {:ok, Socket.t()} | {:error, term()}
   @spec await_disconnect(socket :: Socket.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_disconnect(socket, timeout \\ @default_timeout) do
@@ -996,18 +1005,20 @@ defmodule Slipstream do
   Awaits a pending disconnection request synchronously, raising on failure
   """
   @doc since: "1.0.0"
-  @spec await_disconnect!(socket :: Socket.t()) :: Socket.t()
   @spec await_disconnect!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_disconnect!(socket, timeout \\ @default_timeout) do
     case await_disconnect(socket, timeout) do
       {:ok, socket} ->
         socket
 
+      # coveralls-ignore-start
       {:error, reason} when is_atom(reason) ->
         exit(reason)
 
       {:error, reason} ->
         raise "Could not await disconnection: #{inspect(reason)}"
+
+        # coveralls-ignore-stop
     end
   end
 
@@ -1015,8 +1026,6 @@ defmodule Slipstream do
   Awaits a pending join request synchronously
   """
   @doc since: "1.0.0"
-  @spec await_join(socket :: Socket.t(), topic :: String.t()) ::
-          {:ok, Socket.t()} | {:error, term()}
   @spec await_join(socket :: Socket.t(), topic :: String.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_join(socket, topic, timeout \\ @default_timeout)
@@ -1036,13 +1045,20 @@ defmodule Slipstream do
   Awaits a join request synchronously, raising on failure
   """
   @doc since: "1.0.0"
-  @spec await_join!(socket :: Socket.t()) :: Socket.t()
   @spec await_join!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_join!(socket, timeout \\ @default_timeout) do
     case await_join(socket, timeout) do
-      {:ok, socket} -> socket
-      {:error, reason} when is_atom(reason) -> exit(reason)
-      {:error, reason} -> raise "Could not await join: #{inspect(reason)}"
+      {:ok, socket} ->
+        socket
+
+      # coveralls-ignore-start
+      {:error, reason} when is_atom(reason) ->
+        exit(reason)
+
+      {:error, reason} ->
+        raise "Could not await join: #{inspect(reason)}"
+
+        # coveralls-ignore-stop
     end
   end
 
@@ -1050,8 +1066,6 @@ defmodule Slipstream do
   Awaits a leave request synchronously
   """
   @doc since: "1.0.0"
-  @spec await_leave(socket :: Socket.t(), topic :: String.t()) ::
-          {:ok, Socket.t()} | {:error, term()}
   @spec await_leave(socket :: Socket.t(), topic :: String.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_leave(socket, topic, timeout \\ @default_timeout)
@@ -1068,13 +1082,101 @@ defmodule Slipstream do
   Awaits a leave request synchronously, raising on failure
   """
   @doc since: "1.0.0"
-  @spec await_leave!(socket :: Socket.t()) :: Socket.t()
   @spec await_leave!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_leave!(socket, timeout \\ @default_timeout) do
     case await_leave(socket, timeout) do
-      {:ok, socket} -> socket
-      {:error, reason} when is_atom(reason) -> exit(reason)
-      {:error, reason} -> raise "Could not await leave: #{inspect(reason)}"
+      {:ok, socket} ->
+        socket
+
+      # coveralls-ignore-start
+      {:error, reason} when is_atom(reason) ->
+        exit(reason)
+
+      {:error, reason} ->
+        raise "Could not await leave: #{inspect(reason)}"
+
+        # coveralls-ignore-stop
+    end
+  end
+
+  @doc """
+  Awaits the server's message push
+
+  Note that unlike the other `await_*` functions, `await_message/4` is a
+  macro. This allows an author to match on patterns in the topic, event, and/or
+  payload parts of a message.
+
+  ## Examples
+
+      iex> event = "msg:new"
+      iex> await_message("rooms:lobby", ^event, %{"user_id" => 5})
+      {:ok, "rooms:lobby", "msg:new", %{"user_id" => 5, body: "hello"}}
+  """
+  @doc since: "1.0.0"
+  @spec await_message(
+          topic_expr :: Macro.t(),
+          event_expr :: Macro.t(),
+          payload_expr :: Macro.t(),
+          timeout()
+        ) ::
+          {:ok, topic :: String.t(), event :: String.t(),
+           payload :: json_serializable()}
+          | {:error, :timeout}
+  defmacro await_message(
+             topic_expr,
+             event_expr,
+             payload_expr,
+             timeout \\ @default_timeout
+           ) do
+    quote do
+      receive do
+        event(
+          %Events.MessageReceived{
+            topic: unquote(topic_expr),
+            event: unquote(event_expr),
+            payload: unquote(payload_expr)
+          } = event
+        ) ->
+          {:ok, event.topic, event.event, event.payload}
+      after
+        unquote(timeout) -> {:error, :timeout}
+      end
+    end
+  end
+
+  @doc """
+  Awaits the server's message push, raising on failure
+
+  See `await_message/4`
+  """
+  @doc since: "1.0.0"
+  @spec await_message!(
+          topic_expr :: Macro.t(),
+          event_expr :: Macro.t(),
+          payload_expr :: Macro.t(),
+          timeout()
+        ) ::
+          {topic :: String.t(), event :: String.t(),
+           payload :: json_serializable()}
+  defmacro await_message!(
+             topic_expr,
+             event_expr,
+             payload_expr,
+             timeout \\ @default_timeout
+           ) do
+    quote do
+      receive do
+        event(
+          %Events.MessageReceived{
+            topic: unquote(topic_expr),
+            event: unquote(event_expr),
+            payload: unquote(payload_expr)
+          } = event
+        ) ->
+          {event.topic, event.event, event.payload}
+      after
+        unquote(timeout) -> exit(:timeout)
+      end
     end
   end
 
@@ -1082,7 +1184,6 @@ defmodule Slipstream do
   Awaits the server's response to a message
   """
   @doc since: "1.0.0"
-  @spec await_reply(push_reference()) :: reply() | {:error, :timeout}
   @spec await_reply(push_reference(), timeout()) :: reply() | {:error, :timeout}
   def await_reply(push_reference, timeout \\ @default_timeout)
 
@@ -1101,11 +1202,12 @@ defmodule Slipstream do
   See `await_reply/2` for more information.
   """
   @doc since: "1.0.0"
-  @spec await_reply!(push_reference()) :: reply()
   @spec await_reply!(push_reference(), timeout()) :: reply()
   def await_reply!(push_reference, timeout \\ @default_timeout) do
     case await_reply(push_reference, timeout) do
+      # coveralls-ignore-start
       {:error, :timeout} -> exit(:timeout)
+      # coveralls-ignore-stop
       reply -> reply
     end
   end
