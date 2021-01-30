@@ -76,27 +76,6 @@ defmodule Slipstream do
       :hello
       iex> GenServer.call(MyClient, :foo)
       {:ok, :bar}
-
-  ## The `__using__/1` macro
-
-  Slipstream provides a `use Slipstream` macro that behaves similar to
-  GenServer's `use GenServer`. This does a few things:
-
-  - a default implementation of `child_spec/1`, which is used to start the
-    module as a GenServer. This may be overridden.
-  - imports for all documented functions in `Slipstream` and `Slipstream.Socket`
-  - a `c:GenServer.handle_info/2` function clause which matches incoming events
-    from the connection process and dispatches them to the various Slipstream
-    callbacks
-  - a `c:GenServer.handle_info/2` function clause which matches Slipstream
-    commands. This is used to implement back-off retry mechanisms for
-    `reconnect/1` and `rejoin/3`.
-
-  This provides a familiar and sleek interface for the common case of using
-  Slipstream: an asynchronous callback-based GenServer module.
-
-  It's not required to use this macro, though. Slipstream can be used in
-  synchronous mode (via the `await_*` family of functions).
   """
 
   alias Slipstream.{Commands, Events, Socket}
@@ -540,6 +519,11 @@ defmodule Slipstream do
   @doc """
   Starts a slipstream client process
 
+  This function delegates to `GenServer.start_link/3`, so all options passable
+  to that function are passable here as well. Most notably, you may name your
+  slipstream clients using the same naming rules as GenServers, as in the
+  example below.
+
   ## Examples
 
       defmodule MySlipstreamClient do
@@ -554,8 +538,7 @@ defmodule Slipstream do
   """
   @spec start_link(module(), any()) :: GenServer.on_start()
   @spec start_link(module(), any(), GenServer.options()) :: GenServer.on_start()
-  defdelegate start_link(module, init_arg), to: GenServer
-  defdelegate start_link(module, init_arg, options), to: GenServer
+  defdelegate start_link(module, init_arg, options \\ []), to: GenServer
 
   @doc """
   Creates a new socket without connecting to a remote websocket
@@ -1217,6 +1200,50 @@ defmodule Slipstream do
     end
   end
 
+  @doc """
+  Declares that a module is a Slipstream socket client
+
+  Slipstream provides a `use Slipstream` macro that behaves similar to
+  GenServer's `use GenServer`. This does a few things:
+
+  - a default implementation of `child_spec/1`, which is used to start the
+    module as a GenServer. This may be overridden.
+  - imports for all documented functions in `Slipstream` and `Slipstream.Socket`
+  - a `c:GenServer.handle_info/2` function clause which matches incoming events
+    from the connection process and dispatches them to the various Slipstream
+    callbacks
+  - a `c:GenServer.handle_info/2` function clause which matches Slipstream
+    commands. This is used to implement back-off retry mechanisms for
+    `reconnect/1` and `rejoin/3`.
+
+  This provides a familiar and sleek interface for the common case of using
+  Slipstream: an asynchronous callback-based GenServer module.
+
+  It's not required to use this macro, though. Slipstream can be used in
+  synchronous mode (via the `await_*` family of functions).
+
+  ## Options
+
+  Any options passed as the `opts` argument to `__using__/1` are passed along
+  to `Supervisor.child_spec/2`, as is done in the default `child_spec/1`
+  implementation for GenServer. Most notably, you may control the restart
+  strategy of the client with the `:restart` option. See the example below.
+
+  ## Examples
+
+      defmodule MyApp.MySocketClient do
+        # one crash/shutdown/exit will permanently terminate the server
+        use Slipstream, restart: :transient
+
+        def start_link(args) do
+          Slipstream.start_link(__MODULE__, args)
+        end
+
+        ..
+      end
+  """
+  @doc since: "1.0.0"
+  @spec __using__(Keyword.t()) :: Macro.t()
   defmacro __using__(opts) do
     quote location: :keep do
       def child_spec(init_arg) do

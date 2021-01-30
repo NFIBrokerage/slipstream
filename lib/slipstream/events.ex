@@ -20,6 +20,15 @@ defmodule Slipstream.Events do
 
   alias Slipstream.Connection.State
 
+  @doc """
+  Maps a message from the remote websocket server to an internally known
+  Slipstream event
+
+  The connection state may need to be taken into consideration. It holds
+  information about the `ref` fields on messages and whether or not they belong
+  to joins or leaves.
+  """
+  @spec map(atom() | %Message{}, %State{}) :: struct()
   def map(server_message, connection_state)
 
   # coveralls-ignore-start

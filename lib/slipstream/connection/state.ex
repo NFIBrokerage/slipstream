@@ -26,6 +26,16 @@ defmodule Slipstream.Connection.State do
     current_ref_str: "0"
   ]
 
+  @doc """
+  Gets the next ref and increments the ref counter in state
+
+  The `ref` passed between a client and phoenix server is a marker which
+  can be used to link pushes to their replies. E.g. a heartbeat message from
+  the client will include a ref which will match the associated heartbeat
+  reply from the server, when the heartbeat is sucessful.
+
+  Refs are simply strings of incrementing integers.
+  """
   def next_ref(state) do
     ref = state.current_ref + 1
 
@@ -33,18 +43,39 @@ defmodule Slipstream.Connection.State do
      %__MODULE__{state | current_ref: ref, current_ref_str: to_string(ref)}}
   end
 
+  @doc """
+  Resets the heartbeat ref to nil
+
+  This is used to clear out a pending heartbeat. If the
+  `Slipstream.Commands.SendHeartbeat` command is received and the heartbeat_ref
+  in state is nil, that means we have not received a reply to our heartbeat
+  request and that the server is potentially stuck or otherwise not responding.
+  """
   def reset_heartbeat(state) do
     %__MODULE__{state | heartbeat_ref: nil}
   end
 
+  @doc """
+  Detects if a ref is one used to join a topic
+  """
   def join_ref?(%__MODULE__{joins: joins}, ref), do: ref in Map.values(joins)
 
+  @doc """
+  Detects if a ref was used to request a topic leave
+  """
   def leave_ref?(%__MODULE__{leaves: leaves}, ref),
     do: ref in Map.values(leaves)
 
-  # update the state given any command
-  # this is done before handling the command, so it's an appropriate place
-  # to take next_ref/1s
+  @doc """
+  Update the state given any command
+
+  This is done before handling the command, so it's an appropriate place
+  to take `next_ref/1`s.
+
+  Any command can modify the state before it gets handled. This separation
+  between updating state and handling of commands keeps clean the boundary
+  of where side-effects take place in the connection process.
+  """
   @spec apply_command(%__MODULE__{}, command :: struct()) :: %__MODULE__{}
   def apply_command(state, command)
 
@@ -74,6 +105,13 @@ defmodule Slipstream.Connection.State do
 
   def apply_command(state, _command), do: state
 
+  @doc """
+  Updates the state before an event is sent along to a client process
+
+  This is mostly used to groom internal state about whether or not the
+  connection process is actually connected to the remote server and whether or
+  not the connection is joined to topics.
+  """
   @spec apply_event(%__MODULE__{}, event :: struct()) :: %__MODULE__{}
   def apply_event(state, event)
 
