@@ -1,6 +1,10 @@
 defmodule Slipstream.Socket do
   @moduledoc """
-  A datastructure representing a potential websocket client connection
+  A data structure representing a potential websocket client connection
+
+  This structure closely resembles `t:Phoenix.Socket.t/0`, but is not
+  compatible with its functions. All documented functions from this module
+  are imported by `use Slipstream`.
   """
 
   import Kernel, except: [send: 2, pid: 1]
@@ -23,7 +27,7 @@ defmodule Slipstream.Socket do
   ]
 
   @typedoc """
-  The socket datastructure
+  A socket data structure representing a potential websocket client connection
   """
   @typedoc since: "1.0.0"
   @type t :: %__MODULE__{
