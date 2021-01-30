@@ -110,3 +110,71 @@ messages recognizable and enforce the communication boundary.
 
 I dub this pattern the "signature pattern" (but realize that I am probably
 not the first to discover it).
+
+## The Token Pattern
+
+The `t:Slipstream.Socket.t/0` data structure is built to closely resemble the
+`t:Phoenix.Socket.t/0` structure, and feel similar in usage. These are both
+implementations of a pattern coined by [`@rrrene`](https://github.com/rrrene):
+the [token pattern](https://rrrene.org/2018/05/14/flow-elixir-designing-apis/).
+
+The idea is fairly straight-forward: instead of passing around only the values
+each function needs, you pass around a structure which contains all information
+available and provide a functional API to modify the internals (by producing a
+new structure). These structures are called "tokens."
+
+The token pattern is particularly useful for writing flexible pipelines. E.g.
+a piece of code that does something like this:
+
+```elixir
+def do_work(request) do
+  request
+  |> decode_request()
+  |> hydrate_request_with_background_info()
+  |> start_computation_measurements()
+  |> do_the_computation()
+  |> end_computation_measurements()
+  |> send_the_result_somewhere()
+end
+```
+
+These functions are all chained together, so it may seem perfectly appropriate
+to write the functions in a way that each consumes the direct output of the
+preceeding function in the chain. But if we eventually need another `do_work/1`
+clause that handles a different sort of request and say, cuts out the
+`hydrate_request_with_background_info/1` step, we will likely have to refactor
+at least a few of the functions to properly emit and consume the data they need.
+
+Instead of taking and giving _only_ the information each function needs, each
+function should pass along a token structure containing all the information in
+the request:
+
+```elixir
+def do_work(request) do
+  %Token{initial_request: request}
+  |> decode_request() # returns a new %Token{}
+  |> hydrate_request_with_background_info() # returns a new %Token{}
+  ..
+end
+```
+
+If we need to cut out or add new functions to the pipeline, we are less likely
+to need to refactor any of the component functions.
+
+The usage of sockets in Slipstream is not so chain-y as the example, but the
+socket token allows a clean API of functions that each take a socket and
+some other information and emit a new socket token.
+
+```elixir
+@impl Slipstream
+def handle_info({:join, topic}, socket) do
+  socket =
+    if connected?(socket) and not joined?(socket, topic) do
+      join(socket, topic)
+    else
+      socket
+    end
+
+  {:noreply, socket}
+end
+```
