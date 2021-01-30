@@ -26,8 +26,6 @@ defmodule Slipstream.ConnectionTest do
   setup :set_mox_global
   @gun GunMock
 
-  # @moduletag :capture_log
-
   setup do
     original_value = Application.fetch_env!(:slipstream, :gun_client)
     Application.put_env(:slipstream, :gun_client, @gun)
@@ -144,6 +142,20 @@ defmodule Slipstream.ConnectionTest do
       send(c.socket.channel_pid, {:gun_ws, conn, c.stream_ref, :ping})
 
       assert_receive :pong_sent
+    end
+
+    test "when the connection receives a close, the client is disconnected",
+         c do
+      conn = c.conn
+
+      @gun |> expect(:close, 1, fn ^conn -> :ok end)
+
+      send(
+        c.socket.channel_pid,
+        {:gun_ws, c.conn, c.stream_ref, {:close, 1_000, ""}}
+      )
+
+      refute c.socket |> await_disconnect!() |> connected?
     end
   end
 end

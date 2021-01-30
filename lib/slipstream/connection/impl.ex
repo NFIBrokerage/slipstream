@@ -252,13 +252,6 @@ defmodule Slipstream.Connection.Impl do
   def decode_message(:ping, _state), do: :ping
   def decode_message(:pong, _state), do: :pong
 
-  # coveralls-ignore-start
-  def decode_message({:close, timeout, reason}, _state) do
-    {:close, timeout, reason}
-  end
-
-  # coveralls-ignore-stop
-
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation
   @spec path(URI.t()) :: charlist()
