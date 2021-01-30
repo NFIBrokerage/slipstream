@@ -28,6 +28,7 @@ defmodule Slipstream.MixProject do
         coveralls: :test,
         "coveralls.html": :test,
         "coveralls.github": :test,
+        inch: :dev,
         bless: :test,
         test: :test
       ],
