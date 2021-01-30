@@ -29,9 +29,9 @@ defmodule Slipstream do
   ## GenServer operations
 
   Note that Slipstream is in many ways a simple wrapper around a GenServer.
-  As such, all GenServer functionality is possible with Slipstream servers,
+  As such, all GenServer functionality is possible with Slipstream clients,
   such as `Kernel.send/2` or `GenServer.call/3`. For example, assume you have
-  a slipstream server written like so:
+  a slipstream client written like so:
 
       defmodule MyClient do
         use Slipstream
@@ -65,7 +65,7 @@ defmodule Slipstream do
         end
       end
 
-  This `MyClient` server is a GenServer, so the following are valid ways to
+  This `MyClient` client is a GenServer, so the following are valid ways to
   interact with `MyClient`:
 
       iex> GenServer.cast(MyClient, :ping)
@@ -105,7 +105,7 @@ defmodule Slipstream do
   ## Synchronicity
 
   This approach treats the websocket connection as an RPC: some other process
-  in the service does a `GenServer.call/3` to the slipstream server process,
+  in the service does a `GenServer.call/3` to the slipstream client process,
   which sends a push to the remote websocket server, waits for a reply
   (synchronously) and then sends that back to the caller. All-in-all, this
   appears completely synchronous for the caller.
@@ -118,9 +118,9 @@ defmodule Slipstream do
       end
 
   This approach is written in a more asynchronous fashion. An info message
-  arriving from any other process triggers the slipstream server to push a
+  arriving from any other process triggers the slipstream client to push a
   work message to the remote websocket server. When the remote websocket server
-  replies with the result, the slipstream server sends off the result to be
+  replies with the result, the slipstream client sends off the result to be
   dealt with else-where. No process in this scenario blocks, so they are all
   capable of receiving other messages while the work is being completed.
 
@@ -287,7 +287,7 @@ defmodule Slipstream do
 
   This provides a way to schedule work to occur immediately after
   successful initialization or to break work across multiple callbacks, which
-  can be useful for servers which are state-machine-like.
+  can be useful for clients which are state-machine-like.
 
   See `c:GenServer.handle_continue/2` for more information.
   """
@@ -908,7 +908,7 @@ defmodule Slipstream do
   any remote websocket server.
 
   Note that you do not need to use `disconnect/1` to clean up a connection.
-  The connection process monitors the slipstream server process and will shut
+  The connection process monitors the slipstream client process and will shut
   down when it detects that the process has terminated.
 
   Disconnection may be awaited synchronously with `await_disconnect/2`
