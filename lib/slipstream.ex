@@ -92,7 +92,7 @@ defmodule Slipstream do
   be encoded with the JSON parser passed in configuration. See
   `Slipstream.Configuration`.
   """
-  @typedoc since: "1.0.0"
+  @typedoc since: "0.1.0"
   @type json_serializable :: term()
 
   @typedoc """
@@ -138,7 +138,7 @@ defmodule Slipstream do
         {:ok, socket}
       end
   """
-  @typedoc since: "1.0.0"
+  @typedoc since: "0.1.0"
   @type push_reference() ::
           {topic :: String.t(), message_reference :: String.t()}
 
@@ -174,7 +174,7 @@ defmodule Slipstream do
       def handle_reply(_ref, {:ok, %{"created?" => true}} = _reply, socket) do
         ..
   """
-  @typedoc since: "1.0.0"
+  @typedoc since: "0.1.0"
   @type reply() ::
           :ok
           | :error
@@ -260,7 +260,7 @@ defmodule Slipstream do
         connect(config)
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback init(init_arg :: any()) ::
               {:ok, state}
               | {:ok, state, timeout() | :hibernate | {:continue, term()}}
@@ -291,7 +291,7 @@ defmodule Slipstream do
 
   See `c:GenServer.handle_continue/2` for more information.
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_continue(continue :: term(), state :: Socket.t()) ::
               {:noreply, new_state}
               | {:noreply, new_state,
@@ -304,7 +304,7 @@ defmodule Slipstream do
 
   Behaves the same as `c:GenServer.handle_info/2`
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_info(msg :: term(), socket :: Socket.t()) ::
               {:noreply, new_socket}
               | {:noreply, new_socket,
@@ -317,7 +317,7 @@ defmodule Slipstream do
 
   Behaves the same as `c:GenServer.handle_cast/2`
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_cast(msg :: term(), socket :: Socket.t()) ::
               {:noreply, new_socket}
               | {:noreply, new_socket,
@@ -330,7 +330,7 @@ defmodule Slipstream do
 
   Behaves the same as `c:GenServer.handle_call/3`
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_call(
               request :: term(),
               from :: GenServer.from(),
@@ -352,7 +352,7 @@ defmodule Slipstream do
   Note that this callback is not always invoked as the process shuts down.
   See `c:GenServer.terminate/2` for more information.
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback terminate(reason :: term(), state :: term()) :: term()
 
   # callbacks unique to Slipstream ('novel' callbacks)
@@ -369,7 +369,7 @@ defmodule Slipstream do
         {:noreply, socket}
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_connect(socket :: Socket.t()) ::
               {:ok, new_socket}
               | {:stop, reason :: term(), new_socket}
@@ -387,7 +387,7 @@ defmodule Slipstream do
         {:ok, reconnect(socket)}
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_disconnect(reason :: term(), socket :: Socket.t()) ::
               {:ok, new_socket}
               | {:stop, stop_reason :: term(), new_socket}
@@ -405,7 +405,7 @@ defmodule Slipstream do
         {:ok, socket}
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_join(
               topic :: String.t(),
               response :: json_serializable(),
@@ -434,7 +434,7 @@ defmodule Slipstream do
         {:ok, socket}
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_message(
               topic :: String.t(),
               event :: String.t(),
@@ -468,7 +468,7 @@ defmodule Slipstream do
         {:ok, socket}
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_reply(
               ref :: push_reference(),
               message :: reply(),
@@ -491,7 +491,7 @@ defmodule Slipstream do
         {:ok, socket} = rejoin(socket, topic)
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @callback handle_topic_close(
               topic :: String.t(),
               reason :: term(),
@@ -543,7 +543,7 @@ defmodule Slipstream do
   @doc """
   Creates a new socket without connecting to a remote websocket
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec new_socket() :: Socket.t()
   defdelegate new_socket(), to: Socket, as: :new
 
@@ -560,7 +560,7 @@ defmodule Slipstream do
 
       {:ok, socket} = connect(uri: "ws://localhost:4000/socket/websocket")
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec connect(opts :: Keyword.t()) ::
           {:ok, Socket.t()} | {:error, %NimbleOptions.ValidationError{}}
   @spec connect(socket :: Socket.t(), opts :: Keyword.t()) ::
@@ -584,7 +584,7 @@ defmodule Slipstream do
   connect. The `!` only pertains to the potential for raising when the
   configuration is invalid.
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec connect!(opts :: Keyword.t()) :: Socket.t()
   @spec connect!(socket :: Socket.t(), opts :: Keyword.t()) :: Socket.t()
   def connect!(socket \\ new_socket(), opts) do
@@ -623,7 +623,7 @@ defmodule Slipstream do
 
   A reconnect may be awaited with `await_connect/2`.
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec reconnect(socket :: Socket.t()) :: {:ok, Socket.t()} | :error
   def reconnect(socket) do
     with false <- Socket.connected?(socket),
@@ -666,7 +666,7 @@ defmodule Slipstream do
         {:ok, join(socket, "rooms:lobby", %{user: 1})}
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec join(socket :: Socket.t(), topic :: String.t()) :: Socket.t()
   @spec join(
           socket :: Socket.t(),
@@ -716,7 +716,7 @@ defmodule Slipstream do
         {:ok, _socket} = rejoin(socket, topic)
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec rejoin(socket :: Socket.t(), topic :: String.t()) ::
           {:ok, Socket.t()} | {:error, :never_joined}
   @spec rejoin(
@@ -761,7 +761,7 @@ defmodule Slipstream do
       iex> {:ok, socket} = leave(socket, "room:lobby") |> await_leave("rooms:lobby")
       iex> join(socket, "rooms:specific")
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec leave(socket :: Socket.t(), topic :: String.t()) :: Socket.t()
   def leave(%Socket{} = socket, topic) when is_binary(topic) do
     if Socket.joined?(socket, topic) do
@@ -807,7 +807,7 @@ defmodule Slipstream do
         {:ok, state}
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec push(
           socket :: Socket.t(),
           topic :: String.t(),
@@ -861,7 +861,7 @@ defmodule Slipstream do
       iex> {:ok, result} = push!(socket, "rooms:lobby", "msg:new", params) |> await_reply()
       {:ok, %{"created?" => true}}
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec push!(
           socket :: Socket.t(),
           topic :: String.t(),
@@ -893,7 +893,7 @@ defmodule Slipstream do
       iex> collect_garbage(socket)
       :ok
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec collect_garbage(socket :: Socket.t()) :: :ok
   def collect_garbage(socket) do
     route_command %Commands.CollectGarbage{socket: socket}
@@ -925,7 +925,7 @@ defmodule Slipstream do
         {:noreply, reconnect(socket)}
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec disconnect(socket :: Socket.t()) :: Socket.t()
   def disconnect(socket) do
     route_command %Commands.CloseConnection{socket: socket}
@@ -938,7 +938,7 @@ defmodule Slipstream do
   @doc """
   Awaits a pending connection request synchronously
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_connect(socket :: Socket.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_connect(socket, timeout \\ @default_timeout) do
@@ -956,7 +956,7 @@ defmodule Slipstream do
   @doc """
   Awaits a pending connection request synchronously, raising on failure
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_connect!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_connect!(socket, timeout \\ @default_timeout) do
     case await_connect(socket, timeout) do
@@ -977,7 +977,7 @@ defmodule Slipstream do
   @doc """
   Awaits a pending disconnection request synchronously
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_disconnect(socket :: Socket.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_disconnect(socket, timeout \\ @default_timeout) do
@@ -992,7 +992,7 @@ defmodule Slipstream do
   @doc """
   Awaits a pending disconnection request synchronously, raising on failure
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_disconnect!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_disconnect!(socket, timeout \\ @default_timeout) do
     case await_disconnect(socket, timeout) do
@@ -1013,7 +1013,7 @@ defmodule Slipstream do
   @doc """
   Awaits a pending join request synchronously
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_join(socket :: Socket.t(), topic :: String.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_join(socket, topic, timeout \\ @default_timeout)
@@ -1032,7 +1032,7 @@ defmodule Slipstream do
   @doc """
   Awaits a join request synchronously, raising on failure
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_join!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_join!(socket, timeout \\ @default_timeout) do
     case await_join(socket, timeout) do
@@ -1053,7 +1053,7 @@ defmodule Slipstream do
   @doc """
   Awaits a leave request synchronously
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_leave(socket :: Socket.t(), topic :: String.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_leave(socket, topic, timeout \\ @default_timeout)
@@ -1069,7 +1069,7 @@ defmodule Slipstream do
   @doc """
   Awaits a leave request synchronously, raising on failure
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_leave!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_leave!(socket, timeout \\ @default_timeout) do
     case await_leave(socket, timeout) do
@@ -1100,7 +1100,7 @@ defmodule Slipstream do
       iex> await_message("rooms:lobby", ^event, %{"user_id" => 5})
       {:ok, "rooms:lobby", "msg:new", %{"user_id" => 5, body: "hello"}}
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_message(
           topic_expr :: Macro.t(),
           event_expr :: Macro.t(),
@@ -1137,7 +1137,7 @@ defmodule Slipstream do
 
   See `await_message/4`
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_message!(
           topic_expr :: Macro.t(),
           event_expr :: Macro.t(),
@@ -1171,7 +1171,7 @@ defmodule Slipstream do
   @doc """
   Awaits the server's response to a message
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_reply(push_reference(), timeout()) :: reply() | {:error, :timeout}
   def await_reply(push_reference, timeout \\ @default_timeout)
 
@@ -1189,7 +1189,7 @@ defmodule Slipstream do
 
   See `await_reply/2` for more information.
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec await_reply!(push_reference(), timeout()) :: reply()
   def await_reply!(push_reference, timeout \\ @default_timeout) do
     case await_reply(push_reference, timeout) do
@@ -1242,7 +1242,7 @@ defmodule Slipstream do
         ..
       end
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec __using__(Keyword.t()) :: Macro.t()
   defmacro __using__(opts) do
     quote location: :keep do

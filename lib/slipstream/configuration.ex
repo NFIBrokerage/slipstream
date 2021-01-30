@@ -129,7 +129,7 @@ defmodule Slipstream.Configuration do
   @doc """
   Validates a proposed configuration
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec validate(Keyword.t()) ::
           {:ok, t()} | {:error, %NimbleOptions.ValidationError{}}
   def validate(opts) do

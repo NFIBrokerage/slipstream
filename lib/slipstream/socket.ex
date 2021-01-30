@@ -29,7 +29,7 @@ defmodule Slipstream.Socket do
   @typedoc """
   A socket data structure representing a potential websocket client connection
   """
-  @typedoc since: "1.0.0"
+  @typedoc since: "0.1.0"
   @type t :: %__MODULE__{
           channel_pid: nil | pid(),
           socket_pid: pid(),
@@ -58,7 +58,7 @@ defmodule Slipstream.Socket do
   # and indeed the implementation is just about the same as well.
   # we can't defdelegate/2 though because the socket module is different
   # (hence the struct doesn't match)
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec assign(t(), Keyword.t()) :: t()
   @spec assign(t(), key :: atom(), value :: any()) :: t()
   def assign(%__MODULE__{} = socket, key, value) when is_atom(key) do
@@ -78,7 +78,7 @@ defmodule Slipstream.Socket do
       iex> joined?(socket, "room:lobby")
       true
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec joined?(t(), topic :: String.t()) :: boolean()
   def joined?(%__MODULE__{} = socket, topic) when is_binary(topic) do
     join_status(socket, topic) == :joined
@@ -108,7 +108,7 @@ defmodule Slipstream.Socket do
       iex> join_status(socket, "room:lobby")
       :joined
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec join_status(t(), topic :: String.t()) ::
           :requested | :joined | :closed | nil
   def join_status(%__MODULE__{} = socket, topic) when is_binary(topic) do
@@ -128,7 +128,7 @@ defmodule Slipstream.Socket do
       iex> connected?(socket)
       true
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec connected?(t()) :: boolean()
   def connected?(%__MODULE__{} = socket),
     do: socket |> channel_pid() |> is_pid()
@@ -151,7 +151,7 @@ defmodule Slipstream.Socket do
       iex> Slipstream.Socket.channel_pid(socket)
       #PID<0.1.2>
   """
-  @doc since: "1.0.0"
+  @doc since: "0.1.0"
   @spec channel_pid(t()) :: pid() | nil
   def channel_pid(%__MODULE__{channel_pid: pid}) do
     if is_pid(pid) and Process.alive?(pid), do: pid, else: nil
