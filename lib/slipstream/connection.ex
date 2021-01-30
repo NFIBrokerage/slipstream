@@ -85,6 +85,7 @@ defmodule Slipstream.Connection do
     {:noreply, state}
   end
 
+  # coveralls-ignore-start
   def handle_info(
         {:gun_response, conn, stream_ref, :nofin, status_code, resp_headers},
         %State{conn: conn, stream_ref: stream_ref} = state
@@ -110,6 +111,8 @@ defmodule Slipstream.Connection do
 
     {:noreply, state}
   end
+
+  # coveralls-ignore-stop
 
   def handle_info(
         {:gun_ws, conn, stream_ref, message},

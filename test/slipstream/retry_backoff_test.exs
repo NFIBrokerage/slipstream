@@ -9,7 +9,7 @@ defmodule Slipstream.RetryBackoffTest do
   import Slipstream.Signatures, only: [command: 1]
   alias Slipstream.{Commands, CommandRouter}
 
-  # @moduletag :capture_log
+  @moduletag :capture_log
 
   setup do
     [config: Application.fetch_env!(:slipstream, Slipstream.GoodExample)]

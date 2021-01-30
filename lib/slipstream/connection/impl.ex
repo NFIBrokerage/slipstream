@@ -5,6 +5,13 @@ defmodule Slipstream.Connection.Impl do
   alias Phoenix.Socket.Message
   alias Slipstream.{Events, Commands}
   import Slipstream.Signatures, only: [event: 1]
+  require Logger
+
+  if Version.match?(System.version(), ">= 1.10.0") do
+    @gun Application.compile_env(:slipstream, :gun_client, :gun)
+  else
+    @gun Application.get_env(:slipstream, :gun_client, :gun)
+  end
 
   @noop_event_types [
     Events.PongReceived,
@@ -18,14 +25,14 @@ defmodule Slipstream.Connection.Impl do
     # N.B. I've _never_ seen this match fail
     # if it does, please open an issue
     {:ok, conn} =
-      :gun.open(
+      @gun.open(
         to_charlist(uri.host),
         uri.port,
         configuration.gun_open_options
       )
 
     stream_ref =
-      :gun.ws_upgrade(
+      @gun.ws_upgrade(
         conn,
         path(uri),
         configuration.headers
@@ -103,7 +110,7 @@ defmodule Slipstream.Connection.Impl do
   end
 
   def handle_command(state, %Commands.CloseConnection{}) do
-    :gun.close(state.conn)
+    @gun.close(state.conn)
 
     route_event state, %Events.ChannelClosed{
       reason: :client_disconnect_requested
@@ -112,11 +119,20 @@ defmodule Slipstream.Connection.Impl do
     {:stop, {:shutdown, :disconnected}, state}
   end
 
+  # coveralls-ignore-start
   def handle_command(state, command) do
-    IO.inspect(command, label: "unhandled command")
+    Logger.error("""
+    #{inspect(__MODULE__)} received a command it is not setup to handle:
+    #{inspect(command)}.
+
+    Please open an issue in NFIBrokerage/slipstream with any available details
+    leading to this logger message.
+    """)
 
     {:noreply, state}
   end
+
+  # coveralls-ignore-stop
 
   # ---
 
@@ -126,13 +142,13 @@ defmodule Slipstream.Connection.Impl do
   def handle_event(state, event)
 
   def handle_event(state, %Events.PingReceived{}) do
-    :gun.ws_send(state.conn, :pong)
+    @gun.ws_send(state.conn, :pong)
 
     {:noreply, state}
   end
 
   def handle_event(state, %Events.ChannelClosed{} = event) do
-    :gun.close(state.conn)
+    @gun.close(state.conn)
 
     route_event state, event
 
@@ -151,7 +167,7 @@ defmodule Slipstream.Connection.Impl do
   # ---
 
   def push_message(message, state) do
-    :gun.ws_send(state.conn, {:text, encode(message, state)})
+    @gun.ws_send(state.conn, {:text, encode(message, state)})
   end
 
   def push_heartbeat(state) do

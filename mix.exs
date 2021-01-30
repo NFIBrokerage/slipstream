@@ -15,8 +15,10 @@ defmodule Slipstream.MixProject do
       app: :slipstream,
       version: @version,
       # Slipstream makes use of the `@derive {Inspect, ..` feature introduced
-      # in elixir 1.8
-      elixir: "~> 1.8",
+      # in elixir 1.8 and the Application.compile_env/3 function introduced in
+      # elixir 1.10, but it only uses these features if it detects that the
+      # current elixir version meets those requiremens.
+      elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: extra_compilers(Mix.env()) ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
