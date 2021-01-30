@@ -28,7 +28,7 @@
       # If you create your own checks, you must specify the source files for
       # them here, so they can be loaded by Credo before running the analysis.
       #
-      requires: ["deps/convene/lib/convene/check/*.ex"],
+      requires: [],
       #
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
@@ -48,12 +48,6 @@
       #     {Credo.Check.Design.DuplicatedCode, false}
       #
       checks: [
-        #
-        ## Cuatro Checks
-        #
-        {Convene.Check.ModulenameMatchesFilename,
-         excluded: [~r(test/support/)]},
-
         #
         ## Consistency Checks
         #
@@ -129,8 +123,6 @@
         {Credo.Check.Warning.ExpensiveEmptyEnumCheck},
         {Credo.Check.Warning.IExPry},
         {Credo.Check.Warning.IoInspect},
-        # can remove this because these are all lazy in Elixir 1.7.4
-        {Credo.Check.Warning.LazyLogging, false},
         {Credo.Check.Warning.OperationOnSameValues},
         {Credo.Check.Warning.OperationWithConstantResult},
         {Credo.Check.Warning.UnusedEnumOperation},
