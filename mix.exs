@@ -70,7 +70,7 @@ defmodule Slipstream.MixProject do
       {:mox, "~> 1.0", only: :test},
       {:credo, "~> 1.5", only: :test},
       {:bless, "~> 1.0", only: :test},
-      {:excoveralls, "~> 0.7", only: :test},
+      {:excoveralls, "~> 0.7", only: :test}
     ]
   end
 
