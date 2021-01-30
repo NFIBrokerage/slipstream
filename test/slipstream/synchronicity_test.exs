@@ -76,6 +76,10 @@ defmodule Slipstream.SynchronicityTest do
 
       refute connected?(socket)
     end
+
+    test "we may request garbage collection", c do
+      assert collect_garbage(c.socket) == :ok
+    end
   end
 
   describe "given a connection joined to a good topic" do

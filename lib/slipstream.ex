@@ -631,16 +631,20 @@ defmodule Slipstream do
         {:ok, socket} = reconnect(socket)
       end
 
-  `reconnect/1` may return `:error` in the case that the socket passed does not
-  contain any connection information (which is added to the socket with
-  `connect/2` or `connect!/2`).
+  `reconnect/1` may return an `:error` tuple in the case that the socket passed
+  does not contain any connection information (which is added to the socket
+  with `connect/2` or `connect!/2`), or if the socket is currently connected.
+  For a `reconnect/1` call without configuration, the return pattern is
+  `{:error, :no_config}`, and for a socket that is already connected, the
+  pattern is `{:error, :connected}`.
 
   A reconnect may be awaited with `await_connect/2`.
   """
   @doc since: "1.0.0"
   @spec reconnect(socket :: Socket.t()) :: {:ok, Socket.t()} | :error
   def reconnect(socket) do
-    with %Slipstream.Configuration{} = config <- socket.channel_config,
+    with false <- Socket.connected?(socket),
+         %Slipstream.Configuration{} = config <- socket.channel_config,
          {time, socket} <- Socket.next_reconnect_time(socket) do
       command = %Commands.OpenConnection{socket: socket, config: config}
 
@@ -652,7 +656,8 @@ defmodule Slipstream do
 
       {:ok, socket}
     else
-      nil -> :error
+      nil -> {:error, :no_config}
+      true -> {:error, :connected}
     end
   end
 
