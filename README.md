@@ -1,4 +1,4 @@
-<img src="guides/koi.png" align="right" width="50"/>
+<img src="guides/wheel.png" align="right" width="50"/>
 
 # Slipstream
 

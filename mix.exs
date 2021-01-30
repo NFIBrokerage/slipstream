@@ -76,7 +76,6 @@ defmodule Slipstream.MixProject do
       name: "slipstream",
       files: ~w(lib .formatter.exs mix.exs README.md .version),
       licenses: [],
-      organization: "cuatro",
       links: %{"GitHub" => "https://github.com/NFIBrokerage/slipstream"}
     ]
   end
@@ -94,7 +93,7 @@ defmodule Slipstream.MixProject do
       extras: [
         "CHANGELOG.md"
       ],
-      logo: "guides/koi.png",
+      logo: "guides/wheel.png",
       groups_for_extras: [
         Guides: Path.wildcard("guides/*.md")
       ]
