@@ -849,7 +849,12 @@ defmodule Slipstream do
     else
       false -> {:error, :not_joined}
       # e.g. if the genserver call fails by timeout
+      # we're not gonna test that though. imagine how big the message would have
+      # to be
+      # coveralls-ignore-start
       other_return -> other_return
+
+      # coveralls-ignore-stop
     end
   end
 

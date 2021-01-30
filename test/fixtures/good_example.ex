@@ -5,7 +5,6 @@ defmodule Slipstream.GoodExample do
 
   use Slipstream, restart: :transient
 
-  @topic "test:foo"
   @config Application.compile_env!(:slipstream, __MODULE__)
 
   def start_link(opts) do
@@ -28,14 +27,7 @@ defmodule Slipstream.GoodExample do
   def handle_connect(socket) do
     send(socket.assigns.test_proc, {__MODULE__, :connected})
 
-    {:ok, join(socket, @topic)}
-  end
-
-  @impl Slipstream
-  def handle_disconnect(reason, socket) do
-    send(socket.assigns.test_proc, {__MODULE__, :disconnected, reason})
-
-    {:ok, _socket} = reconnect(socket)
+    {:ok, socket}
   end
 
   @impl Slipstream
@@ -74,25 +66,41 @@ defmodule Slipstream.GoodExample do
     {:stop, :normal, socket}
   end
 
-  def handle_info(:leave, socket) do
-    {:noreply, leave(socket, @topic)}
-  end
-
-  def handle_info(:disconnect, socket) do
-    {:noreply, disconnect(socket)}
-  end
-
-  def handle_info(message, socket) do
+  def handle_info(_message, socket) do
     {:noreply, socket}
   end
 
   @impl Slipstream
-  def handle_topic_close(topic, message, socket) do
-    send(
-      socket.assigns.test_proc,
-      {__MODULE__, :topic_closed, topic, message}
-    )
+  def handle_cast({:join, topic, params}, socket) do
+    {:noreply, join(socket, topic, params)}
+  end
 
-    {:ok, _socket} = rejoin(socket, topic)
+  def handle_cast({:leave, topic}, socket) do
+    {:noreply, leave(socket, topic)}
+  end
+
+  def handle_cast({:push, topic, event, message}, socket) do
+    push(socket, topic, event, message)
+
+    {:noreply, socket}
+  end
+
+  def handle_cast(:disconnect, socket) do
+    {:noreply, disconnect(socket)}
+  end
+
+  @impl Slipstream
+  # a graceful leave requested by leave/2 above ^
+  def handle_topic_close(topic, :left, socket) do
+    send(socket.assigns.test_proc, {__MODULE__, :left, topic})
+
+    {:ok, socket}
+  end
+
+  @impl Slipstream
+  def handle_disconnect(reason, socket) do
+    send(socket.assigns.test_proc, {__MODULE__, :disconnected, reason})
+
+    {:ok, socket}
   end
 end
