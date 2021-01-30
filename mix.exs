@@ -1,6 +1,7 @@
 defmodule Slipstream.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/NFIBrokerage/slipstream"
   @version_file Path.join(__DIR__, ".version")
   @external_resource @version_file
   @version (case Regex.run(~r/^v([\d\.\w-]+)/, File.read!(@version_file),
@@ -76,7 +77,10 @@ defmodule Slipstream.MixProject do
       name: "slipstream",
       files: ~w(lib .formatter.exs mix.exs README.md .version),
       licenses: [],
-      links: %{"GitHub" => "https://github.com/NFIBrokerage/slipstream"}
+      links: %{
+        "GitHub" => @source_url,
+        "GitHub" => @source_url <> "/blob/main/CHANGELOG.md"
+      }
     ]
   end
 
@@ -91,7 +95,8 @@ defmodule Slipstream.MixProject do
       # https://github.com/NFIBrokerage/projection/blob/5f406872d00156e2b94cfa9fae8e92a1aa4c177b/mix.exs#L88-L90
       deps: [],
       extras: [
-        "CHANGELOG.md"
+        "CHANGELOG.md",
+        "guides/implementation.md"
       ],
       groups_for_extras: [
         Guides: Path.wildcard("guides/*.md")
