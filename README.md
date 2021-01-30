@@ -1,4 +1,4 @@
-# Slipstream ![CI](https://github.com/NFIBrokerage/slipstream/workflows/Actions%20CI/badge.svg)
+# Slipstream ![CI](https://github.com/NFIBrokerage/slipstream/workflows/Actions%20CI/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/NFIBrokerage/slipstream/badge.svg)](https://coveralls.io/github/NFIBrokerage/slipstream)
 
 A slick websocket client for Phoenix channels
 
