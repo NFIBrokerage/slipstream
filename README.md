@@ -16,6 +16,10 @@ def deps do
 end
 ```
 
+> N.B.: Slipstream is still being evaluated and tested in production. Once the
+> interface is stable and initial bugs worked out, a v1.0.0 version will be
+> published.
+
 ## Contributing
 
 Issues and PRs are welcome! If you're considering sending a PR or
