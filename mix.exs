@@ -58,7 +58,7 @@ defmodule Slipstream.MixProject do
     [
       {:gun, "~> 1.3"},
       {:phoenix, "~> 1.0"},
-      {:telemetry, "~> 0.4"},
+      # {:telemetry, "~> 0.4"},
       {:jason, "~> 1.0", optional: true},
       {:nimble_options, "~> 0.1"},
       # docs
