@@ -27,6 +27,7 @@ defmodule Slipstream.MixProject do
         credo: :test,
         coveralls: :test,
         "coveralls.html": :test,
+        "coveralls.github": :test,
         bless: :test,
         test: :test
       ],
