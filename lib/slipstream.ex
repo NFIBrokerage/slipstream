@@ -7,6 +7,93 @@ defmodule Slipstream do
 
   - it's backed by `:gun` instead of `:websocket_client`
   - it has an `await_*` interface for performing actions synchronously
+  - smart retry strategies for reconnection and rejoining work out-of-the-box
+
+  ## Basic Usage
+
+  The intended use for Slipstream is to write asynchronous, callback-oriented
+  GenServer-like modules that define socket clients. This approach makes it
+  easy to write socket clients that resemble state-machines. A minimalistic
+  example usage might be like so:
+
+      defmodule MyApp.MySocketClient do
+        @moduledoc \"\"\"
+        A socket client for connecting to that other Phoenix server
+
+        Periodically sends pings and asks the other server for its metrics.
+        \"\"\"
+
+        use Slipstream,
+          restart: :temporary
+
+        require Logger
+
+        @topic "backend-service:money-server"
+
+        def start_link(args) do
+          Slipstream.start_link(__MODULE__, args, name: __MODULE__)
+        end
+
+        @impl Slipstream
+        def init(config) do
+          {:ok, connect!(config), {:continue, :start_ping}}
+        end
+
+        @impl Slipstream
+        def handle_continue(:start_ping, socket) do
+          timer = :timer.send_interval(self(), :request_metrics)
+
+          {:noreply, assign(socket, :ping_timer, timer)}
+        end
+
+        @impl Slipstream
+        def handle_connect(socket) do
+          {:ok, join(socket, @topic)}
+        end
+
+        @impl Slipstream
+        def handle_join(@topic, _join_response, socket) do
+          # an asynchronous push with no reply:
+          push(socket, @topic, "hello", %{})
+
+          {:ok, socket}
+        end
+
+        @impl Slipstream
+        def handle_info(:request_metrics, socket) do
+          # we will asynchronously receive a reply and handle it in the
+          # handle_reply/3 implementation below
+          {:ok, ref} = push(socket, @topic, "get_metrics", %{format: "json"})
+
+          {:noreply, assign(socket, :metrics_request, ref)}
+        end
+
+        @impl Slipstream
+        def handle_reply(ref, metrics, socket) do
+          if ref == socket.assigns.metrics_request do
+            :ok = MyApp.MetricsPublisher.publish(metrics)
+          end
+
+          {:ok, socket}
+        end
+
+        @impl Slipstream
+        def handle_message(@topic, event, message, socket) do
+          Logger.error(
+            "Was not expecting a push from the server. Heard: " <>
+              inspect({@topic, event, message})
+          )
+
+          {:ok, socket}
+        end
+
+        @impl Slipstream
+        def handle_disconnect(_reason, socket) do
+          :timer.cancel(socket.assigns.ping_timer)
+
+          {:stop, :normal, socket}
+        end
+      end
 
   ## Synchronicity
 
@@ -63,6 +150,8 @@ defmodule Slipstream do
         def handle_call(:foo, _from, socket) do
           {:reply, {:ok, :bar}, socket}
         end
+
+        ..
       end
 
   This `MyClient` client is a GenServer, so the following are valid ways to
@@ -541,7 +630,29 @@ defmodule Slipstream do
   defdelegate start_link(module, init_arg, options \\ []), to: GenServer
 
   @doc """
-  Creates a new socket without connecting to a remote websocket
+  Creates a new socket without immediately connecting to a remote websocket
+
+  This can be useful if you do not wish to request connection with `connect/2`
+  during the `c:init/1` callback (because the `c:init/1` callback requires that
+  you return a `t:Slipstream.Socket.t/0`).
+
+  ## Examples
+
+      defmodule MySocketClient do
+        use Slipstream
+
+        ..
+
+        @impl Slipstream
+        def init(args) do
+          {:ok, new_socket() |> assign(:init_args, args)}
+        end
+
+        ..
+      end
+
+      iex> new_socket()
+      #Slipstream.Socket<assigns: %{}, ...>
   """
   @doc since: "0.1.0"
   @spec new_socket() :: Socket.t()
@@ -1233,7 +1344,7 @@ defmodule Slipstream do
 
       defmodule MyApp.MySocketClient do
         # one crash/shutdown/exit will permanently terminate the server
-        use Slipstream, restart: :transient
+        use Slipstream, restart: :temporary
 
         def start_link(args) do
           Slipstream.start_link(__MODULE__, args)
