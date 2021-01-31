@@ -63,7 +63,7 @@ defmodule Slipstream.MixProject do
       {:nimble_options, "~> 0.1"},
       # docs
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:inch_ex, "== 2.1.0-rc.1", only: [:dev, :test]},
+      {:inch_ex, "~> 2.0", only: [:dev, :test]},
       # test
       {:cowlib, "~> 2.9", override: true, only: [:dev, :test]},
       {:phoenix_pubsub, "~> 2.0", override: true, only: [:dev, :test]},
