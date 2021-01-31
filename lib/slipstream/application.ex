@@ -5,7 +5,8 @@ defmodule Slipstream.Application do
 
   def start(_type, _args) do
     children = [
-      Slipstream.ConnectionSupervisor
+      Slipstream.ConnectionSupervisor,
+      Slipstream.TestingBallast
     ]
 
     opts = [strategy: :one_for_one, name: Slipstream.Supervisor]
