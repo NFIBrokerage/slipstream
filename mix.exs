@@ -79,7 +79,7 @@ defmodule Slipstream.MixProject do
     [
       name: "slipstream",
       files: ~w(lib .formatter.exs mix.exs README.md .version),
-      licenses: [],
+      licenses: ["Apache-2.0"],
       links: %{
         "GitHub" => @source_url,
         "Changelog" => @source_url <> "/blob/main/CHANGELOG.md"
