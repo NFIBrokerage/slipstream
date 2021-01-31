@@ -56,7 +56,7 @@ defmodule Slipstream.MixProject do
 
   defp deps do
     [
-      {:gun, "~> 1.3"},
+      {:gun, "~> 1.0"},
       {:phoenix, "~> 1.0"},
       # {:telemetry, "~> 0.4"},
       {:jason, "~> 1.0", optional: true},
