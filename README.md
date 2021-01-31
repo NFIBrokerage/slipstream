@@ -22,8 +22,9 @@ end
 
 ## Contributing
 
-Issues and PRs are always welcome! See `CONTRIBUTING.md` for more information
-about best-practices and passing CI.
+Issues and PRs are always welcome! See our organization
+[`CONTRIBUTING.md`](https://github.com/NFIBrokerage/.github/blob/main/CONTRIBUTING.md)
+for more information about best-practices and passing CI.
 
 If you're considering sending a PR or otherwise forking Slipstream, you may
 wish to read [the implementation docs](guides/implementation.md) first.
