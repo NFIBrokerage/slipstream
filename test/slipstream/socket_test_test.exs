@@ -61,7 +61,7 @@ defmodule Slipstream.SocketTestTest do
       topic = c.topic
       params = c.params
 
-      join(topic, params)
+      __MODULE__.tell_fixture_to_join(topic, params)
 
       connect_and_assert_join @fixture, ^topic, ^params, {:ok, params}
 
@@ -73,7 +73,7 @@ defmodule Slipstream.SocketTestTest do
       topic = c.topic
       params = c.params
 
-      join(topic, params)
+      __MODULE__.tell_fixture_to_join(topic, params)
 
       connect_and_assert_join @fixture, ^topic, ^params, :error
 
@@ -107,7 +107,7 @@ defmodule Slipstream.SocketTestTest do
       topic = c.topic
       params = c.params
 
-      join(topic, params)
+      __MODULE__.tell_fixture_to_join(topic, params)
 
       assert_join ^topic, ^params, :ok
 
@@ -132,7 +132,7 @@ defmodule Slipstream.SocketTestTest do
 
       start_supervised!({@fixture, self()})
 
-      join(topic, params)
+      __MODULE__.tell_fixture_to_join(topic, params)
 
       connect_and_assert_join @fixture, ^topic, ^params, :ok
 
@@ -185,7 +185,7 @@ defmodule Slipstream.SocketTestTest do
     end
   end
 
-  defp join(topic, params) do
+  def tell_fixture_to_join(topic, params) do
     @fixture
     |> Slipstream.SocketTest.__check_client__()
     |> send({:join, topic, params})
