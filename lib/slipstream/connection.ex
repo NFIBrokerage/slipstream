@@ -68,6 +68,14 @@ defmodule Slipstream.Connection do
   end
 
   def handle_info(
+        {:gun_error, conn, {:websocket, stream_ref, _, _, _},
+         {:closed, 'The connection was lost.'}},
+        %State{conn: conn, stream_ref: stream_ref} = state
+      ) do
+    emit_channel_closed(:connection_lost, state)
+  end
+
+  def handle_info(
         {:gun_ws, conn, stream_ref, {:close, _, _}},
         %State{conn: conn, stream_ref: stream_ref} = state
       ) do
