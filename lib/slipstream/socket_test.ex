@@ -48,15 +48,16 @@ defmodule Slipstream.SocketTest do
 
         ..
 
-  By default, this will start a server session for each test that TODO
+  By default, this will start a server session for each test that simulates
+  the current test process as the websocket server connected to the client.
 
       test "the client sends a push to the server on join", c do
-        server = connect(c.server, MyClient)
+        accept_connect(MyClient)
       end
 
-  This server does not run a websocket server. Instead the server structure is
-  a conceptual server: you may imagine that you hold a reference to a server
-  which allows you to control the behavior of that server imperatively.
+  This server does not run a websocket server. Instead the server is
+  a conceptual server: you may imagine that in each test, you are have control
+  of the remote server and can control the behavior of the server imperatively.
 
   The `assert_*` and `refute_*` family of macros from this module allow you to
   make assertions about- and match on values from- requests from the client to
@@ -314,7 +315,7 @@ defmodule Slipstream.SocketTest do
 
   ## Examples
 
-      connect(MyClient)
+      accept_connect(MyClient)
       assert_join "rooms:lobby", %{}, :ok
   """
   @doc since: "0.2.0"
