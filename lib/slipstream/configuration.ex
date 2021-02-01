@@ -66,6 +66,14 @@ defmodule Slipstream.Configuration do
       """,
       type: {:custom, __MODULE__, :parse_gun_open_options, []},
       default: %{protocols: [:http]}
+    ],
+    test_mode?: [
+      doc: """
+      Whether or not to start-up the client in test-mode. See
+      `Slipstream.SocketTest` for notes on testing Slipstream clients.
+      """,
+      type: :boolean,
+      default: false
     ]
   ]
 

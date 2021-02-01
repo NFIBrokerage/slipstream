@@ -18,6 +18,8 @@ defmodule Slipstream.CommandRouter do
 
   alias Slipstream.Socket
 
+  alias Slipstream.Configuration, as: Config
+
   import Slipstream.Signatures, only: [command: 1]
 
   @forwarded_command_types [
@@ -29,6 +31,10 @@ defmodule Slipstream.CommandRouter do
 
   @spec route_command(struct()) :: any()
   def route_command(command)
+
+  def route_command(%OpenConnection{config: %Config{test_mode?: true}}) do
+    :ok
+  end
 
   def route_command(%OpenConnection{} = cmd) do
     DynamicSupervisor.start_child(

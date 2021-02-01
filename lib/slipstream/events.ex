@@ -27,6 +27,9 @@ defmodule Slipstream.Events do
   The connection state may need to be taken into consideration. It holds
   information about the `ref` fields on messages and whether or not they belong
   to joins or leaves.
+
+  `server_message` is either a `%Phoenix.Socket.Message{}` or `:ping` or `:pong`.
+  `connection_state` is the GenServer state of the connection process.
   """
   @spec map(atom() | %Message{}, %State{}) :: struct()
   def map(server_message, connection_state)
@@ -84,7 +87,7 @@ defmodule Slipstream.Events do
         %Message{
           topic: topic,
           event: "phx_reply",
-          payload: %{"response" => response, "status" => status},
+          payload: %{"response" => _response, "status" => _status} = payload,
           ref: ref
         },
         state
@@ -95,8 +98,7 @@ defmodule Slipstream.Events do
     else
       %ReplyReceived{
         topic: topic,
-        status: String.to_atom(status),
-        response: response,
+        reply: ReplyReceived.to_reply(payload),
         ref: ref
       }
     end

@@ -102,7 +102,13 @@ defmodule Slipstream.MixProject do
       ],
       groups_for_extras: [
         Guides: Path.wildcard("guides/*.md")
-      ]
+      ],
+      groups_for_modules: [
+        Testing: [
+          Slipstream.SocketTest
+        ]
+      ],
+      skip_undefined_reference_warnings_on: ["guides/implementation.md"]
     ]
   end
 end

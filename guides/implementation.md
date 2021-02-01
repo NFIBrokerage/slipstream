@@ -86,6 +86,7 @@ alias Slipstream.Events
 import Slipstream.Signatures, only: [event: 1]
 
 event(%Events.HeartbeatAcknowledged{})
+#=> {:__slipstream_event__, %Slipstream.Events.HeartbeatAcknowledged{}}
 ```
 
 And then later-on this data structure can be matched with any sort of

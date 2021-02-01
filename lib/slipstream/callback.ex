@@ -105,10 +105,7 @@ defmodule Slipstream.Callback do
   end
 
   defp _determine_callback(%Events.ReplyReceived{} = event) do
-    callback :handle_reply, [
-      {event.topic, event.ref},
-      Events.ReplyReceived.to_reply(event)
-    ]
+    callback :handle_reply, [event.ref, event.reply]
   end
 
   defp _determine_callback(%Events.MessageReceived{} = event) do
