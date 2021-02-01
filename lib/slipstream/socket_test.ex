@@ -174,7 +174,7 @@ defmodule Slipstream.SocketTest do
       test "the server increments our counter with ping messages", c do
         assert Counter.count() == 0
 
-        connect_and_join(MyClient, "counter-topic", %{}, :ok)
+        connect_and_join MyClient, "counter-topic", %{}, :ok
 
         push(MyClient, "counter-topic", "ping", %{delta: 1})
 
@@ -214,7 +214,7 @@ defmodule Slipstream.SocketTest do
   ## Examples
 
       topic = "rooms:lobby"
-      connect_and_join(MySocketClient, ^topic, %{}, :ok)
+      connect_and_join MySocketClient, ^topic, %{}, :ok
       assert_push ^topic, "ping", %{}, ref
       reply(MySocketClient, ref, {:ok, %{"ping" => "pong"}})
   """
@@ -265,12 +265,12 @@ defmodule Slipstream.SocketTest do
         {:ok, join(socket, "rooms:lobby", %{user_id: socket.assigns.user_id})}
       end
 
-  May be tested with `connect_and_join/6` as opposed to a separate `connect/2`
+  May be tested with `connect_and_join/5` as opposed to a separate `connect/2`
   and then an `assert_join/5`.
 
   ## Examples
 
-      socket = connect_and_join(MySocketClient, "rooms:lobby", %{}, :ok)
+      socket = connect_and_join MySocketClient, "rooms:lobby", %{}, :ok
       push(socket, "rooms:lobby", "initial-hello", %{"hello" => "world"})
   """
   @doc since: "0.2.0"
@@ -310,8 +310,8 @@ defmodule Slipstream.SocketTest do
   may be literal values, pinned (`^`) bindings, or partial values such as
   `"msg:" <> _` or `%{}` (which matches any map).
 
-  `reply` is encoded following the same rules as are outlined in
-  `t:Slipstream.reply/0`.
+  `reply` is meant to simulate the return value of the
+  `c:Phoenix.Channel.join/3` callback.
 
   ## Examples
 
