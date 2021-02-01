@@ -149,7 +149,7 @@ defmodule Slipstream.SynchronicityTest do
 
   test """
   when trying to connect to a url that is not a websocket endpoint,
-  the channel connection fails with TODO
+  the channel connection fails with 404
   """ do
     assert {:error, reason} =
              connect!(uri: "ws://localhost:4001/socket")
