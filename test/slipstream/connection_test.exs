@@ -15,7 +15,7 @@ defmodule Slipstream.ConnectionTest do
   import Slipstream
   import Slipstream.Socket, except: [send: 2]
   import Slipstream.Signatures
-  alias Slipstream.{Commands}
+  alias Slipstream.{Commands, Events}
 
   import Mox
   setup :verify_on_exit!
@@ -239,9 +239,13 @@ defmodule Slipstream.ConnectionTest do
       # we don't send the connection process a reply to that heartbeat, so we
       # expect it to disconnect the client
 
-      assert {:ok, socket} = await_disconnect(socket)
+      # also, normally we would test the disconnect with this code:
+      #     assert {:ok, socket} = await_disconnect(socket)
+      #     assert connected?(socket) == false
+      # which passes the test, but I want to get that disconnect reason
+      # and assert that it is :heartbeat_timeout
 
-      assert connected?(socket) == false
+      assert_receive event(%Events.ChannelClosed{reason: :heartbeat_timeout})
     end
   end
 end
