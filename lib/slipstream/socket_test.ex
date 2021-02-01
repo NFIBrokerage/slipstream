@@ -174,7 +174,7 @@ defmodule Slipstream.SocketTest do
       test "the server increments our counter with ping messages", c do
         assert Counter.count() == 0
 
-        connect_and_join MyClient, "counter-topic", %{}, :ok
+        connect_and_assert_join MyClient, "counter-topic", %{}, :ok
 
         push(MyClient, "counter-topic", "ping", %{delta: 1})
 
@@ -214,7 +214,7 @@ defmodule Slipstream.SocketTest do
   ## Examples
 
       topic = "rooms:lobby"
-      connect_and_join MySocketClient, ^topic, %{}, :ok
+      connect_and_assert_join MySocketClient, ^topic, %{}, :ok
       assert_push ^topic, "ping", %{}, ref
       reply(MySocketClient, ref, {:ok, %{"ping" => "pong"}})
   """
@@ -265,23 +265,23 @@ defmodule Slipstream.SocketTest do
         {:ok, join(socket, "rooms:lobby", %{user_id: socket.assigns.user_id})}
       end
 
-  May be tested with `connect_and_join/5` as opposed to a separate `connect/2`
+  May be tested with `connect_and_assert_join/5` as opposed to a separate `connect/2`
   and then an `assert_join/5`.
 
   ## Examples
 
-      socket = connect_and_join MySocketClient, "rooms:lobby", %{}, :ok
+      socket = connect_and_assert_join MySocketClient, "rooms:lobby", %{}, :ok
       push(socket, "rooms:lobby", "initial-hello", %{"hello" => "world"})
   """
   @doc since: "0.2.0"
-  @spec connect_and_join(
+  @spec connect_and_assert_join(
           client :: pid() | GenServer.name(),
           topic_expr :: Macro.t(),
           params_expr :: Macro.t(),
           reply :: Slipstream.reply(),
           timeout()
         ) :: term()
-  defmacro connect_and_join(
+  defmacro connect_and_assert_join(
              client,
              topic_expr,
              params_expr,

@@ -28,8 +28,8 @@ published_locals_without_parens = [
   refute_push: 3,
   refute_push: 4,
 
-  connect_and_join: 4,
-  connect_and_join: 5
+  connect_and_assert_join: 4,
+  connect_and_assert_join: 5
 ]
 
 [

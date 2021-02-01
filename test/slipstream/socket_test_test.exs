@@ -56,14 +56,14 @@ defmodule Slipstream.SocketTestTest do
                    end
     end
 
-    test "we may connect and join a topic all at once with connect_and_join/5",
+    test "we may connect and join a topic all at once with connect_and_assert_join/5",
          c do
       topic = c.topic
       params = c.params
 
       join(topic, params)
 
-      connect_and_join @fixture, ^topic, ^params, {:ok, params}
+      connect_and_assert_join @fixture, ^topic, ^params, {:ok, params}
 
       assert_receive {@fixture, :connected}
       assert_receive {@fixture, :joined, ^topic, ^params}
@@ -75,7 +75,7 @@ defmodule Slipstream.SocketTestTest do
 
       join(topic, params)
 
-      connect_and_join @fixture, ^topic, ^params, :error
+      connect_and_assert_join @fixture, ^topic, ^params, :error
 
       assert_receive {@fixture, :connected}
 
@@ -134,7 +134,7 @@ defmodule Slipstream.SocketTestTest do
 
       join(topic, params)
 
-      connect_and_join @fixture, ^topic, ^params, :ok
+      connect_and_assert_join @fixture, ^topic, ^params, :ok
 
       assert_receive {@fixture, :connected}
       assert_receive {@fixture, :joined, ^topic, %{}}
