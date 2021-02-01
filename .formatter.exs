@@ -1,14 +1,42 @@
-locals_without_parens = [
+local_locals_without_parens = [
   route_event: 2,
   route_command: 1,
   callback: 2
 ]
 
+published_locals_without_parens = [
+  assert_disconnect: :*,
+  assert_disconnect: :*,
+
+  refute_disconnect: :*,
+
+  assert_join: :*,
+  assert_join: :*,
+
+  refute_join: :*,
+  refute_join: :*,
+
+  assert_leave: :*,
+  assert_leave: :*,
+
+  refute_leave: :*,
+  refute_leave: :*,
+
+  assert_push: :*,
+  assert_push: :*,
+  assert_push: :*,
+
+  refute_push: :*,
+  refute_push: :*,
+
+  connect_and_join: :*
+]
+
 [
   inputs: ["mix.exs", "{config,lib,test}/**/*.{ex,exs}"],
   import_deps: [],
-  locals_without_parens: locals_without_parens,
-  export: [],
+  locals_without_parens: local_locals_without_parens ++ published_locals_without_parens,
+  export: [locals_without_parens: published_locals_without_parens],
   line_length: 80
 ]
 

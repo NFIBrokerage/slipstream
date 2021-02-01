@@ -228,8 +228,7 @@ defmodule Slipstream do
       end
   """
   @typedoc since: "0.1.0"
-  @type push_reference() ::
-          {topic :: String.t(), message_reference :: String.t()}
+  @type push_reference() :: String.t()
 
   @typedoc """
   A reply from a remote server to a push from the client
@@ -944,7 +943,7 @@ defmodule Slipstream do
 
     with true <- Socket.joined?(socket, topic),
          {:ok, ref} <- route_command(command) do
-      {:ok, {topic, ref}}
+      {:ok, ref}
     else
       false ->
         {:error, :not_joined}
@@ -1286,10 +1285,9 @@ defmodule Slipstream do
   @spec await_reply(push_reference(), timeout()) :: reply() | {:error, :timeout}
   def await_reply(push_reference, timeout \\ @default_timeout)
 
-  def await_reply({topic, ref}, timeout) do
+  def await_reply(ref, timeout) do
     receive do
-      event(%Events.ReplyReceived{ref: ^ref, topic: ^topic} = event) ->
-        Events.ReplyReceived.to_reply(event)
+      event(%Events.ReplyReceived{ref: ^ref} = event) -> event.reply
     after
       timeout -> {:error, :timeout}
     end

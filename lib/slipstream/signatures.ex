@@ -21,4 +21,11 @@ defmodule Slipstream.Signatures do
       {:__slipstream_command__, unquote(command_pattern)}
     end
   end
+
+  # this one is because I feel bad writing :"$gen_call" twice
+  defmacro gen_server_call(message_expr, from_expr) do
+    quote do
+      {:"$gen_call", unquote(from_expr), unquote(message_expr)}
+    end
+  end
 end
