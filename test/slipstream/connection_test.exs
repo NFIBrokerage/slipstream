@@ -15,7 +15,7 @@ defmodule Slipstream.ConnectionTest do
   import Slipstream
   import Slipstream.Socket, except: [send: 2]
   import Slipstream.Signatures
-  alias Slipstream.{Commands}
+  alias Slipstream.{Commands, Events}
 
   import Mox
   setup :verify_on_exit!
@@ -177,6 +177,75 @@ defmodule Slipstream.ConnectionTest do
       )
 
       refute c.socket |> await_disconnect!() |> connected?
+    end
+  end
+
+  describe "given an open connection socket with heartbeat interval set very low" do
+    setup c do
+      conn = self()
+      stream_ref = make_ref()
+
+      @gun
+      |> stub(:open, fn _host, _port, _opts ->
+        # N.B.: we're providing the test process as the conn so it makes life
+        # easier later when we expect messages and want to send them to the
+        # test process for an assert_receive/2
+        {:ok, conn}
+      end)
+      |> stub(:ws_upgrade, fn _conn, _path, _headers, _opts ->
+        send(
+          self(),
+          {:gun_upgrade, conn, stream_ref, ["websocket"], _headers = []}
+        )
+
+        stream_ref
+      end)
+
+      config =
+        c.config
+        # 20ms between heartbeat requests
+        |> Keyword.put(:heartbeat_interval_msec, 20)
+
+      [config: config, conn: conn, stream_ref: stream_ref]
+    end
+
+    test """
+         when we snub heartbeat responses to the connection process,
+         then the client will disconnect
+         """,
+         c do
+      conn = c.conn
+
+      @gun
+      |> expect(:ws_send, 1, fn ^conn, {:text, heartbeat_request} ->
+        request =
+          heartbeat_request
+          |> IO.iodata_to_binary()
+          |> Jason.decode!()
+
+        send(conn, {:request, request})
+
+        :ok
+      end)
+      |> expect(:close, 1, fn ^conn -> :ok end)
+
+      socket = c.config |> connect!() |> await_connect!()
+
+      assert connected?(socket)
+
+      assert_receive {:request,
+                      [_join_ref, _ref, "phoenix", "heartbeat", _payload]}
+
+      # we don't send the connection process a reply to that heartbeat, so we
+      # expect it to disconnect the client
+
+      # also, normally we would test the disconnect with this code:
+      #     assert {:ok, socket} = await_disconnect(socket)
+      #     assert connected?(socket) == false
+      # which passes the test, but I want to get that disconnect reason
+      # and assert that it is :heartbeat_timeout
+
+      assert_receive event(%Events.ChannelClosed{reason: :heartbeat_timeout})
     end
   end
 end
