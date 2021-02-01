@@ -79,10 +79,21 @@ defmodule Slipstream.Connection.State do
   @spec apply_command(%__MODULE__{}, command :: struct()) :: %__MODULE__{}
   def apply_command(state, command)
 
-  def apply_command(%__MODULE__{} = state, %Commands.SendHeartbeat{}) do
+  def apply_command(
+        %__MODULE__{heartbeat_ref: nil} = state,
+        %Commands.SendHeartbeat{}
+      ) do
     {ref, state} = next_ref(state)
 
     %__MODULE__{state | heartbeat_ref: ref}
+  end
+
+  def apply_command(
+        %__MODULE__{heartbeat_ref: existing_heartbeat_ref} = state,
+        %Commands.SendHeartbeat{}
+      )
+      when is_binary(existing_heartbeat_ref) do
+    %__MODULE__{state | heartbeat_ref: :error}
   end
 
   def apply_command(%__MODULE__{} = state, %Commands.PushMessage{}) do

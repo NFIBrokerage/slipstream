@@ -61,7 +61,20 @@ defmodule Slipstream.Connection.Impl do
         when new_state: %State{}
   def handle_command(state, command)
 
-  def handle_command(state, %Commands.SendHeartbeat{}) do
+  # we are waiting on a HeartbeatAcknowledged event (heartbeat-timeout)
+  def handle_command(
+        %State{heartbeat_ref: :error} = state,
+        %Commands.SendHeartbeat{}
+      ) do
+    gun().close(state.conn)
+
+    route_event state, %Events.ChannelClosed{reason: :heartbeat_timeout}
+
+    {:stop, {:shutdown, :disconnected}, state}
+  end
+
+  # we are _not_ waiting on a HeartbeatAcknowledged event (normal)
+  def handle_command(%State{} = state, %Commands.SendHeartbeat{}) do
     push_heartbeat(state)
 
     {:noreply, state}
