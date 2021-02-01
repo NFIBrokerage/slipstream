@@ -178,6 +178,8 @@ defmodule Slipstream.SocketTestTest do
       assert_leave left_topic
       assert left_topic == topic
 
+      assert_receive {@fixture, :left, ^topic}
+
       # we do not duplicate the request to leave
       refute_leave ^topic
     end
