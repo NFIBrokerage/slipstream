@@ -64,34 +64,14 @@ defmodule Slipstream.Connection do
         {:gun_down, conn, :ws, :closed, [], []},
         %State{conn: conn} = state
       ) do
-    event = %Events.ChannelClosed{reason: :closed_by_remote}
-
-    # if we're already terminating, no need to duplicate the channel_closed
-    # event
-    if state.status == :terminating do
-      {:noreply, state}
-    else
-      state
-      |> State.apply_event(event)
-      |> Impl.handle_event(event)
-    end
+    emit_channel_closed(:closed_by_remote)
   end
 
   def handle_info(
         {:gun_ws, conn, stream_ref, {:close, _, _}},
         %State{conn: conn, stream_ref: stream_ref} = state
       ) do
-    event = %Events.ChannelClosed{reason: :closed_by_remote}
-
-    # if we're already terminating, no need to duplicate the channel_closed
-    # event
-    if state.status == :terminating do
-      {:noreply, state}
-    else
-      state
-      |> State.apply_event(event)
-      |> Impl.handle_event(event)
-    end
+    emit_channel_closed(:closed_by_remote)
   end
 
   # coveralls-ignore-start
@@ -159,5 +139,19 @@ defmodule Slipstream.Connection do
     state
     |> State.apply_command(cmd)
     |> Impl.handle_command(cmd)
+  end
+
+  defp emit_channel_closed(reason) do
+    event = %Events.ChannelClosed{reason: reason}
+
+    # if we're already terminating, no need to duplicate the channel_closed
+    # event
+    if state.status == :terminating do
+      {:noreply, state}
+    else
+      state
+      |> State.apply_event(event)
+      |> Impl.handle_event(event)
+    end
   end
 end
