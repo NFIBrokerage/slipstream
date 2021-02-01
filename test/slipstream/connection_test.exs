@@ -129,6 +129,27 @@ defmodule Slipstream.ConnectionTest do
       refute c.socket |> await_disconnect!() |> connected?
     end
 
+    # e.g. your networking interface shuts down
+    test """
+         when the remote websocket connection is lost,
+         then the socket is notified that the connection has been terminated
+         and the connection is closed
+         """,
+         c do
+      conn = c.conn
+
+      @gun |> expect(:close, 1, fn ^conn -> :ok end)
+
+      send(
+        c.socket.channel_pid,
+        {:gun_error, c.conn,
+         {:websocket, c.stream_ref, "VFeeglQh/qqSFe9rqSM5FQ==", [], %{}},
+         {:closed, 'The connection was lost.'}}
+      )
+
+      refute c.socket |> await_disconnect!() |> connected?
+    end
+
     test "when the connection receives a ping, then it responds with pong", c do
       conn = c.conn
 
