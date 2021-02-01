@@ -80,7 +80,7 @@ defmodule Slipstream.SocketTestTest do
       assert_receive {@fixture, :connected}
 
       assert_receive {@fixture, :topic_closed, ^topic,
-                      {:failed_to_join, %{"join" => "crashed"}}}
+                      {:failed_to_join, %{"error" => "join crashed"}}}
     end
   end
 

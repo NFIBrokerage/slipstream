@@ -647,7 +647,7 @@ defmodule Slipstream.SocketTest do
   def __map_join_reply__(:ok), do: __map_join_reply__({:ok, %{}})
 
   def __map_join_reply__(:error),
-    do: __map_join_reply__({:error, %{"join" => "crashed"}})
+    do: __map_join_reply__({:error, %{"error" => "join crashed"}})
 
   def __map_join_reply__({:ok, params}) do
     %Slipstream.Events.TopicJoinSucceeded{response: params}
