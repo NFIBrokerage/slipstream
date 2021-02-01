@@ -71,9 +71,6 @@ jobs:
     - name: Credo
       run: mix credo
 
-    - name: Inch
-      run: mix inch.report
-
   publish-hex-package:
     name: Publish Hex Package ⬆️☁️
     runs-on: ubuntu-16.04
