@@ -124,7 +124,10 @@ defmodule Slipstream.ConnectionTest do
 
       @gun |> expect(:close, 1, fn ^conn -> :ok end)
 
-      send(c.socket.channel_pid, {:gun_down, c.conn, :ws, :closed, [], []})
+      send(
+        c.socket.channel_pid,
+        {:gun_down, c.conn, :ws, :closed, [c.stream_ref], []}
+      )
 
       refute c.socket |> await_disconnect!() |> connected?
     end

@@ -61,10 +61,14 @@ defmodule Slipstream.Connection do
   end
 
   def handle_info(
-        {:gun_down, conn, :ws, :closed, _refs, []},
-        %State{conn: conn} = state
+        {:gun_down, conn, _protocol, _reason, affected_refs, []},
+        %State{conn: conn, stream_ref: stream_ref} = state
       ) do
-    emit_channel_closed(:closed_by_remote, state)
+    if stream_ref in affected_refs do
+      emit_channel_closed(:closed_by_remote, state)
+    else
+      {:noreply, state}
+    end
   end
 
   def handle_info(
