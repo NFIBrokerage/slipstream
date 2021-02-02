@@ -8,6 +8,7 @@ defmodule Slipstream do
   - it's backed by `:gun` instead of `:websocket_client`
   - it has an `await_*` interface for performing actions synchronously
   - smart retry strategies for reconnection and rejoining work out-of-the-box
+  - a testing framework for clients
 
   ## Basic Usage
 
