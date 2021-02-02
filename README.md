@@ -8,6 +8,13 @@ A slick websocket client for Phoenix channels
 
 See the [online documentation](https://hexdocs.pm/slipstream)
 
+## Main Features
+
+- backed by `:gun` instead of `:websocket_client`
+- an `await_*` interface for a interacting synchronously
+- built-in re-connect and re-join machinisms matching `phoenix.js`
+- a testing framework for clients
+
 ## Installation
 
 Add slipstream to you dependencies in `mix.exs`:
