@@ -96,6 +96,7 @@ defmodule Slipstream.MixProject do
       deps: [],
       language: "en",
       formatters: ["html"],
+      main: Slipstream,
       extras: [
         "CHANGELOG.md",
         "guides/implementation.md"
