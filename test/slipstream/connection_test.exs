@@ -26,6 +26,8 @@ defmodule Slipstream.ConnectionTest do
   setup :set_mox_global
   @gun GunMock
 
+  @moduletag :capture_log
+
   setup do
     original_value = Application.fetch_env!(:slipstream, :gun_client)
     Application.put_env(:slipstream, :gun_client, @gun)
@@ -33,6 +35,8 @@ defmodule Slipstream.ConnectionTest do
     on_exit(fn ->
       Application.put_env(:slipstream, :gun_client, original_value)
     end)
+
+    stub(@gun, :close, fn _conn -> :ok end)
 
     [config: Application.fetch_env!(:slipstream, Slipstream.GoodExample)]
   end
@@ -166,6 +170,10 @@ defmodule Slipstream.ConnectionTest do
       send(c.socket.channel_pid, {:gun_ws, conn, c.stream_ref, :ping})
 
       assert_receive :pong_sent
+
+      # when we send a pong, it just no-ops
+      # no real test here, just getting coverage
+      send(c.socket.channel_pid, {:gun_ws, conn, c.stream_ref, :pong})
     end
 
     test "when the connection receives a close, the client is disconnected",

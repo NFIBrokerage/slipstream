@@ -1,8 +1,7 @@
 defmodule Slipstream.Connection.State do
   @moduledoc false
 
-  import Slipstream.Signatures, only: [command: 1]
-  alias Slipstream.{Commands, Events}
+  alias Slipstream.Connection.Telemetry
 
   # a struct for storing the internal state of a Slipstream.Connection
   # process
@@ -11,20 +10,43 @@ defmodule Slipstream.Connection.State do
   # as the implementor
 
   defstruct [
-    :socket_pid,
-    :socket_ref,
+    :connection_id,
+    :trace_id,
+    :client_pid,
+    :client_ref,
     :config,
     :conn,
     :stream_ref,
     :join_params,
     :heartbeat_timer,
     :heartbeat_ref,
+    :metadata,
     status: :opened,
     joins: %{},
     leaves: %{},
     current_ref: 0,
     current_ref_str: "0"
   ]
+
+  @doc """
+  Creates a new State data structure
+
+  The life-cycle of a `Slipstream.Connection` matches that of a websocket
+  connection between client and remote websocket server, so a new `State`
+  data structure represents a new connection (and therefore generates a new
+  connection_id for telemetry purposes).
+  """
+  @spec new(config :: Slipstream.Configuration.t(), client_pid :: pid()) ::
+          %__MODULE__{}
+  def new(config, client_pid) do
+    %__MODULE__{
+      config: config,
+      client_pid: client_pid,
+      client_ref: Process.monitor(client_pid),
+      trace_id: Telemetry.trace_id(),
+      connection_id: Telemetry.id()
+    }
+  end
 
   @doc """
   Gets the next ref and increments the ref counter in state
@@ -41,6 +63,12 @@ defmodule Slipstream.Connection.State do
 
     {to_string(ref),
      %__MODULE__{state | current_ref: ref, current_ref_str: to_string(ref)}}
+  end
+
+  def next_heartbeat_ref(state) do
+    {ref, state} = next_ref(state)
+
+    %__MODULE__{state | heartbeat_ref: ref}
   end
 
   @doc """
@@ -65,103 +93,4 @@ defmodule Slipstream.Connection.State do
   """
   def leave_ref?(%__MODULE__{leaves: leaves}, ref),
     do: ref in Map.values(leaves)
-
-  @doc """
-  Update the state given any command
-
-  This is done before handling the command, so it's an appropriate place
-  to take `next_ref/1`s.
-
-  Any command can modify the state before it gets handled. This separation
-  between updating state and handling of commands keeps clean the boundary
-  of where side-effects take place in the connection process.
-  """
-  @spec apply_command(%__MODULE__{}, command :: struct()) :: %__MODULE__{}
-  def apply_command(state, command)
-
-  def apply_command(
-        %__MODULE__{heartbeat_ref: nil} = state,
-        %Commands.SendHeartbeat{}
-      ) do
-    {ref, state} = next_ref(state)
-
-    %__MODULE__{state | heartbeat_ref: ref}
-  end
-
-  def apply_command(
-        %__MODULE__{heartbeat_ref: existing_heartbeat_ref} = state,
-        %Commands.SendHeartbeat{}
-      )
-      when is_binary(existing_heartbeat_ref) do
-    %__MODULE__{state | heartbeat_ref: :error}
-  end
-
-  def apply_command(%__MODULE__{} = state, %Commands.PushMessage{}) do
-    {_ref, state} = next_ref(state)
-
-    state
-  end
-
-  def apply_command(%__MODULE__{} = state, %Commands.JoinTopic{} = cmd) do
-    {ref, state} = next_ref(state)
-
-    %__MODULE__{state | joins: Map.put(state.joins, cmd.topic, ref)}
-  end
-
-  def apply_command(%__MODULE__{} = state, %Commands.LeaveTopic{} = cmd) do
-    {ref, state} = next_ref(state)
-
-    %__MODULE__{state | leaves: Map.put(state.leaves, cmd.topic, ref)}
-  end
-
-  def apply_command(state, _command), do: state
-
-  @doc """
-  Updates the state before an event is sent along to a client process
-
-  This is mostly used to groom internal state about whether or not the
-  connection process is actually connected to the remote server and whether or
-  not the connection is joined to topics.
-  """
-  @spec apply_event(%__MODULE__{}, event :: struct()) :: %__MODULE__{}
-  def apply_event(state, event)
-
-  def apply_event(state, %type{} = event)
-      when type in [Events.TopicJoinClosed, Events.TopicJoinFailed] do
-    %__MODULE__{state | joins: Map.delete(state.joins, event.topic)}
-  end
-
-  def apply_event(state, %Events.TopicLeaveAccepted{} = event) do
-    %__MODULE__{state | leaves: Map.delete(state.leaves, event.topic)}
-  end
-
-  def apply_event(state, %Events.HeartbeatAcknowledged{}) do
-    reset_heartbeat(state)
-  end
-
-  def apply_event(state, %Events.ChannelConnected{}) do
-    timer =
-      if state.config.heartbeat_interval_msec != 0 do
-        :timer.send_interval(
-          state.config.heartbeat_interval_msec,
-          command(%Commands.SendHeartbeat{})
-        )
-      end
-
-    %__MODULE__{state | status: :connected, heartbeat_timer: timer}
-    |> reset_heartbeat()
-  end
-
-  def apply_event(state, %Events.ChannelClosed{}) do
-    if state.heartbeat_timer |> is_reference() do
-      # coveralls-ignore-start
-      :timer.cancel(state.heartbeat_timer)
-
-      # coveralls-ignore-stop
-    end
-
-    %__MODULE__{state | status: :terminating}
-  end
-
-  def apply_event(state, _event), do: state
 end

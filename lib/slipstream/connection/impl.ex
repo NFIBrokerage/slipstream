@@ -8,9 +8,7 @@ defmodule Slipstream.Connection.Impl do
 
   alias Slipstream.Connection.State
   alias Phoenix.Socket.Message
-  alias Slipstream.{Events, Commands}
   import Slipstream.Signatures, only: [event: 1]
-  require Logger
 
   # in test mode, we want to be able to swap out `:gun` for a mock
   # in dev/prod mode, we want to compile in `:gun` as the gun-client
@@ -20,11 +18,6 @@ defmodule Slipstream.Connection.Impl do
     @gun Application.get_env(:slipstream, :gun_client, :gun)
     def gun, do: @gun
   end
-
-  @noop_event_types [
-    Events.PongReceived,
-    Events.HeartbeatAcknowledged
-  ]
 
   @spec connect(%State{}) :: %State{}
   def connect(%State{config: configuration} = state) do
@@ -51,139 +44,8 @@ defmodule Slipstream.Connection.Impl do
   end
 
   @spec route_event(%State{}, event :: struct()) :: term()
-  def route_event(%State{socket_pid: pid}, event) do
+  def route_event(%State{client_pid: pid}, event) do
     send(pid, event(event))
-  end
-
-  @spec handle_command(%State{}, command :: struct()) ::
-          {:noreply, new_state}
-          | {:reply, Slipstream.push_reference(), new_state}
-        when new_state: %State{}
-  def handle_command(state, command)
-
-  # we are waiting on a HeartbeatAcknowledged event (heartbeat-timeout)
-  def handle_command(
-        %State{heartbeat_ref: :error} = state,
-        %Commands.SendHeartbeat{}
-      ) do
-    gun().close(state.conn)
-
-    route_event state, %Events.ChannelClosed{reason: :heartbeat_timeout}
-
-    {:stop, {:shutdown, :disconnected}, state}
-  end
-
-  # we are _not_ waiting on a HeartbeatAcknowledged event (normal)
-  def handle_command(%State{} = state, %Commands.SendHeartbeat{}) do
-    push_heartbeat(state)
-
-    {:noreply, state}
-  end
-
-  def handle_command(state, %Commands.CollectGarbage{}) do
-    :erlang.garbage_collect(self())
-
-    {:noreply, state}
-  end
-
-  def handle_command(state, %Commands.PushMessage{} = cmd) do
-    ref = state.current_ref_str
-
-    push_message(
-      %Message{
-        topic: cmd.topic,
-        event: cmd.event,
-        payload: cmd.payload,
-        ref: ref
-      },
-      state
-    )
-
-    {:reply, ref, state}
-  end
-
-  def handle_command(state, %Commands.JoinTopic{} = cmd) do
-    push_message(
-      %Message{
-        topic: cmd.topic,
-        event: "phx_join",
-        payload: cmd.payload,
-        ref: state.current_ref_str,
-        join_ref: state.current_ref_str
-      },
-      state
-    )
-
-    {:noreply, state}
-  end
-
-  def handle_command(state, %Commands.LeaveTopic{} = cmd) do
-    push_message(
-      %Message{
-        topic: cmd.topic,
-        event: "phx_leave",
-        payload: %{},
-        ref: state.current_ref_str
-      },
-      state
-    )
-
-    {:noreply, state}
-  end
-
-  def handle_command(state, %Commands.CloseConnection{}) do
-    gun().close(state.conn)
-
-    route_event state, %Events.ChannelClosed{
-      reason: :client_disconnect_requested
-    }
-
-    {:stop, {:shutdown, :disconnected}, state}
-  end
-
-  # coveralls-ignore-start
-  def handle_command(state, command) do
-    Logger.error("""
-    #{inspect(__MODULE__)} received a command it is not setup to handle:
-    #{inspect(command)}.
-
-    Please open an issue in NFIBrokerage/slipstream with any available details
-    leading to this logger message.
-    """)
-
-    {:noreply, state}
-  end
-
-  # coveralls-ignore-stop
-
-  # ---
-
-  @spec handle_event(%State{}, event :: struct()) ::
-          {:noreply, new_state} | {:stop, reason :: term(), new_state}
-        when new_state: %State{}
-  def handle_event(state, event)
-
-  def handle_event(state, %Events.PingReceived{}) do
-    gun().ws_send(state.conn, :pong)
-
-    {:noreply, state}
-  end
-
-  def handle_event(state, %Events.ChannelClosed{} = event) do
-    gun().close(state.conn)
-
-    route_event state, event
-
-    {:stop, :normal, state}
-  end
-
-  def handle_event(state, %type{}) when type in @noop_event_types,
-    do: {:noreply, state}
-
-  def handle_event(state, event) do
-    route_event state, event
-
-    {:noreply, state}
   end
 
   # ---
@@ -264,6 +126,7 @@ defmodule Slipstream.Connection.Impl do
 
   def decode_message(:ping, _state), do: :ping
   def decode_message(:pong, _state), do: :pong
+  def decode_message({:close, _, _} = message, _state), do: message
 
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation
