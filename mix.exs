@@ -99,6 +99,7 @@ defmodule Slipstream.MixProject do
       main: Slipstream,
       extras: [
         "CHANGELOG.md",
+        "guides/telemetry.md",
         "guides/implementation.md"
       ],
       groups_for_extras: [
@@ -109,7 +110,11 @@ defmodule Slipstream.MixProject do
           Slipstream.SocketTest
         ]
       ],
-      skip_undefined_reference_warnings_on: ["guides/implementation.md"]
+      skip_undefined_reference_warnings_on: [
+        "guides/implementation.md",
+        "guides/telemetry.md",
+        "CHANGELOG.md"
+      ]
     ]
   end
 end
