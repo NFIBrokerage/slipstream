@@ -15,7 +15,8 @@ defmodule Slipstream.Events do
     TopicLeft,
     TopicLeaveAccepted,
     PingReceived,
-    PongReceived
+    PongReceived,
+    ChannelClosed
   }
 
   alias Slipstream.Connection.State
@@ -37,6 +38,7 @@ defmodule Slipstream.Events do
   # coveralls-ignore-start
   def map(:ping, _state), do: %PingReceived{}
   def map(:pong, _state), do: %PongReceived{}
+  def map({:close, _, _}, _state), do: %ChannelClosed{reason: :closed_by_remote}
 
   # coveralls-ignore-stop
 

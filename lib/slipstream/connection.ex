@@ -7,163 +7,45 @@ defmodule Slipstream.Connection do
 
   use GenServer, restart: :temporary
 
-  import __MODULE__.Impl, only: [route_event: 2]
-  import Slipstream.Signatures, only: [command: 1]
-  alias __MODULE__.{Impl, State}
-  alias Slipstream.{Events, Commands}
-
-  require Logger
+  alias Slipstream.Connection.{State, Pipeline, Telemetry}
 
   def start_link(init_arg) do
     GenServer.start_link(__MODULE__, init_arg)
   end
 
   @impl GenServer
-  def init(%Commands.OpenConnection{
+  def init(%Slipstream.Commands.OpenConnection{
         socket: %Slipstream.Socket{socket_pid: socket_pid},
         config: config
       }) do
-    {:ok, %State{socket_pid: socket_pid, config: config}, {:continue, :connect}}
+    initial_state = State.new(config, socket_pid)
+
+    metadata = Telemetry.begin(initial_state)
+
+    state = %State{initial_state | metadata: metadata}
+
+    {:ok, state, {:continue, :connect}}
   end
 
   @impl GenServer
   def handle_continue(:connect, state) do
-    state = %State{state | socket_ref: Process.monitor(state.socket_pid)}
-
-    {:noreply, Impl.connect(state)}
+    Pipeline.handle(:connect, state)
   end
 
   @impl GenServer
-  def handle_info(
-        {:DOWN, socket_ref, :process, socket_pid, reason},
-        %State{socket_ref: socket_ref, socket_pid: socket_pid} = state
-      ) do
-    {:stop, reason, state}
+  def handle_info(message, state) do
+    Pipeline.handle(message, state)
   end
-
-  def handle_info({:gun_up, conn, _http}, %State{conn: conn} = state) do
-    {:noreply, state}
-  end
-
-  def handle_info(
-        {:gun_upgrade, conn, stream_ref, ["websocket"], resp_headers},
-        %State{conn: conn, stream_ref: stream_ref} = state
-      ) do
-    event = %Events.ChannelConnected{
-      pid: self(),
-      config: state.config,
-      response_headers: resp_headers
-    }
-
-    state
-    |> State.apply_event(event)
-    |> Impl.handle_event(event)
-  end
-
-  def handle_info(
-        {:gun_down, conn, _protocol, _reason, affected_refs, []},
-        %State{conn: conn, stream_ref: stream_ref} = state
-      ) do
-    if stream_ref in affected_refs do
-      emit_channel_closed(:closed_by_remote, state)
-    else
-      {:noreply, state}
-    end
-  end
-
-  def handle_info(
-        {:gun_error, conn, {:websocket, stream_ref, _, _, _},
-         {:closed, 'The connection was lost.'}},
-        %State{conn: conn, stream_ref: stream_ref} = state
-      ) do
-    emit_channel_closed(:connection_lost, state)
-  end
-
-  def handle_info(
-        {:gun_ws, conn, stream_ref, {:close, _, _}},
-        %State{conn: conn, stream_ref: stream_ref} = state
-      ) do
-    emit_channel_closed(:closed_by_remote, state)
-  end
-
-  # coveralls-ignore-start
-  def handle_info(
-        {:gun_response, conn, stream_ref, :nofin, status_code, resp_headers},
-        %State{conn: conn, stream_ref: stream_ref} = state
-      ) do
-    receive do
-      {:gun_data, ^conn, {:websocket, ^stream_ref, request_id, _, _}, :fin,
-       response} ->
-        response =
-          case Impl.decode(response, state) do
-            {:ok, json} -> json
-            _ -> response
-          end
-
-        route_event state, %Events.ChannelConnectFailed{
-          request_id: request_id,
-          status_code: status_code,
-          resp_headers: resp_headers,
-          response: response
-        }
-    after
-      5_000 -> exit(:timeout)
-    end
-
-    {:noreply, state}
-  end
-
-  # coveralls-ignore-stop
-
-  def handle_info(
-        {:gun_ws, conn, stream_ref, message},
-        %State{conn: conn, stream_ref: stream_ref} = state
-      ) do
-    event = message |> Impl.decode_message(state) |> Events.map(state)
-
-    state
-    |> State.apply_event(event)
-    |> Impl.handle_event(event)
-  end
-
-  def handle_info(command(cmd), state) do
-    state
-    |> State.apply_command(cmd)
-    |> Impl.handle_command(cmd)
-  end
-
-  # coveralls-ignore-start
-  def handle_info(unknown_message, state) do
-    Logger.error("""
-    unknown message #{inspect(unknown_message)}
-    heard in #{inspect(__MODULE__)}
-    please open an issue in NFIBrokerage/slipstream with this message and
-    any available information.
-    """)
-
-    {:noreply, state}
-  end
-
-  # coveralls-ignore-stop
 
   @impl GenServer
-  def handle_call(command(%Commands.PushMessage{} = cmd), _from, state) do
-    state
-    |> State.apply_command(cmd)
-    |> Impl.handle_command(cmd)
+  def handle_call(message, _from, state) do
+    Pipeline.handle(message, state)
   end
 
-  defp emit_channel_closed(reason, state) do
-    event = %Events.ChannelClosed{reason: reason}
+  @impl GenServer
+  def terminate(reason, state) do
+    Telemetry.conclude(state, reason)
 
-    # if we're already terminating, no need to duplicate the channel_closed
-    # event
-    if state.status == :terminating do
-      {:noreply, state}
-    else
-      state
-      |> State.apply_event(event)
-      |> Impl.handle_event(event)
-    end
+    state
   end
 end
