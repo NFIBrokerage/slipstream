@@ -6,6 +6,15 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 - 2021-02-03
+
+### Added
+
+- `:telemetry` events are executed for each message handled by the
+  `Slipstream.Connection` process
+    - this should aide in debugging in scenarios in which one wants to see the
+      full event history of a connection
+
 ## 0.2.4 - 2021-02-02
 
 ### Fixed
