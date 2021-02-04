@@ -196,6 +196,8 @@ defmodule Slipstream.Socket do
   def apply_event(socket, event)
 
   def apply_event(socket, %Events.ChannelConnected{} = event) do
+    socket = TelemetryHelper.conclude_connect(socket, event)
+
     %__MODULE__{
       socket
       | channel_pid: event.pid,
@@ -204,8 +206,9 @@ defmodule Slipstream.Socket do
     }
   end
 
-  def apply_event(socket, %Events.TopicJoinSucceeded{topic: topic}) do
+  def apply_event(socket, %Events.TopicJoinSucceeded{topic: topic} = event) do
     socket
+    |> TelemetryHelper.conclude_join(event)
     |> put_in([Access.key(:joins), topic, Access.key(:status)], :joined)
     |> put_in([Access.key(:joins), topic, Access.key(:rejoin_counter)], 0)
   end
