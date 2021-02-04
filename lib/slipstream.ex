@@ -9,6 +9,7 @@ defmodule Slipstream do
   - it has an `await_*` interface for performing actions synchronously
   - smart retry strategies for reconnection and rejoining work out-of-the-box
   - a testing framework for clients
+  - high-level and low-level instrumentation with `:telemetry`
 
   ## Basic Usage
 
