@@ -1,7 +1,7 @@
 defmodule Slipstream.Connection.State do
   @moduledoc false
 
-  alias Slipstream.Connection.Telemetry
+  alias Slipstream.TelemetryHelper
 
   # a struct for storing the internal state of a Slipstream.Connection
   # process
@@ -43,8 +43,8 @@ defmodule Slipstream.Connection.State do
       config: config,
       client_pid: client_pid,
       client_ref: Process.monitor(client_pid),
-      trace_id: Telemetry.trace_id(),
-      connection_id: Telemetry.id()
+      trace_id: TelemetryHelper.trace_id(),
+      connection_id: TelemetryHelper.id()
     }
   end
 

@@ -9,7 +9,7 @@ defmodule Slipstream.Socket do
 
   import Kernel, except: [send: 2, pid: 1]
 
-  alias __MODULE__.Join
+  alias Slipstream.{TelemetryHelper, Socket.Join}
   alias Slipstream.Events
 
   if Version.match?(System.version(), ">= 1.8.0") do
@@ -21,6 +21,7 @@ defmodule Slipstream.Socket do
     :socket_pid,
     :channel_config,
     :response_headers,
+    metadata: %{},
     reconnect_counter: 0,
     joins: %{},
     assigns: %{}
@@ -34,6 +35,7 @@ defmodule Slipstream.Socket do
           channel_pid: nil | pid(),
           socket_pid: pid(),
           channel_config: Slipstream.Configuration.t() | nil,
+          metadata: %{atom() => String.t() | %{String.t() => String.t()}},
           reconnect_counter: non_neg_integer(),
           assigns: map(),
           joins: %{String.t() => %Join{}}
@@ -42,7 +44,13 @@ defmodule Slipstream.Socket do
   @doc false
   @spec new() :: t()
   def new do
-    %__MODULE__{socket_pid: self()}
+    %__MODULE__{
+      socket_pid: self(),
+      metadata: %{
+        socket_id: TelemetryHelper.trace_id(),
+        join_ids: %{}
+      }
+    }
   end
 
   @doc """
