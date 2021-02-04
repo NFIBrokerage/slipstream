@@ -71,7 +71,7 @@ sent to the connection process in the form of:
 ```
 
 The `Slipstream.Signatures` file defines two macros that wrap the above
-patterns. This allows one two both produce and match on a data structure
+patterns. This allows one to both produce and match on a data structure
 and have confidence that the resulting data structure or match pattern will
 be an event or command.
 
@@ -141,7 +141,7 @@ end
 
 These functions are all chained together, so it may seem perfectly appropriate
 to write the functions in a way that each consumes the direct output of the
-preceeding function in the chain. But if we eventually need another `do_work/1`
+preceding function in the chain. But if we eventually need another `do_work/1`
 clause that handles a different sort of request and say, cuts out the
 `hydrate_request_with_background_info/1` step, we will likely have to refactor
 at least a few of the functions to properly emit and consume the data they need.
