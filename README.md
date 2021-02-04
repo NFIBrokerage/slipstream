@@ -10,11 +10,11 @@ See the [online documentation](https://hexdocs.pm/slipstream)
 
 ## Main Features
 
-- backed by `:gun` instead of `:websocket_client`
-- [an `await_*` interface for a interacting synchronously](https://hexdocs.pm/slipstream/Slipstream.html#module-synchronicity)
-- built-in re-connect and re-join machinisms matching `phoenix.js`
-- [a testing framework for clients](https://hexdocs.pm/slipstream/Slipstream.SocketTest.html#content)
-- [emits `:telemetry`](https://hexdocs.pm/slipstream/telemetry.html#content)
+- backed by `:gun` instead of `:websocket_client` (see [why](https://hexdocs.pm/slipstream/why_gun.html#content))
+- an `await_*` interface for a interacting [synchronously](https://hexdocs.pm/slipstream/Slipstream.html#module-synchronicity)
+- built-in [re-connect and re-join mechanisms](https://hexdocs.pm/slipstream/Slipstream.html#module-retry-mechanisms) matching `phoenix.js`
+- [a testing framework](https://hexdocs.pm/slipstream/Slipstream.SocketTest.html#content) for clients
+- [emits `:telemetry` events](https://hexdocs.pm/slipstream/telemetry.html#content)
 
 ## Installation
 
