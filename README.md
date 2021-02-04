@@ -14,6 +14,7 @@ See the [online documentation](https://hexdocs.pm/slipstream)
 - an `await_*` interface for a interacting synchronously
 - built-in re-connect and re-join machinisms matching `phoenix.js`
 - a testing framework for clients
+- [emits `:telemetry`](https://hexdocs.pm/slipstream/telemetry.html#content)
 
 ## Installation
 
