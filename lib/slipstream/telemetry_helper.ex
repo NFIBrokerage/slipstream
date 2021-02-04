@@ -20,12 +20,25 @@ defmodule Slipstream.TelemetryHelper do
   Emits a start event for an attempt to connect
 
   Emitted in cases of a client using `Slipstream.connect/2`,
-  `Slipstream.connect!/2` or `Slipstream.reconnect/1`
+  `Slipstream.connect!/2` or `Slipstream.reconnect/1`.
   """
   @doc since: "0.4.0"
   @spec begin_connect(Socket.t(), Slipstream.Configuration.t()) :: Socket.t()
-  def begin_connect(socket, _config) do
-    socket
+  def begin_connect(socket, config) do
+    metadata = %{
+      start_time: DateTime.utc_now(),
+      start_time_monotonic: :erlang.monotonic_time(),
+      config: config,
+      socket: socket
+    }
+
+    :telemetry.execute(
+      [:slipstream, :client, :connect, :start],
+      %{system_time: :erlang.system_time()},
+      Map.delete(metadata, :start_time_monotonic)
+    )
+
+    put_in(socket, [Access.key(:metadata), :connect], metadata)
   end
 
   @doc """
@@ -36,9 +49,34 @@ defmodule Slipstream.TelemetryHelper do
   """
   @doc since: "0.4.0"
   @spec conclude_connect(Socket.t(), %Events.ChannelConnected{}) :: Socket.t()
-  def conclude_connect(socket, _event) do
-    socket
+  def conclude_connect(%{metadata: %{connect: start_metadata}} = socket, event)
+      when is_map(start_metadata) and map_size(start_metadata) > 0 do
+    metadata =
+      start_metadata
+      |> Map.merge(%{
+        response_headers: event.response_headers,
+        socket: socket
+      })
+      |> Map.delete(:start_time_monotonic)
+
+    duration = :erlang.monotonic_time() - start_metadata.start_time_monotonic
+
+    :telemetry.execute(
+      [:slipstream, :client, :connect, :stop],
+      %{duration: duration},
+      metadata
+    )
+
+    %Socket{socket | metadata: Map.delete(socket.metadata, :connect)}
   end
+
+  # technically speaking this case doesn't make any sense... you need to connect
+  # in order to conclude connecting, but /shrug just putting it here to not
+  # crash over some spilled telemetry
+  # coveralls-ignore-start
+  def conclude_connect(socket, _event), do: socket
+
+  # coveralls-ignore-stop
 
   # YARD emit exception event for failure to connect and another when failed to
   # join?
@@ -47,7 +85,7 @@ defmodule Slipstream.TelemetryHelper do
   Emits a start event for an attempt to join
 
   Emitted in cases of a client using `Slipstream.join/3` or
-  `Slipstream.rejoin/3`
+  `Slipstream.rejoin/3`.
   """
   @doc since: "0.4.0"
   @spec begin_join(
@@ -55,8 +93,22 @@ defmodule Slipstream.TelemetryHelper do
           topic :: String.t(),
           params :: Slipstream.json_serializable()
         ) :: Socket.t()
-  def begin_join(socket, _topic, _params) do
-    socket
+  def begin_join(socket, topic, params) do
+    metadata = %{
+      start_time: DateTime.utc_now(),
+      start_time_monotonic: :erlang.monotonic_time(),
+      socket: socket,
+      topic: topic,
+      params: params
+    }
+
+    :telemetry.execute(
+      [:slipstream, :client, :join, :start],
+      %{system_time: :erlang.system_time()},
+      Map.delete(metadata, :start_time_monotonic)
+    )
+
+    put_in(socket, [Access.key(:metadata), :joins, topic], metadata)
   end
 
   @doc """
@@ -67,7 +119,38 @@ defmodule Slipstream.TelemetryHelper do
   """
   @doc since: "0.4.0"
   @spec conclude_join(Socket.t(), %Events.TopicJoinSucceeded{}) :: Socket.t()
-  def conclude_join(socket, _event) do
-    socket
+  def conclude_join(socket, event) do
+    case Map.fetch(socket.metadata.joins, event.topic) do
+      {:ok, start_metadata} ->
+        metadata =
+          start_metadata
+          |> Map.merge(%{
+            socket: socket,
+            response: event.response
+          })
+          |> Map.delete(:start_time_monotonic)
+
+        duration =
+          :erlang.monotonic_time() - start_metadata.start_time_monotonic
+
+        :telemetry.execute(
+          [:slipstream, :client, :join, :stop],
+          %{duration: duration},
+          metadata
+        )
+
+        update_in(
+          socket,
+          [Access.key(:metadata), :joins],
+          &Map.delete(&1, event.topic)
+        )
+
+      :error ->
+        # again, this doesn't make sense, but I'd rather not crash if I'm wrong
+        # coveralls-ignore-start
+        socket
+
+        # coveralls-ignore-stop
+    end
   end
 end

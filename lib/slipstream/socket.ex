@@ -48,7 +48,7 @@ defmodule Slipstream.Socket do
       socket_pid: self(),
       metadata: %{
         socket_id: TelemetryHelper.trace_id(),
-        join_ids: %{}
+        joins: %{}
       }
     }
   end
