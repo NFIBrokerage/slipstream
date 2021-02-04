@@ -3,7 +3,7 @@ defmodule Slipstream.Callback do
 
   # maps events to the proper callback function and arguments
 
-  alias Slipstream.{Events, Socket}
+  alias Slipstream.{Events, Socket, TelemetryHelper}
 
   @known_callbacks [{:__no_op__, 2} | Slipstream.behaviour_info(:callbacks)]
 
@@ -30,8 +30,10 @@ defmodule Slipstream.Callback do
         Slipstream.Default
       end
 
-    apply(dispatch_module, function, args)
-    |> handle_callback_return()
+    TelemetryHelper.wrap_dispatch(dispatch_module, function, args, fn ->
+      apply(dispatch_module, function, args)
+      |> handle_callback_return()
+    end)
   end
 
   # coveralls-ignore-start

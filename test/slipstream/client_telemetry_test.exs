@@ -19,7 +19,8 @@ defmodule Slipstream.ClientTelemetryTest do
     ~w[slipstream client connect start]a,
     ~w[slipstream client connect stop]a,
     ~w[slipstream client join start]a,
-    ~w[slipstream client join stop]a
+    ~w[slipstream client join stop]a,
+    ~w[slipstream client handle_reply stop]a
   ]
 
   describe "given the test process is receiving telemetry events from the connection" do
@@ -83,6 +84,26 @@ defmodule Slipstream.ClientTelemetryTest do
       assert match?(%Slipstream.Socket{}, metadata.socket)
       assert metadata.topic == topic
       assert metadata.response == %{}
+    end
+
+    test "when we receive a message, we get expected telemetry" do
+      topic = "test:good"
+      pid = start_supervised!({@client, self()})
+      assert_receive {@client, :connected}
+      join(pid, topic)
+      assert_receive {@client, :joined, ^topic, %{}}
+      :ok = GenServer.cast(pid, {:push, topic, "ping", %{}})
+
+      assert_receive {@client, :received_reply, _ref,
+                      {:ok, %{"pong" => "pong"}}}
+
+      assert_receive {:telemetry, [:slipstream, :client, :handle_reply, :stop],
+                      %{duration: _}, metadata}
+
+      assert match?(%Slipstream.Socket{}, metadata.socket)
+      assert match?({:noreply, _socket}, metadata.return)
+      assert metadata.callback == :handle_reply
+      assert metadata.client == @client
     end
   end
 

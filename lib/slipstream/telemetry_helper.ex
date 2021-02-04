@@ -153,4 +153,36 @@ defmodule Slipstream.TelemetryHelper do
         # coveralls-ignore-stop
     end
   end
+
+  @doc """
+  Wraps a callback dispatch to a Slipstream client module
+  """
+  @doc since: "0.4.0"
+  def wrap_dispatch(module, function, args, func) do
+    metadata = %{
+      client: module,
+      callback: function,
+      arguments: args,
+      socket: List.last(args),
+      start_time: DateTime.utc_now()
+    }
+
+    return_value =
+      :telemetry.span(
+        [:slipstream, :client, function],
+        metadata,
+        fn ->
+          return = func.()
+
+          metadata =
+            Map.merge(metadata, %{
+              return: return
+            })
+
+          {return, metadata}
+        end
+      )
+
+    return_value
+  end
 end
