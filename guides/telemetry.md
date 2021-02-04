@@ -1,10 +1,86 @@
 # Telemetry
 
+Slipstream emits telemetry events for both processes: the client process and
+the connection process.
+
+Telemetry for the connection process is very low-level: information about
+each message and before-and-after states for the connection. This telemetry
+aides in debugging failure-states of Slipstream and can be useful for
+development, but is likely not worth ingesting for average Slipstream users.
+
+Client process telemetry is similar to the telemetry emitted by
+`Phoenix.Channel`s and is recommended for consumption by average Slipstream
+users.
+
+## Client-process Telemetry
+
+Clients emit telemetry in two categories:
+
+- basic channel connection and topic join events
+- callback events
+
+The first emulate two-of-three events emitted by `Phoenix.Channel`s (at time
+of writing):
+
+- `[:slipstream, :client, :connect]` - dispatched at the end of a successful
+  client connection to a remote websocket host
+    - metadata
+      ```elixir
+      %{
+        start_time: DateTime.t(),
+        configuration: Slipstream.Configuration.t(),
+        socket: Slipstream.Socket.t(),
+        # emitted only on the stop event:
+        response_headers: [{String.t(), String.t()}]
+      }
+      ```
+- `[:slipstream, :client, :join]` - dispatched at the end of a successful
+  join onto a topic
+    - metadata
+      ```elixir
+      %{
+        start_time: DateTime.t(),
+        socket: Slipstream.Socket.t(),
+        topic: String.t(),
+        params: Slipstream.json_serializable(),
+        # emitted only on the stop event:
+        response: Slipstream.json_serializable()
+      }
+      ```
+
+The second is emitted for any callback defined by the `Slipstream` module. Each
+of these events are emitted under the event name of
+`[:slipstream, :client, callback]`, where `callback` is any callback defined
+by `Slipstream`, e.g. `:handle_message`. The metadata for these events is as
+follows:
+
+```elixir
+%{
+  client: module(),
+  callback: atom(),
+  arguments: [any()],
+  socket: Slipstream.Socket.t(),
+  start_time: DateTime.t(),
+  # emitted only on the stop event
+  response: any()
+}
+```
+
+Note that all client-process events emulate `:telemetry.span/3` in naming and
+in measurements, and in the case of callback events, the events are emitted
+by `:telemetry.span/3`. This means that each of the above-described events
+are actually prefixes, and each event name below represents messages of
+`event_prefix ++ [:start]` and `event_prefix ++ [:stop]`, with exceptions
+being emitted as `event_prefix ++ [:exception]`.
+
+Client authors are encouraged to only subscribe to the callbacks they are
+interested in (e.g. `:handle_message` or `:handle_reply`).
+
+## Connection-process Telemetry
+
 Slipstream currently emits telemetry for each message received in its
 `Slipstream.Connection` process. This aides in low-level debugging when one
-desires to see the entire event-history of a connection. Telemetry support is
-also desired for clients, but has yet to be implemented. See
-[#4](https://github.com/NFIBrokerage/slipstream/issues/4).
+desires to see the entire event-history of a connection.
 
 A connection can be pieced together by the `:trace_id` and `:connection_id`
 keys emitted in the metadata of these telemetry events. One

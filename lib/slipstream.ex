@@ -9,6 +9,7 @@ defmodule Slipstream do
   - it has an `await_*` interface for performing actions synchronously
   - smart retry strategies for reconnection and rejoining work out-of-the-box
   - a testing framework for clients
+  - high-level and low-level instrumentation with `:telemetry`
 
   ## Basic Usage
 
@@ -219,7 +220,7 @@ defmodule Slipstream do
       end
   """
 
-  alias Slipstream.{Commands, Events, Socket}
+  alias Slipstream.{Commands, Events, Socket, TelemetryHelper}
   import Slipstream.CommandRouter, only: [route_command: 1]
   import Slipstream.Signatures, only: [event: 1, command: 1]
 
@@ -741,6 +742,8 @@ defmodule Slipstream do
   def connect(socket \\ new_socket(), opts) do
     case Slipstream.Configuration.validate(opts) do
       {:ok, config} ->
+        socket = TelemetryHelper.begin_connect(socket, config)
+
         route_command %Commands.OpenConnection{config: config, socket: socket}
 
         {:ok, socket}
@@ -762,6 +765,7 @@ defmodule Slipstream do
   @spec connect!(socket :: Socket.t(), opts :: Keyword.t()) :: Socket.t()
   def connect!(socket \\ new_socket(), opts) do
     config = Slipstream.Configuration.validate!(opts)
+    socket = TelemetryHelper.begin_connect(socket, config)
 
     route_command %Commands.OpenConnection{config: config, socket: socket}
 
@@ -849,6 +853,8 @@ defmodule Slipstream do
   def join(%Socket{} = socket, topic, params \\ %{}) when is_binary(topic) do
     if Socket.connected?(socket) and
          Socket.join_status(socket, topic) in [nil, :closed] do
+      socket = TelemetryHelper.begin_join(socket, topic, params)
+
       route_command %Commands.JoinTopic{
         socket: socket,
         topic: topic,
@@ -1451,8 +1457,28 @@ defmodule Slipstream do
 
       # this matches on time-delay commands like those emitted from
       # reconnect/1 and rejoin/3
-      def handle_info(Slipstream.Signatures.command(command), socket) do
-        Slipstream.CommandRouter.route_command(command)
+      def handle_info(
+            Slipstream.Signatures.command(
+              %Slipstream.Commands.OpenConnection{} = cmd
+            ),
+            socket
+          ) do
+        socket = TelemetryHelper.begin_connect(socket, cmd.config)
+
+        Slipstream.CommandRouter.route_command(cmd)
+
+        {:noreply, socket}
+      end
+
+      def handle_info(
+            Slipstream.Signatures.command(
+              %Slipstream.Commands.JoinTopic{} = cmd
+            ),
+            socket
+          ) do
+        socket = TelemetryHelper.begin_join(socket, cmd.topic, cmd.payload)
+
+        Slipstream.CommandRouter.route_command(cmd)
 
         {:noreply, socket}
       end
