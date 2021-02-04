@@ -28,7 +28,7 @@ defmodule Slipstream.TelemetryHelper do
     metadata = %{
       start_time: DateTime.utc_now(),
       start_time_monotonic: :erlang.monotonic_time(),
-      config: config,
+      configuration: config,
       socket: socket
     }
 
