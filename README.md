@@ -13,8 +13,8 @@ See the [online documentation](https://hexdocs.pm/slipstream)
 - backed by `:gun` instead of `:websocket_client` (see [why](https://hexdocs.pm/slipstream/why_gun.html#content))
 - an `await_*` interface for a interacting [synchronously](https://hexdocs.pm/slipstream/Slipstream.html#module-synchronicity)
 - built-in [re-connect and re-join mechanisms](https://hexdocs.pm/slipstream/Slipstream.html#module-retry-mechanisms) matching `phoenix.js`
-- [a testing framework](https://hexdocs.pm/slipstream/Slipstream.SocketTest.html#content) for clients
-- [emits `:telemetry` events](https://hexdocs.pm/slipstream/telemetry.html#content)
+- a [testing framework](https://hexdocs.pm/slipstream/Slipstream.SocketTest.html#content) for clients
+- emits [`:telemetry` events](https://hexdocs.pm/slipstream/telemetry.html#content)
 
 ## Installation
 
