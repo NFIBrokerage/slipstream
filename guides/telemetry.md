@@ -43,7 +43,7 @@ Metadata contains:
 
 ```elixir
 %{
-  state: %Slipstream.Connection.State{},
+  start_state: %Slipstream.Connection.State{},
   connection_id: String.t(),
   trace_id: String.t(),
   # unique to this message handle
@@ -53,9 +53,10 @@ Metadata contains:
   raw_message: term(),
   # included on the `event_prefix ++ [:stop]` events:
   message: term(),
-  event: [%{type: atom(), attrs: map()}],
+  events: [%{type: atom(), attrs: map()}],
   built_events: [struct()],
-  return: tuple()
+  return: tuple(),
+  end_state: %Slipstream.Connection.State{}
 }
 ```
 

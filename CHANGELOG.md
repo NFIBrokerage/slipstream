@@ -6,6 +6,21 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.1 - 2021-02-03
+
+### Fixed
+
+- The telemetry event for message handles in the connection process should now
+  correctly publish the `:events` key, not the `:event` key
+- The telemetry guide now correctly states that the `:start_state` key holds
+  the connection state for handle-style events
+
+### Added
+
+- Published the connection state at the end of the message handle for
+  handle-type telemetry events in the connection process
+    - this is published in the `:end_state` key
+
 ## 0.3.0 - 2021-02-03
 
 ### Added

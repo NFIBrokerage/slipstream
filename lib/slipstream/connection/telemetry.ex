@@ -41,7 +41,8 @@ defmodule Slipstream.Connection.Telemetry do
             metadata
             |> Map.merge(%{
               message: finished_pipeline.message,
-              event: finished_pipeline.events,
+              events: finished_pipeline.events,
+              end_state: finished_pipeline.state,
               built_events: finished_pipeline.built_events,
               return: finished_pipeline.return
             })
