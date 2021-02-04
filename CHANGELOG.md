@@ -6,6 +6,15 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.2 - 2021-02-03
+
+### Fixed
+
+- Fixed edge case where the remote server shutting down would not emit a
+  `ChannelClosed` event
+    - this and heartbeats caused the odd `:gun_error` atom from
+      [#12](https://github.com/NFIBrokerage/slipstream/issues/12)
+
 ## 0.3.1 - 2021-02-03
 
 ### Fixed

@@ -84,18 +84,12 @@ defmodule Slipstream.Connection.Pipeline do
 
   defp decode_message(
          %{
-           raw_message: {:gun_down, conn, _protocol, _reason, affected_refs, _},
-           state: %{conn: conn, stream_ref: stream_ref}
+           raw_message:
+             {:gun_down, conn, _protocol, _reason, _affected_refs, _},
+           state: %{conn: conn}
          } = p
        ) do
-    if stream_ref in affected_refs do
-      put_message(p, event(%Events.ChannelClosed{reason: :closed_by_remote}))
-    else
-      # coveralls-ignore-start
-      put_message(p, event(%Events.NoOp{}))
-
-      # coveralls-ignore-stop
-    end
+    put_message(p, event(%Events.ChannelClosed{reason: :closed_by_remote}))
   end
 
   defp decode_message(
