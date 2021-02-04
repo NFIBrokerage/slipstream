@@ -123,9 +123,6 @@ defmodule Slipstream.Connection.Pipeline do
     put_message(p, event(event))
   end
 
-  # YARD we can probably test this by hitting a 404 endpoint
-  # in the SlipstreamWeb local phoenix server
-  # coveralls-ignore-start
   defp decode_message(
          %{
            raw_message:
@@ -139,8 +136,13 @@ defmodule Slipstream.Connection.Pipeline do
        response} ->
         response =
           case Impl.decode(response, state) do
-            {:ok, json} -> json
-            _ -> response
+            {:ok, json} ->
+              json
+
+            # coveralls-ignore-start
+            _ ->
+              response
+              # coveralls-ignore-stop
           end
 
         event = %Events.ChannelConnectFailed{
@@ -152,10 +154,15 @@ defmodule Slipstream.Connection.Pipeline do
 
         put_message(p, event(event))
     after
-      5_000 -> exit(:timeout)
+      # coveralls-ignore-start
+      5_000 ->
+        exit(:timeout)
+
+        # coveralls-ignore-stop
     end
   end
 
+  # coveralls-ignore-start
   defp decode_message(%{raw_message: unknown_message} = p) do
     Logger.error(
       """
