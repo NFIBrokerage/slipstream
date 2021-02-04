@@ -1,10 +1,26 @@
 # Telemetry
 
+Slipstream emits telemetry events for both processes: the client process and
+the connection process.
+
+Telemetry for the connection process is very low-level: information about
+each message and before-and-after states for the connection. This telemetry
+aides in debugging failure-states of Slipstream and can be useful for
+development, but is likely not worth ingesting for average Slipstream users.
+
+Client process telemetry is similar to the telemetry emitted by
+`Phoenix.Channel`s and is recommended for consumption by average Slipstream
+users.
+
+## Client-process Telemetry
+
+TODO
+
+## Connection-process Telemetry
+
 Slipstream currently emits telemetry for each message received in its
 `Slipstream.Connection` process. This aides in low-level debugging when one
-desires to see the entire event-history of a connection. Telemetry support is
-also desired for clients, but has yet to be implemented. See
-[#4](https://github.com/NFIBrokerage/slipstream/issues/4).
+desires to see the entire event-history of a connection.
 
 A connection can be pieced together by the `:trace_id` and `:connection_id`
 keys emitted in the metadata of these telemetry events. One
