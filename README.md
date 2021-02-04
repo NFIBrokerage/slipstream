@@ -22,7 +22,7 @@ Add slipstream to you dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:slipstream, "~> 0.2"}
+    {:slipstream, "~> 0.3"}
   ]
 end
 ```
