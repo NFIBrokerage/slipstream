@@ -100,7 +100,8 @@ defmodule Slipstream.MixProject do
       extras: [
         "CHANGELOG.md",
         "guides/telemetry.md",
-        "guides/implementation.md"
+        "guides/implementation.md",
+        "guides/why_gun.md"
       ],
       groups_for_extras: [
         Guides: Path.wildcard("guides/*.md")

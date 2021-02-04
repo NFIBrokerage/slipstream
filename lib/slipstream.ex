@@ -166,6 +166,57 @@ defmodule Slipstream do
       :hello
       iex> GenServer.call(MyClient, :foo)
       {:ok, :bar}
+
+  ## Retry Mechanisms
+
+  Slipstream emulates the official `phoenix.js` package with its reconnection
+  and re-join features. `Slipstream.Configuration` allows configuration of the
+  back-off times with the `:reconnect_after_msec` and `:rejoin_after_msec`
+  lists, respectively.
+
+  To take advantage of these built-in mechanisms, a client must be written
+  in the asynchronous GenServer-like manner and must use the `reconnect/1` and
+  `rejoin/3` functions in its `c:Slipstream.handle_disconnect/2` and
+  `c:Slipstream.handle_topic_close/3` callbacks, respectively. Note that the
+  default implementation of these callbacks invokes these functions, so a client
+  which does not explicitly define these callbacks will retry connection and
+  joins.
+
+  Take care to handle the `:left` case of `c:Slipstream.handle_topic_close/3`.
+  In the case that a client attempts to leave a topic with `leave/2`, the
+  callback will be invoked with a `reason` of `:left`. The default
+  implementation of `c:Slipstream.handle_topic_close/3` makes this distinction
+  and simply no-ops on channel leaves.
+
+      defmodule MyClientWithRetry do
+        use Slipstream
+
+        def start_link(config) do
+          Slipstream.start_link(__MODULE__, config, name: __MODULE__)
+        end
+
+        @impl Slipstream
+        def init(config), do: connect(config)
+
+        @impl Slipstream
+        def handle_connect(socket) do
+          {:ok, join(socket, "rooms:lobby", %{user_id: 1})}
+        end
+
+        @impl Slipstream
+        def handle_disconnect(_reason, socket) do
+          reconnect(socket)
+        end
+
+        @impl Slipstream
+        def handle_topic_close(_topic, :left, socket) do
+          {:ok, socket}
+        end
+
+        def handle_topic_close(topic, _reason, socket) do
+          rejoin(socket, topic)
+        end
+      end
   """
 
   alias Slipstream.{Commands, Events, Socket}
@@ -568,15 +619,26 @@ defmodule Slipstream do
             when new_socket: Socket.t()
 
   @doc """
-  Invoked when a channel has been closed by the remote server
+  Invoked when a join has concluded
+
+  This callback will be invoked in a few cases:
+
+  - the remote `Phoenix.Channel` crashes, e.g. by a raised error
+  - the client successfully leaves the topic with `leave/2`
+
+  In the case that the client has left the topic, `reason` will simply be
+  `:left`. If the remote channel crashes, the `reason` will be an error tuple
+  `{:error, params :: json_serializable()}` where `params` is the message
+  sent from the remote channel on chrash.
 
   The default implementation of this callback attempts to re-join the
-  last-joined topic.
+  last-joined topic whenever `reason != :left`. If the reason is `:left`, the
+  default implementation will no-op by returning `{:ok, socket}`.
 
   ## Examples
 
       @impl Slipstream
-      def handle_topic_close(topic, _message, socket) do
+      def handle_topic_close(topic, _reason, socket) do
         {:ok, socket} = rejoin(socket, topic)
       end
   """
