@@ -14,7 +14,67 @@ users.
 
 ## Client-process Telemetry
 
-TODO
+Clients emit telemetry in two categories:
+
+- basic channel connection and topic join events
+- callback events
+
+The first emulate two-of-three events emitted by `Phoenix.Channel`s (at time
+of writing):
+
+- `[:slipstream, :client, :connect]` - dispatched at the end of a successful
+  client connection to a remote websocket host
+    - metadata
+      ```elixir
+      %{
+        start_time: DateTime.t(),
+        configuration: Slipstream.Configuration.t(),
+        socket: Slipstream.Socket.t(),
+        # emitted only on the stop event:
+        response_headers: [{String.t(), String.t()}]
+      }
+      ```
+- `[:slipstream, :client, :join]` - dispatched at the end of a successful
+  join onto a topic
+    - metadata
+      ```elixir
+      %{
+        start_time: DateTime.t(),
+        socket: Slipstream.Socket.t(),
+        topic: String.t(),
+        params: Slipstream.json_serializable(),
+        # emitted only on the stop event:
+        response: Slipstream.json_serializable()
+      }
+      ```
+
+The second is emitted for any callback defined by the `Slipstream` module. Each
+of these events are emitted under the event name of
+`[:slipstream, :client, callback]`, where `callback` is any callback defined
+by `Slipstream`, e.g. `:handle_message`. The metadata for these events is as
+follows:
+
+```elixir
+%{
+  client: module(),
+  callback: atom(),
+  arguments: [any()],
+  socket: Slipstream.Socket.t(),
+  start_time: DateTime.t(),
+  # emitted only on the stop event
+  response: any()
+}
+```
+
+Note that all client-process events emulate `:telemetry.span/3` in naming and
+in measurements, and in the case of callback events, the events are emitted
+by `:telemetry.span/3`. This means that each of the above-described events
+are actually prefixes, and each event name below represents messages of
+`event_prefix ++ [:start]` and `event_prefix ++ [:stop]`, with exceptions
+being emitted as `event_prefix ++ [:exception]`.
+
+Client authors are encouraged to only subscribe to the callbacks they are
+interested in (e.g. `:handle_message` or `:handle_reply`).
 
 ## Connection-process Telemetry
 
