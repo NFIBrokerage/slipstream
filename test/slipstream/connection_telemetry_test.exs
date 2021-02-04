@@ -62,7 +62,6 @@ defmodule Slipstream.ConnectionTelemetryTest do
                       %{duration: _}, metadata}
 
       assert metadata.state.status == :opened
-      assert metadata.termination_reason == :shutdown
       assert metadata.trace_id |> is_binary()
       assert metadata.connection_id |> is_binary()
       assert match?(%DateTime{}, metadata.start_time)
