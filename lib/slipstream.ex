@@ -492,9 +492,22 @@ defmodule Slipstream do
 
   Note that this callback is not always invoked as the process shuts down.
   See `c:GenServer.terminate/2` for more information.
+
+  It is wise to `disconnect/1` in this callback (and such is the default
+  implementation). This will gracefully end the websocket connection.
+  This is the behavior of the default implementation of `c:terminate/2`.
+
+  ## Examples
+
+      @impl Slipstream
+      def terminate(reason, socket) do
+        Logger.debug("shutting down: " <> inspect(reason))
+
+        disconnect(socket)
+      end
   """
   @doc since: "0.1.0"
-  @callback terminate(reason :: term(), state :: term()) :: term()
+  @callback terminate(reason :: term(), socket :: Socket.t()) :: term()
 
   # callbacks unique to Slipstream ('novel' callbacks)
 

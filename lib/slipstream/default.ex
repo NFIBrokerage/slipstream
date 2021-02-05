@@ -6,13 +6,13 @@ defmodule Slipstream.Default do
 
   @behaviour Slipstream
 
-  import Slipstream, only: [reconnect: 1, rejoin: 2]
+  import Slipstream, only: [reconnect: 1, rejoin: 2, disconnect: 1]
 
   @impl Slipstream
   def init(args), do: {:ok, args}
 
   @impl Slipstream
-  def terminate(_reason, _socket), do: :ok
+  def terminate(_reason, socket), do: disconnect(socket)
 
   @impl Slipstream
   def handle_info(_message, socket), do: {:noreply, socket}
