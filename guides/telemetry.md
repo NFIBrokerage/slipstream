@@ -76,6 +76,9 @@ being emitted as `event_prefix ++ [:exception]`.
 Client authors are encouraged to only subscribe to the callbacks they are
 interested in (e.g. `:handle_message` or `:handle_reply`).
 
+Note: events will _not_ be emitted for any messages handled by the `await_*`
+family of synchronous functions.
+
 ## Connection-process Telemetry
 
 Slipstream currently emits telemetry for each message received in its
@@ -139,3 +142,6 @@ Metadata contains:
 Each of these events follows the `:telemetry.span/3` pattern in measurements
 and in names: `event_prefix ++ [:start]` and `event_prefix ++ [:stop]` events
 are emitted using each of the above event prefixes.
+
+Note: connection telemetry will _not_ be emitted for any connections simulated
+in a `Slipstream.SocketTest`.
