@@ -759,7 +759,7 @@ defmodule Slipstream do
 
         route_command %Commands.OpenConnection{config: config, socket: socket}
 
-        {:ok, socket}
+        {:ok, %Socket{socket | channel_config: config}}
 
       {:error, reason} ->
         {:error, reason}
@@ -782,7 +782,7 @@ defmodule Slipstream do
 
     route_command %Commands.OpenConnection{config: config, socket: socket}
 
-    socket
+    %Socket{socket | channel_config: config}
   end
 
   @doc """

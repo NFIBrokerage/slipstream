@@ -201,7 +201,7 @@ defmodule Slipstream.Socket do
     %__MODULE__{
       socket
       | channel_pid: event.pid,
-        channel_config: event.config,
+        channel_config: event.config || socket.channel_config,
         reconnect_counter: 0
     }
   end

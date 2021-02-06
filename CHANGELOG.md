@@ -6,6 +6,15 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.2 - 2021-02-05
+
+### Fixed
+
+- Added channel config to socket on `Slipstream.connect/2` or
+  `Slipstream.connect!/2`
+    - this fixes an issue reconnecting when faking a connection through
+      `Slipstream.SocketTest.accept_connect/1`
+
 ## 0.4.1 - 2021-02-04
 
 ### Fixed
