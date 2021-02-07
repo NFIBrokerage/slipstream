@@ -8,8 +8,8 @@ be in working order by every green check-mark from the CI.
 
 ## Format
 
-Each example is contained in a directory in `./examples` (the current
-directory). Each example contains a `README.md` with:
+Each example is contained in a directory in `./examples`.
+Each example contains a `README.md` with:
 
 - a description of the example and what it tries to solve
 - a tutorial-like listing of commits that created the example, along with
@@ -22,3 +22,6 @@ and reproducing the client in an example project.
 
 - Graceful Startup: a client that handles failures in configuration at start-up
   time with graceful degradation
+- Repeater-style Client: a client which subscribes to a topic in another
+  service in order to re-publish each message as a broadcast in the client's
+  service's `Phoenix.Endpoint`
