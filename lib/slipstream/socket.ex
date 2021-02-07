@@ -83,6 +83,10 @@ defmodule Slipstream.Socket do
 
   Raises a `KeyError` if the key is not present in `socket.assigns`.
 
+  `func` should be an 1-arity function which takes the existing value at assign
+  `key` and updates it to a new value. The new value will take the old value's
+  place in `socket.assigns[key]`.
+
   This function is a useful alternative to `assign/3` when the key is already
   present in assigns and is a list, map, or similarly malleable data structure.
 
