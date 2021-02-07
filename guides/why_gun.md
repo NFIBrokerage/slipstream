@@ -37,3 +37,19 @@ process hibernation, leading to a very large process memory. The stacking up
 of this process memory and the zombie-like state these processes were left
 in when `:websocket_client` attempted to disconnect would quickly overwhelm
 the backend server hosting the data, leading to out-of-memory crashes.
+
+## Post-Cutover Performance
+
+![cutover-metrics](../guides/cutover-to-slipstream-metrics.png)
+
+> We cutover to the majority of our phoenix socket clients to Slipstream
+> at ~13:29 on 02/02, seen as the black bar in the graph above.
+> 
+> Note that disconnection reasons such as "LiveView process terminated", all
+> "parent process terminated" and "subscription process terminated (cleanup)"
+> are benign exit reasons.
+
+Once we cutover our sockets to Slipstream, we found a marked decline in
+clients terminating due to remote server disconnect. It's hard to point the
+finger at the exact reason this decline took place, but it is likely the
+product of a less-encumbered backend.
