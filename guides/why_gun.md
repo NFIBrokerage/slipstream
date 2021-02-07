@@ -42,7 +42,7 @@ the backend server hosting the data, leading to out-of-memory crashes.
 
 ![cutover-metrics](https://raw.githubusercontent.com/NFIBrokerage/slipstream/main/guides/cutover-to-slipstream-metrics.png)
 
-> We cutover to the majority of our phoenix socket clients to Slipstream
+> We cutover the majority of our phoenix socket clients to Slipstream
 > at ~13:29 on 02/02, seen as the black bar in the graph above.
 > 
 > Note that disconnection reasons such as "LiveView process terminated", all
