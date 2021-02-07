@@ -25,3 +25,5 @@ and reproducing the client in an example project.
 - Repeater-style Client: a client which subscribes to a topic in another
   service in order to re-publish each message as a broadcast in the client's
   service's `Phoenix.Endpoint`
+- Rejoin on Reconnect: a client which re-joins all joined topics on a
+  reconnection after a disconnection
