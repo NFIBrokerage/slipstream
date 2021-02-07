@@ -82,7 +82,7 @@ def init(_args) do
 end
 ```
 
-So now the client will attempt to connect only if the configuration
+Now the client will attempt to connect only if the configuration
 is defined. But it can still fail, as we use the raising
 `Slipstream.connect!/2`.  We refactor that to `Slipstream.connect/2` in
 [`b3be445`](https://github.com/NFIBrokerage/slipstream/commit/b3be44525acfb6cda828a80d15e28d3351852540):
