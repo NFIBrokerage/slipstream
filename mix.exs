@@ -101,10 +101,16 @@ defmodule Slipstream.MixProject do
         "CHANGELOG.md",
         "guides/telemetry.md",
         "guides/implementation.md",
-        "guides/why_gun.md"
+        "guides/why_gun.md",
+        "examples/README.md": [filename: "examples", title: "Examples"],
+        "examples/graceful_startup/README.md": [
+          filename: "graceful_startup_example",
+          title: "Graceful Startup"
+        ]
       ],
       groups_for_extras: [
-        Guides: Path.wildcard("guides/*.md")
+        Guides: ["examples/README.md" | Path.wildcard("guides/*.md")],
+        Examples: Path.wildcard("examples/*/README.md")
       ],
       groups_for_modules: [
         Testing: [
