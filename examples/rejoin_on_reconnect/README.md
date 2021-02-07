@@ -59,7 +59,7 @@ it will gracefully re-join all topics when it reconnects after a disconnect.
 
 We will start by modifying the `c:Slipstream.init/1` callback to store a list
 of topics in the socket assigns using `Slipstream.Socket.assign/3`
-(commit)
+([`2b0bd58`](https://github.com/NFIBrokerage/slipstream/commit/2b0bd582ff99d294274a323d8a902e101226c3be))
 
 ```elixir
 @impl Slipstream
@@ -77,7 +77,7 @@ And every time the client is told to join a topic with `MyClient.join/1`, we
 want to update that `socket.assigns.topics` key to store the new topic. We
 do that in the `c:Slipstream.handle_cast/2` callback with
 `Slipstream.Socket.update/3`
-(commit)
+([`70e802f`](https://github.com/NFIBrokerage/slipstream/pull/22/commits/70e802f7710a46d889939325ba7d62a680b60a96))
 
 ```elixir
 @impl Slipstream
@@ -102,7 +102,7 @@ When a client is re-connected after a disconnect, the
 `c:Slipstream.handle_connect/1` callback is invoked again (it is first
 invoked upon the first successful connection to the remote websocket server).
 That's the perfect place to put our re-join mechanism
-(commit)
+([`70e802f`](https://github.com/NFIBrokerage/slipstream/pull/22/commits/70e802f7710a46d889939325ba7d62a680b60a96))
 
 ```elixir
 @impl Slipstream
