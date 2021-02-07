@@ -4,6 +4,8 @@ defmodule MyApp.RepeaterClient do
   into this service's endpoint
   """
 
+  @topic "rooms:lobby"
+
   use Slipstream
 
   def start_link(config) do
@@ -12,4 +14,7 @@ defmodule MyApp.RepeaterClient do
 
   @impl Slipstream
   def init(config), do: {:ok, connect!(config)}
+
+  @impl Slipstream
+  def handle_connect(socket), do: {:ok, join(socket, @topic)}
 end
