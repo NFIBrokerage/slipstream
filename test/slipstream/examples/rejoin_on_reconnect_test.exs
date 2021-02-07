@@ -22,7 +22,8 @@ defmodule Slipstream.RejoinOnReconnectTest do
       :ok
     end
 
-    test "when the channel is disconnected, it reconnects and rejoins each topic", c do
+    test "when the channel is disconnected, it reconnects and rejoins each topic",
+         c do
       disconnect(c.client, :closed_by_remote)
 
       accept_connect(c.client)

@@ -124,8 +124,10 @@ defmodule Slipstream.Socket do
   # but see the `Phoenix.LiveView.update/3` implementation for the original
   # source
   @doc since: "0.5.0"
-  @spec update(t(), key :: atom(), func :: (value :: any() -> value :: any())) :: t()
-  def update(%__MODULE__{assigns: assigns} = socket, key, func) when is_atom(key) and is_function(func, 1) do
+  @spec update(t(), key :: atom(), func :: (value :: any() -> value :: any())) ::
+          t()
+  def update(%__MODULE__{assigns: assigns} = socket, key, func)
+      when is_atom(key) and is_function(func, 1) do
     case Map.fetch(assigns, key) do
       {:ok, value} -> assign(socket, [{key, func.(value)}])
       :error -> raise KeyError, key: key, term: assigns

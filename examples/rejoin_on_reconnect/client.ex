@@ -15,7 +15,7 @@ defmodule MyApp.RejoinOnReconnectClient do
       config
       |> connect!()
       |> assign(:topics, [])
-      
+
     {:ok, socket}
   end
 
