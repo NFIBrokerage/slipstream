@@ -7,4 +7,5 @@
 ]
 |> Supervisor.start_link(strategy: :one_for_one)
 
+ExUnit.configure(assert_receive_timeout: 250, refute_receive_timeout: 300)
 ExUnit.start()
