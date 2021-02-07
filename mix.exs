@@ -97,14 +97,16 @@ defmodule Slipstream.MixProject do
       language: "en",
       formatters: ["html"],
       main: Slipstream,
-      extras: [
-        "CHANGELOG.md",
-        "guides/telemetry.md",
-        "guides/implementation.md",
-        "guides/why_gun.md"
+      extras: ~w[
+        CHANGELOG.md
+        guides/telemetry.md
+        guides/implementation.md
+        guides/why_gun.md
+        examples/graceful_startup/README.md
       ],
       groups_for_extras: [
-        Guides: Path.wildcard("guides/*.md")
+        Guides: Path.wildcard("guides/*.md"),
+        Examples: Path.wildcard("examples/*/README.md")
       ],
       groups_for_modules: [
         Testing: [

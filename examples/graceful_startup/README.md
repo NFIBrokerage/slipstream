@@ -3,8 +3,8 @@
 A client that gracefully handles errors in configuration at start-up time.
 
 As the documentation for `c:GenServer.init/1` details, a GenServer may return
-`:ignore` instead of `{:ok, initial_state}` in its `c:init/1` callback. This
-will cause the client to
+`:ignore` instead of `{:ok, initial_state}` in its `c:GenServer.init/1`
+callback. This will cause the client to
 
 > exit normally without entering the loop or calling `c:GenServer.terminate/2`.
 > If used when part of a supervision tree the parent supervisor will not
@@ -50,18 +50,18 @@ def init(_args) do
 end
 ```
 
-But note that this introduces two potential `raise`ing errors in our `init/1`
-callback:
+But note that this introduces two potential `raise`ing errors in our
+`c:Slipstream.init/1` callback:
 
 1. `Application.fetch_env!/2` will raise of the key-value pair is not defined
    in configuration (`config/*.exs`)
 2. `Slipstream.connect!/2` will raise if the configuration passed as the first
    argument is not valid according to `Slipstream.Configuration`.
 
-And also note that a `raise` in an `init/1` callback will fail the start-up
-of the supervisor process. If this client is started in the Application
-supervision tree (`lib/my_app/application.ex`), it will take down the entire
-application on error.
+And also note that a `raise` in an `c:Slipstream.init/1` callback will fail
+the start-up of the supervisor process. If this client is started in the
+Application supervision tree (`lib/my_app/application.ex`), it will take
+down the entire application on error.
 
 So let's refactor this to make it a bit more safe! First, we switch
 `Application.fetch_env!/2` to its more graceful counterpart:
