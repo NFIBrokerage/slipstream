@@ -17,4 +17,9 @@ defmodule MyApp.RepeaterClient do
 
   @impl Slipstream
   def handle_connect(socket), do: {:ok, join(socket, @topic)}
+
+  @impl Slipstream
+  def handle_message(_topic, _event, _payload, socket) do
+    {:ok, socket}
+  end
 end

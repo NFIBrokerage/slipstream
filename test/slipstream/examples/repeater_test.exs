@@ -7,7 +7,9 @@ defmodule Slipstream.RepeaterTest do
 
   describe "given the client has connected to the endpoint and joined a topic" do
     setup do
-      start_supervised!({@client, uri: "ws://localhost:4000/socket/websocket", test_mode?: true})
+      start_supervised!(
+        {@client, uri: "ws://localhost:4000/socket/websocket", test_mode?: true}
+      )
 
       connect_and_assert_join @client, @topic, %{}, :ok
 
@@ -21,7 +23,11 @@ defmodule Slipstream.RepeaterTest do
 
       push(@client, @topic, event, params)
 
-      assert_receive %Phoenix.Socket.Broadcast{topic: @topic, event: ^event, payload: ^params}
+      assert_receive %Phoenix.Socket.Broadcast{
+        topic: @topic,
+        event: ^event,
+        payload: ^params
+      }
     end
   end
 end
