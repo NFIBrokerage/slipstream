@@ -18,12 +18,12 @@ See the [online documentation](https://hexdocs.pm/slipstream)
 
 ## Installation
 
-Add slipstream to you dependencies in `mix.exs`:
+Add slipstream to your dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:slipstream, "~> 0.4"}
+    {:slipstream, "~> 0.5"}
   ]
 end
 ```
