@@ -1,6 +1,8 @@
 defmodule MyApp.GracefulStartupClient do
   use Slipstream
 
+  require Logger
+
   @moduledoc """
   A slipstream client that gracefully handles misconfiguration errors on
   start-up
@@ -16,8 +18,20 @@ defmodule MyApp.GracefulStartupClient do
          {:ok, socket} <- connect(config) do
       {:ok, socket}
     else
-      :error -> :ignore
-      {:error, _reason} -> :ignore
+      :error ->
+        Logger.warn("""
+        Could not start #{inspect(__MODULE__)} because it is not configured
+        """)
+
+        :ignore
+
+      {:error, reason} ->
+        Logger.error("""
+        Could not start #{inspect(__MODULE__)} because the configuration is invalid:
+        #{inspect(reason)}
+        """)
+
+        :ignore
     end
   end
 end

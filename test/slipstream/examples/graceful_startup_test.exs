@@ -3,13 +3,22 @@ defmodule Slipstream.GracefulStartupTest do
 
   @client MyApp.GracefulStartupClient
 
+  import ExUnit.CaptureLog
+
   describe "given the configuration is not in application-config" do
     setup do
       :ok
     end
 
     test "the client does not start up" do
-      assert start_supervised(@client) == {:ok, :undefined}
+      log =
+        capture_log([level: :warn], fn ->
+          assert start_supervised(@client) == {:ok, :undefined}
+        end)
+
+      assert log =~ "Could not start"
+      assert log =~ inspect(@client)
+      assert log =~ "because it is not configured"
     end
   end
 
@@ -27,7 +36,15 @@ defmodule Slipstream.GracefulStartupTest do
     end
 
     test "the client does not start up" do
-      assert start_supervised(@client) == {:ok, :undefined}
+      log =
+        capture_log([level: :error], fn ->
+          assert start_supervised(@client) == {:ok, :undefined}
+        end)
+
+      assert log =~ "Could not start"
+      assert log =~ inspect(@client)
+      assert log =~ "because the configuration is invalid"
+      assert log =~ "%NimbleOptions.ValidationError{"
     end
   end
 
