@@ -1458,7 +1458,8 @@ defmodule Slipstream do
           channel_pid: 1,
           connected?: 1,
           join_status: 2,
-          joined?: 2
+          joined?: 2,
+          update: 3
         ]
 
       @behaviour Slipstream
