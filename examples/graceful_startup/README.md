@@ -16,16 +16,18 @@ may return `:ignore` and see the same behavior.
 
 ## Tutorial
 
-We start with an empty client module: `c5a08fdcdb02bfe8721b4814f18e495942452426`
+We start with an empty client module
+([`c5a08fd`](https://github.com/NFIBrokerage/slipstream/commit/c5a08fdcdb02bfe8721b4814f18e495942452426))
 
 ```elixir
 defmodule MyApp.GracefulStartupClient do
 end
 ```
 
-And immediately fill out the Slipstream basics like a `start_link/1`
-implementation (so the module may be supervised), and an invocation of
-`use Slipstream`: `8d44dd057f6729b3d34787b85a57f0a968120946`
+And immediately fill out the Slipstream basics like a
+`start_link/1` implementation (so the module may be
+supervised), and an invocation of `use Slipstream`
+([`8d44dd0`](https://github.com/NFIBrokerage/slipstream/commit/8d44dd057f6729b3d34787b85a57f0a968120946))
 
 ```elixir
 defmodule MyApp.GracefulStartupClient do
@@ -39,8 +41,8 @@ defmodule MyApp.GracefulStartupClient do
 end
 ```
 
-Then we add a basic implementation of the `c:Slipstream.init/1` callback:
-`a51e77c70b06086fe0ce5673d6650c0950cf30d8`
+Then we add a basic implementation of the `c:Slipstream.init/1` callback
+([`a51e77c`](https://github.com/NFIBrokerage/slipstream/commit/a51e77c70b06086fe0ce5673d6650c0950cf30d8))
 
 ```elixir
 @impl Slipstream
@@ -66,8 +68,8 @@ down the entire application on error.
 So let's refactor this to make it a bit more safe! First, we switch
 `Application.fetch_env!/2` to its more graceful counterpart:
 `Application.fetch_env/2`, which returns `{:ok, config}` when
-the configuration is defined and `:error` when it is not:
-`90ceb4a5947b8e78c1ab9a1abfe4c6a55b1ab689`
+the configuration is defined and `:error` when it is not
+([`90ceb4a`](https://github.com/NFIBrokerage/slipstream/commit/90ceb4a5947b8e78c1ab9a1abfe4c6a55b1ab689))
 
 ```elixir
 @impl Slipstream
@@ -83,7 +85,7 @@ end
 So now the client will attempt to connect only if the configuration
 is defined. But it can still fail, as we use the raising
 `Slipstream.connect!/2`.  We refactor that to `Slipstream.connect/2` in
-`b3be44525acfb6cda828a80d15e28d3351852540`:
+[`b3be445`](https://github.com/NFIBrokerage/slipstream/commit/b3be44525acfb6cda828a80d15e28d3351852540):
 
 ```elixir
 @impl Slipstream
@@ -104,7 +106,9 @@ of _graceful degradation_: in cases of system failure, we degrade our
 performance instead of entirely giving up.
 
 In this example, we go on to add helpful `Logger`
-messages that declare when a failure case has been met:
-`09d1a83311b039d2dcd743a2a54cbba4287a21d2`. To see the full example code,
-open up `examples/graceful_startup/client.ex`. A small test suite can be
-found at `test/slipstream/examples/graceful_startup_test.exs`.
+messages that declare when a failure case has been met
+([`09d1a83`](https://github.com/NFIBrokerage/slipstream/commit/09d1a83311b039d2dcd743a2a54cbba4287a21d2)).
+To see the full example code, open up
+[`examples/graceful_startup/client.ex`](https://github.com/NFIBrokerage/slipstream/blob/main/examples/graceful_startup/client.ex).
+A small test suite can be found at
+[`test/slipstream/examples/graceful_startup_test.exs`](https://github.com/NFIBrokerage/slipstream/blob/main/test/slipstream/examples/graceful_startup_test.exs).
