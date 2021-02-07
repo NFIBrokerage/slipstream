@@ -11,7 +11,12 @@ defmodule MyApp.RejoinOnReconnectClient do
 
   @impl Slipstream
   def init(config) do
-    {:ok, connect!(config)}
+    socket =
+      config
+      |> connect!()
+      |> assign(:topics, [])
+      
+    {:ok, socket}
   end
 
   @impl Slipstream
