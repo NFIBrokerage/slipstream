@@ -7,6 +7,8 @@ As the documentation for `c:GenServer.init/1` details, a GenServer may return
 will cause the client to
 
 > exit normally without entering the loop or calling `c:GenServer.terminate/2`.
+> If used when part of a supervision tree the parent supervisor will not
+> fail to start nor immediately try to restart the `GenServer`.
 
 This makes it a good option for handling failures to start the client.
 `c:Slipstream.init/1` is mostly a wrapper around `c:GenServer.init/1`, so we
