@@ -8,7 +8,7 @@ defmodule Slipstream.GracefulStartupTest do
       :ok
     end
 
-    test "the server does not start up" do
+    test "the client does not start up" do
       assert start_supervised(@client) == {:ok, :undefined}
     end
   end
@@ -26,10 +26,8 @@ defmodule Slipstream.GracefulStartupTest do
       :ok
     end
 
-    test "the client fails to start up" do
-      assert {:error,
-              {{%NimbleOptions.ValidationError{}, _stack_trace}, _child_spec}} =
-               start_supervised(@client)
+    test "the client does not start up" do
+      assert start_supervised(@client) == {:ok, :undefined}
     end
   end
 

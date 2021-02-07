@@ -12,10 +12,12 @@ defmodule MyApp.GracefulStartupClient do
 
   @impl Slipstream
   def init(_args) do
-    with {:ok, config} <- Application.fetch_env(:slipstream, __MODULE__) do
-      {:ok, connect!(config)}
+    with {:ok, config} <- Application.fetch_env(:slipstream, __MODULE__),
+         {:ok, socket} <- connect(config) do
+      {:ok, socket}
     else
       :error -> :ignore
+      {:error, _reason} -> :ignore
     end
   end
 end
