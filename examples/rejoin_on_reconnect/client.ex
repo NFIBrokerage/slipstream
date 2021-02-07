@@ -1,4 +1,8 @@
 defmodule MyApp.RejoinOnReconnectClient do
+  @moduledoc """
+  A client which re-joins all topics it had joined after a reconnection
+  """
+
   use Slipstream
 
   def join(topic) do
