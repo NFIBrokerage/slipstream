@@ -6,6 +6,18 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.3 - 2021-02-07
+
+### Added
+
+- Added examples to the documentation
+    - "Graceful Startup" and "Repeater-style Client"
+- Added a note about post-cutover performance changes after we (NFIBrokerage)
+  cutover to Slipstream in our stack
+    - This is a new section in the "Why :gun?" guide
+- Added documentation on counting the number of Slipstream connection processes
+  to `Slipstream.ConnectionSupervisor`
+
 ## 0.4.2 - 2021-02-05
 
 ### Fixed
