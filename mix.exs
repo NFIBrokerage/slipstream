@@ -106,6 +106,10 @@ defmodule Slipstream.MixProject do
         "examples/graceful_startup/README.md": [
           filename: "graceful_startup_example",
           title: "Graceful Startup"
+        ],
+        "examples/repeater/README.md": [
+          filename: "repeater_example",
+          title: "Repeater-style Client"
         ]
       ],
       groups_for_extras: [
