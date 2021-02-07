@@ -79,6 +79,66 @@ defmodule Slipstream.Socket do
   end
 
   @doc """
+  Updates an existing key in the socket assigns
+
+  Raises a `KeyError` if the key is not present in `socket.assigns`.
+
+  `func` should be an 1-arity function which takes the existing value at assign
+  `key` and updates it to a new value. The new value will take the old value's
+  place in `socket.assigns[key]`.
+
+  This function is a useful alternative to `assign/3` when the key is already
+  present in assigns and is a list, map, or similarly malleable data structure.
+
+  ## Examples
+
+      @impl Slipstream
+      def handle_cast({:join, topic}, socket) do
+        socket =
+          socket
+          |> update(:topics, &[topic | &1])
+          |> join(topic)
+
+        {:noreply, socket}
+      end
+
+      @impl Slipstream
+      def handle_call({:join, topic}, from, socket) do
+        socket =
+          socket
+          |> update(:join_requests, &Map.put(&1, topic, from))
+          |> join(topic)
+
+        # note: not replying here so we can provide a synchronous call to a
+        # topic being joined
+        {:noreply, socket}
+      end
+
+      @impl Slipstream
+      def handle_join(topic, response, socket) do
+        case Map.fetch(socket.assigns.join_requests, topic) do
+          {:ok, from} -> GenServer.reply(from, {:ok, response})
+          :error -> :ok
+        end
+
+        {:ok, socket}
+      end
+  """
+  # again, can't defdelegate/2 because of the socket module being different
+  # but see the `Phoenix.LiveView.update/3` implementation for the original
+  # source
+  @doc since: "0.5.0"
+  @spec update(t(), key :: atom(), func :: (value :: any() -> value :: any())) ::
+          t()
+  def update(%__MODULE__{assigns: assigns} = socket, key, func)
+      when is_atom(key) and is_function(func, 1) do
+    case Map.fetch(assigns, key) do
+      {:ok, value} -> assign(socket, [{key, func.(value)}])
+      :error -> raise KeyError, key: key, term: assigns
+    end
+  end
+
+  @doc """
   Checks if a channel is currently joined
 
   ## Examples

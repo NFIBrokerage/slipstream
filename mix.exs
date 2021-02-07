@@ -110,6 +110,10 @@ defmodule Slipstream.MixProject do
         "examples/repeater/README.md": [
           filename: "repeater_example",
           title: "Repeater-style Client"
+        ],
+        "examples/rejoin_on_reconnect/README.md": [
+          filename: "rejoin_on_reconnect_example",
+          title: "Rejoin on Reconnect"
         ]
       ],
       groups_for_extras: [
