@@ -6,6 +6,14 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 - 2021-02-07
+
+### Added
+
+- Added `Slipstream.Socket.update/3` which emulates `Phoenix.LiveView.update/3`
+- Added an example on the rejoin-after-reconnect pattern for clients which
+  dynamically join topics
+
 ## 0.4.4 - 2021-02-07
 
 ### Fixed
