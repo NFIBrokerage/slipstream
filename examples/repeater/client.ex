@@ -4,6 +4,7 @@ defmodule MyApp.RepeaterClient do
   into this service's endpoint
   """
 
+  @endpoint SlipstreamWeb.Endpoint
   @topic "rooms:lobby"
 
   use Slipstream
@@ -19,7 +20,9 @@ defmodule MyApp.RepeaterClient do
   def handle_connect(socket), do: {:ok, join(socket, @topic)}
 
   @impl Slipstream
-  def handle_message(_topic, _event, _payload, socket) do
+  def handle_message(topic, event, payload, socket) do
+    @endpoint.broadcast(topic, event, payload)
+
     {:ok, socket}
   end
 end
