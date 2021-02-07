@@ -20,7 +20,26 @@ defmodule MyApp.RejoinOnReconnectClient do
   end
 
   @impl Slipstream
-  def handle_cast({:join, topic}, socket) do
-    {:noreply, join(socket, topic)}
+  def handle_connect(socket) do
+    socket =
+      socket.assigns.topics
+      |> Enum.reduce(socket, fn topic, socket ->
+        case rejoin(socket, topic) do
+          {:ok, socket} -> socket
+          {:error, _reason} -> socket
+        end
+      end)
+
+    {:ok, socket}
+  end
+
+  @impl Slipstream
+  def handle_cast({:join, new_topic}, socket) do
+    socket =
+      socket
+      |> update(:topics, fn existing_topics -> [new_topic | existing_topics] end)
+      |> join(new_topic)
+
+    {:noreply, socket}
   end
 end
