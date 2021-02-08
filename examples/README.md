@@ -27,3 +27,5 @@ and reproducing the client in an example project.
   service's `Phoenix.Endpoint`
 - Rejoin on Reconnect: a client which re-joins all joined topics on a
   reconnection after a disconnection
+- GenServer Capabilities: how to use the GenServer backend of Slipstream to
+  handle GenServer messaging
