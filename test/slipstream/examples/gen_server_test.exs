@@ -40,4 +40,16 @@ defmodule Slipstream.GenServerTest do
 
     assert await(call) == {:ok, %{"foo" => "bar"}}
   end
+
+  test "the :conclude_subscription message shuts down and disconnects the client",
+       c do
+    accept_connect(c.client)
+    client_ref = c.client |> GenServer.whereis() |> Process.monitor()
+
+    c.client |> GenServer.whereis() |> send(:conclude_subscription)
+
+    assert_disconnect()
+
+    assert_receive {:DOWN, ^client_ref, :process, _pid, :normal}
+  end
 end
