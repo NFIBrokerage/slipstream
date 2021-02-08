@@ -40,7 +40,7 @@ roughly the same as `c:GenServer.init/1` except that you must return a
 `t:Slipstream.Socket.t/0`).
 
 Let's add a clause for handling `GenServer.cast/2`s
-(commit)
+([`8d5837b`](https://github.com/NFIBrokerage/slipstream/commit/8d5837b8bdc6801dd8538fe78aefa06631f07b21))
 
 ```elixir
 @impl Slipstream
@@ -68,7 +68,7 @@ is a synchronous action for which the caller will block until a reply is
 received. This is the only callback in the set of `Slipstream` callbacks which
 can produce a reply-tuple (`{:reply, reply, socket}`). Let's start with
 something simple like a ping request
-(commit)
+([`fef68cc`](https://github.com/NFIBrokerage/slipstream/commit/fef68cce490b4dc02d21bc39e16d9ad12b47c5d4))
 
 ```elixir
 @impl Slipstream
@@ -91,7 +91,7 @@ the server which hears the call does not necessarily _have_ to respond in a
 blocking fashion. With a combination of a noreply tuple (`{:noreply, socket}`)
 and `GenServer.reply/2`, we can provide an API for synchronously requesting a
 join
-(commit)
+([`d878f90`](https://github.com/NFIBrokerage/slipstream/commit/d878f90c9b8c0e5f3f0de001dc3881e8a46a78c4))
 
 ```elixir
 @impl Slipstream
@@ -132,7 +132,7 @@ We might write a client which uses `:timer.send_interval/2`,
 work later, or another process may wish to send the client a message to
 alter its behavior. We'll take the approach of that last suggestion with this
 callback implementation for `c:Slipstream.handle_info/2`
-(commit)
+([`63d3759`](https://github.com/NFIBrokerage/slipstream/commit/63d37591879ef2085c154f281357cad203cb6ba8))
 
 ```elixir
 @impl Slipstream
