@@ -114,6 +114,10 @@ defmodule Slipstream.MixProject do
         "examples/rejoin_on_reconnect/README.md": [
           filename: "rejoin_on_reconnect_example",
           title: "Rejoin on Reconnect"
+        ],
+        "examples/gen_server/README.md": [
+          filename: "gen_server_example",
+          title: "GenServer Capabilities"
         ]
       ],
       groups_for_extras: [
