@@ -46,7 +46,7 @@ defmodule Slipstream.MixProject do
 
   defp elixirc_paths(_), do: ["lib"]
 
-  defp extra_compilers(env) when env in [:test], do: [:phoenix]
+  defp extra_compilers(env) when env in [:test, :dev, :docs], do: [:phoenix]
   defp extra_compilers(_), do: []
 
   def application do
@@ -64,11 +64,11 @@ defmodule Slipstream.MixProject do
       {:jason, "~> 1.0", optional: true},
       {:nimble_options, "~> 0.1"},
       # docs
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:inch_ex, "== 2.1.0-rc.1", only: [:dev, :test]},
+      {:ex_doc, ">= 0.0.0", only: [:docs], runtime: false},
+      {:inch_ex, "== 2.1.0-rc.1", only: [:docs]},
       # test
       {:cowlib, "~> 2.9", override: true, only: [:dev, :test]},
-      {:phoenix_pubsub, "~> 2.0", override: true, only: [:dev, :test]},
+      {:phoenix_pubsub, "~> 2.0", override: true, only: [:docs, :dev, :test]},
       {:plug_cowboy, "~> 2.0", only: [:dev, :test]},
       {:mox, "~> 1.0", only: [:dev, :test]},
       {:credo, "~> 1.5", only: :test},
@@ -120,6 +120,10 @@ defmodule Slipstream.MixProject do
         "examples/gen_server/README.md": [
           filename: "gen_server_example",
           title: "GenServer Capabilities"
+        ],
+        "examples/scripting/README.md": [
+          filename: "scripting_example",
+          title: "Scripting"
         ]
       ],
       groups_for_extras: [

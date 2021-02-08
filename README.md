@@ -32,6 +32,16 @@ end
 > interface is stable and initial bugs worked out, a v1.0.0 version will be
 > published.
 
+## Documentation
+
+Documentation is automatically published to
+[hexdocs.pm](https://hexdocs.pm/slipstream) on release. You may build the
+documentation locally with
+
+```
+MIX_ENV=docs mix docs
+```
+
 ## Contributing
 
 Issues and PRs are always welcome! See our organization
