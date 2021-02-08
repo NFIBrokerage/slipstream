@@ -19,4 +19,10 @@ defmodule Slipstream.GenServerTest do
 
     assert_join ^topic, ^params, :ok
   end
+
+  test "calling with a ping request gives a synchronous pong result", c do
+    accept_connect(c.client)
+
+    assert GenServer.call(c.client, :ping) == :pong
+  end
 end
