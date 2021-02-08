@@ -24,4 +24,20 @@ defmodule MyApp.GenServerClient do
   def handle_call(:ping, _from, socket) do
     {:reply, :pong, socket}
   end
+
+  def handle_call({:join, topic, params}, from, socket) do
+    socket =
+      socket
+      |> assign(:join_request, from)
+      |> join(topic, params)
+
+    {:noreply, socket}
+  end
+
+  @impl Slipstream
+  def handle_join(_topic, response, socket) do
+    GenServer.reply(socket.assigns.join_request, {:ok, response})
+
+    {:ok, socket}
+  end
 end
