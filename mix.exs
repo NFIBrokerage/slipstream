@@ -41,7 +41,9 @@ defmodule Slipstream.MixProject do
     ]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/support", "test/fixtures"]
+  defp elixirc_paths(env) when env in [:test, :dev],
+    do: ["lib", "test/support", "test/fixtures"]
+
   defp elixirc_paths(_), do: ["lib"]
 
   defp extra_compilers(env) when env in [:test], do: [:phoenix]
@@ -68,7 +70,7 @@ defmodule Slipstream.MixProject do
       {:cowlib, "~> 2.9", override: true, only: [:dev, :test]},
       {:phoenix_pubsub, "~> 2.0", override: true, only: [:dev, :test]},
       {:plug_cowboy, "~> 2.0", only: [:dev, :test]},
-      {:mox, "~> 1.0", only: :test},
+      {:mox, "~> 1.0", only: [:dev, :test]},
       {:credo, "~> 1.5", only: :test},
       {:bless, "~> 1.0", only: :test},
       {:excoveralls, "~> 0.7", only: :test}

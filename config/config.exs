@@ -1,5 +1,5 @@
 use Mix.Config
 
-if Mix.env() == :test do
-  import_config "test.exs"
+if Mix.env() in [:test, :dev] do
+  import_config "#{Mix.env()}.exs"
 end
