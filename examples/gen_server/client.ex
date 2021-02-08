@@ -19,4 +19,9 @@ defmodule MyApp.GenServerClient do
   def handle_cast({:join, topic, params}, socket) do
     {:noreply, join(socket, topic, params)}
   end
+
+  @impl Slipstream
+  def handle_call(:ping, _from, socket) do
+    {:reply, :pong, socket}
+  end
 end
