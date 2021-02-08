@@ -4,7 +4,7 @@ defmodule MyApp.GenServerClient do
   allowed with Slipstream
   """
 
-  use Slipstream
+  use Slipstream, restart: :temporary
 
   def start_link(config) do
     Slipstream.start_link(__MODULE__, config, name: __MODULE__)
@@ -39,5 +39,10 @@ defmodule MyApp.GenServerClient do
     GenServer.reply(socket.assigns.join_request, {:ok, response})
 
     {:ok, socket}
+  end
+
+  @impl Slipstream
+  def handle_info(:conclude_subscription, socket) do
+    {:stop, :normal, disconnect(socket)}
   end
 end
