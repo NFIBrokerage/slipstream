@@ -13,3 +13,6 @@ _ref = push!(socket, topic, "quicksand", %{"a" => "b"})
 push!(socket, topic, "push to me", %{})
 
 await_message!(^topic, "foo", _payload)
+
+socket = leave(socket, topic) |> await_leave!(topic)
+socket |> disconnect() |> await_disconnect!

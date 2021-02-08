@@ -193,3 +193,13 @@ iex> push!(socket, topic, "push to me", %{})
 iex> await_message!(_, _, _)
 {"rooms:lobby", "foo", %{"bar" => "baz"}}
 ```
+
+Finally, let's leave the topic and disconnect, cleaning up our connection
+cleanly.
+
+```elixir
+iex> socket = leave(socket, topic) |> await_leave!(topic)
+#Slipstream.Socket<assigns: %{}, ...>
+iex> socket |> disconnect() |> await_disconnect!
+#Slipstream.Socket<assigns: %{}, ...>
+```
