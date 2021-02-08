@@ -25,4 +25,19 @@ defmodule Slipstream.GenServerTest do
 
     assert GenServer.call(c.client, :ping) == :pong
   end
+
+  test "the synchronous join API works in the happy-path", c do
+    accept_connect(c.client)
+
+    import Task, only: [async: 1, await: 1]
+
+    topic = "rooms:lobby"
+    params = %{"fizz" => "buzz"}
+
+    call = async(fn -> GenServer.call(c.client, {:join, topic, params}) end)
+
+    assert_join ^topic, ^params, {:ok, %{"foo" => "bar"}}
+
+    assert await(call) == {:ok, %{"foo" => "bar"}}
+  end
 end
