@@ -1,7 +1,7 @@
 # Scripting
 
-
-Sometimes, it's really nice to safely play and experiment in your local development environment. 
+Sometimes, it's really nice to safely play and experiment in your local
+development environment.
 
 In this tutorial we'll cover how to use the synchronous `await_*` family of
 functions to write scripts for interacting with `Phoenix.Channel`s in an
