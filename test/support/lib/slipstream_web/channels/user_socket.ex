@@ -5,6 +5,7 @@ defmodule SlipstreamWeb.UserSocket do
 
   ## Channels
   channel("test:*", SlipstreamWeb.TestChannel)
+  channel("rooms:lobby", SlipstreamWeb.InteractiveChannel)
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

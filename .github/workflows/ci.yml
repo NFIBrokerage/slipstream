@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-16.04
     if: startsWith(github.ref, 'refs/tags/v')
     env:
-      MIX_ENV: dev
+      MIX_ENV: docs
     needs:
     - bless
 

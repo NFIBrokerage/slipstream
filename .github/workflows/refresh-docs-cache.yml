@@ -1,6 +1,6 @@
 name: Refresh Dev Cache ♻️
 
-# We need this workflow to ensure that MIX_ENV=dev caches are available when
+# We need this workflow to ensure that MIX_ENV=docs caches are available when
 # the CI workflow runs for a tagged build. This is due to a combination of
 # several factors, so it's worthy of a wordy explanation.
 #
@@ -8,11 +8,11 @@ name: Refresh Dev Cache ♻️
 # for a branch, it will try to find a cache from its default branch (main).
 # So, when we run CI for a new branch or a new tag, there will be a cache miss
 # and the cache step will try to find a cache from the main branch.
-# The problem is, we only build with MIX_ENV=dev when a tag is pushed. That
-# means our main CI workflow never builds a dev cache in the main branch.
+# The problem is, we only build with MIX_ENV=docs when a tag is pushed. That
+# means our main CI workflow never builds a docs cache in the main branch.
 # When we push a new tag for a release, the actions/cache step will always miss
-# and then check main for a dev cache. We need this workflow to ensure that
-# it will find a recent dev cache.
+# and then check main for a docs cache. We need this workflow to ensure that
+# it will find a recent docs cache.
 #
 # Many of the steps are duplicated between this workflow and the
 # publish-hex-package job in the Actions CI workflow.
@@ -29,11 +29,11 @@ env:
   CUATRO_HEX_KEY: ${{ secrets.CUATRO_HEX_KEY }}
 
 jobs:
-  refresh-dev-cache:
-    name: Refresh Dev Cache
+  refresh-docs-cache:
+    name: Refresh Docs Cache
     runs-on: ubuntu-16.04
     env:
-      MIX_ENV: dev
+      MIX_ENV: docs
 
     steps:
     - name: Checkout
