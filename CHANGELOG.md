@@ -6,6 +6,14 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.1 - 2020-02-08
+
+### Added
+
+- Added an example guide on how to use GenServer operations for a client
+- Added an example on using Slipstream to script interactions with remote
+  `Phoenix.Channel`s
+
 ## 0.5.0 - 2021-02-07
 
 ### Added
