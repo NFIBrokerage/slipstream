@@ -331,10 +331,13 @@ defmodule Slipstream.Connection.Pipeline do
        ) do
     timer =
       if state.config.heartbeat_interval_msec != 0 do
-        :timer.send_interval(
-          state.config.heartbeat_interval_msec,
-          command(%Commands.SendHeartbeat{})
-        )
+        {:ok, tref} =
+          :timer.send_interval(
+            state.config.heartbeat_interval_msec,
+            command(%Commands.SendHeartbeat{})
+          )
+
+        tref
       end
 
     state =
@@ -351,11 +354,8 @@ defmodule Slipstream.Connection.Pipeline do
        ) do
     gun().close(state.conn)
 
-    if state.heartbeat_timer |> is_reference() do
-      # coveralls-ignore-start
+    if match?({:interval, ref} when is_reference(ref), state.heartbeat_timer) do
       :timer.cancel(state.heartbeat_timer)
-
-      # coveralls-ignore-stop
     end
 
     state = %State{state | status: :terminating}

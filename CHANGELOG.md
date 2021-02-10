@@ -6,6 +6,17 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.2 - 2020-02-10
+
+### Fixed
+
+- The timer reference for the heartbeat interval is now properly matched upon
+  in the connection process
+    - this fixes some behavior where the timer reference would not be canceled
+      (with `:timer.cancel/1`) upon disconnection
+    - this has not manifested itself as a bug as far as we are aware, but this
+      fix should properly clean up the timer when it is no longer needed
+
 ## 0.5.1 - 2020-02-08
 
 ### Added
