@@ -135,6 +135,9 @@ defmodule Slipstream.MixProject do
           Slipstream.SocketTest
         ]
       ],
+      groups_for_functions: [
+        "Synchronous Functions": &(&1[:synchronicity] == :synchronous)
+      ],
       skip_undefined_reference_warnings_on: [
         "guides/implementation.md",
         "guides/telemetry.md",

@@ -6,6 +6,13 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.3 - 2020-02-11
+
+### Changed
+
+- Synchronous functions are now grouped under "Synchronous Functions" in the
+  documentation
+
 ## 0.5.2 - 2020-02-10
 
 ### Fixed

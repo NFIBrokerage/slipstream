@@ -1131,6 +1131,7 @@ defmodule Slipstream do
   Awaits a pending connection request synchronously
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_connect(socket :: Socket.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_connect(socket, timeout \\ @default_timeout) do
@@ -1149,6 +1150,7 @@ defmodule Slipstream do
   Awaits a pending connection request synchronously, raising on failure
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_connect!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_connect!(socket, timeout \\ @default_timeout) do
     case await_connect(socket, timeout) do
@@ -1170,6 +1172,7 @@ defmodule Slipstream do
   Awaits a pending disconnection request synchronously
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_disconnect(socket :: Socket.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_disconnect(socket, timeout \\ @default_timeout) do
@@ -1185,6 +1188,7 @@ defmodule Slipstream do
   Awaits a pending disconnection request synchronously, raising on failure
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_disconnect!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_disconnect!(socket, timeout \\ @default_timeout) do
     case await_disconnect(socket, timeout) do
@@ -1206,6 +1210,7 @@ defmodule Slipstream do
   Awaits a pending join request synchronously
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_join(socket :: Socket.t(), topic :: String.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_join(socket, topic, timeout \\ @default_timeout)
@@ -1225,6 +1230,7 @@ defmodule Slipstream do
   Awaits a join request synchronously, raising on failure
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_join!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_join!(socket, timeout \\ @default_timeout) do
     case await_join(socket, timeout) do
@@ -1246,6 +1252,7 @@ defmodule Slipstream do
   Awaits a leave request synchronously
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_leave(socket :: Socket.t(), topic :: String.t(), timeout()) ::
           {:ok, Socket.t()} | {:error, term()}
   def await_leave(socket, topic, timeout \\ @default_timeout)
@@ -1262,6 +1269,7 @@ defmodule Slipstream do
   Awaits a leave request synchronously, raising on failure
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_leave!(socket :: Socket.t(), timeout()) :: Socket.t()
   def await_leave!(socket, timeout \\ @default_timeout) do
     case await_leave(socket, timeout) do
@@ -1293,6 +1301,7 @@ defmodule Slipstream do
       {:ok, "rooms:lobby", "msg:new", %{"user_id" => 5, body: "hello"}}
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_message(
           topic_expr :: Macro.t(),
           event_expr :: Macro.t(),
@@ -1330,6 +1339,7 @@ defmodule Slipstream do
   See `await_message/4`
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_message!(
           topic_expr :: Macro.t(),
           event_expr :: Macro.t(),
@@ -1364,6 +1374,7 @@ defmodule Slipstream do
   Awaits the server's response to a message
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_reply(push_reference(), timeout()) :: reply() | {:error, :timeout}
   def await_reply(push_reference, timeout \\ @default_timeout)
 
@@ -1381,6 +1392,7 @@ defmodule Slipstream do
   See `await_reply/2` for more information.
   """
   @doc since: "0.1.0"
+  @doc synchronicity: :synchronous
   @spec await_reply!(push_reference(), timeout()) :: reply()
   def await_reply!(push_reference, timeout \\ @default_timeout) do
     case await_reply(push_reference, timeout) do
