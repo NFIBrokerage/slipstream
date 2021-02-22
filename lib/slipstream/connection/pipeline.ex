@@ -139,11 +139,15 @@ defmodule Slipstream.Connection.Pipeline do
               # coveralls-ignore-stop
           end
 
-        event = %Events.ChannelConnectFailed{
+        failure_info = %{
           request_id: request_id,
           status_code: status_code,
           resp_headers: resp_headers,
           response: response
+        }
+
+        event = %Events.ChannelConnectFailed{
+          reason: {:upgrade_failure, failure_info}
         }
 
         put_message(p, event(event))
@@ -175,8 +179,33 @@ defmodule Slipstream.Connection.Pipeline do
   # coveralls-ignore-stop
 
   @spec handle_message(t()) :: t()
-  defp handle_message(%{message: :connect, state: state} = p) do
-    put_state(p, Impl.connect(state))
+  defp handle_message(
+         %{message: :connect, state: %{config: configuration} = state} = p
+       ) do
+    uri = configuration.uri
+
+    # seeing an WithClauseError on this block? please open an issue in
+    # NFIBrokerage/slipstream with any available context :)
+    with {:ok, conn} <-
+           Impl.gun().open(
+             to_charlist(uri.host),
+             uri.port,
+             configuration.gun_open_options
+           ),
+         stream_ref when is_reference(stream_ref) <-
+           Impl.gun().ws_upgrade(
+             conn,
+             Impl.path(uri),
+             configuration.headers,
+             _opts = %{}
+           ) do
+      put_state(p, %{state | conn: conn, stream_ref: stream_ref})
+    else
+      {:error, reason} ->
+        p
+        |> put_event(:channel_connect_failed, reason: reason)
+        |> put_return({:stop, {:shutdown, :normal}, state})
+    end
   end
 
   # handle commands
@@ -423,6 +452,10 @@ defmodule Slipstream.Connection.Pipeline do
 
   defp build_event(:channel_closed, attrs) do
     %Events.ChannelClosed{reason: attrs.reason}
+  end
+
+  defp build_event(:channel_connect_failed, attrs) do
+    %Events.ChannelConnectFailed{reason: attrs.reason}
   end
 
   # --- token API

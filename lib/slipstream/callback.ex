@@ -114,9 +114,16 @@ defmodule Slipstream.Callback do
     callback :handle_message, [event.topic, event.event, event.payload]
   end
 
+  # we'll have to write a fixture that either accepts config from the
+  # test process or write one designed to fail on connect to test this
+  # seems like a lot of work for something that's easy to test with the
+  # synchronous API
+  # coveralls-ignore-start
   defp _determine_callback(%Events.ChannelConnectFailed{} = event) do
-    callback :handle_disconnect, [Events.ChannelConnectFailed.to_reason(event)]
+    callback :handle_disconnect, [{:error, event.reason}]
   end
+
+  # coveralls-ignore-stop
 
   defp _determine_callback(%Events.ChannelClosed{} = event) do
     callback :handle_disconnect, [event.reason]

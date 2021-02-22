@@ -151,7 +151,7 @@ defmodule Slipstream.SynchronicityTest do
   when trying to connect to a url that is not a websocket endpoint,
   the channel connection fails with 404
   """ do
-    assert {:error, reason} =
+    assert {:error, {:upgrade_failure, reason}} =
              connect!(uri: "ws://localhost:4001/socket")
              |> await_connect()
 

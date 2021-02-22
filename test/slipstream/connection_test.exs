@@ -259,4 +259,19 @@ defmodule Slipstream.ConnectionTest do
       assert_receive event(%Events.ChannelClosed{reason: :heartbeat_timeout})
     end
   end
+
+  test """
+       when gun refuses to open/3 a connection
+       the client gets a ChannelConnectFailed event
+       """,
+       c do
+    reason = :some_reason
+
+    @gun |> expect(:open, 1, fn _host, _port, _opts -> {:error, reason} end)
+
+    assert {:error, ^reason} =
+             c.config
+             |> connect!
+             |> await_connect
+  end
 end

@@ -13,15 +13,13 @@ defmodule Slipstream.IntegrationTest do
   @client Slipstream.GoodExample
   @server SlipstreamWeb.TestChannel
 
-  setup do
-    pid = start_supervised!({@client, self()})
-    assert_receive {@client, :connected}, @timeout
-
-    [pid: pid]
-  end
-
   describe "given a connection has been established through the #{@client}" do
-    setup do: [good_topic: "test:good", bad_topic: "test:bad"]
+    setup do
+      pid = start_supervised!({@client, self()})
+      assert_receive {@client, :connected}, @timeout
+
+      [pid: pid, good_topic: "test:good", bad_topic: "test:bad"]
+    end
 
     test "joining a good channel works", c do
       topic = c.good_topic
@@ -171,5 +169,32 @@ defmodule Slipstream.IntegrationTest do
 
   defp join(pid, topic) do
     GenServer.cast(pid, {:join, topic, %{test_pid: pid_string()}})
+  end
+
+  test """
+  when the gun options are invalid,
+  then the client receives a ChannelConnectFailed event
+  """ do
+    import Slipstream
+
+    tls_opts = [
+      cacerts: [],
+      keyfile: "data/some-key.pem",
+      certfile: "data/some-cert.pem",
+      verify: :verify_peer,
+      server_name_indication: 'example.org'
+    ]
+
+    config = [
+      uri: "wss://0.0.0.0:4001/socket/websocket",
+      # N.B. in :gun ~> 1.0, this is :transport_opts and in :gun ~> 2.0 it's
+      # :tls_opts
+      gun_open_options: %{transport: :tls, tls_opts: tls_opts}
+    ]
+
+    assert {:error, {:options, {:tls_opts, ^tls_opts}}} =
+             config
+             |> connect!()
+             |> await_connect()
   end
 end

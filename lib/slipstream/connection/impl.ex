@@ -19,30 +19,6 @@ defmodule Slipstream.Connection.Impl do
     def gun, do: @gun
   end
 
-  @spec connect(%State{}) :: %State{}
-  def connect(%State{config: configuration} = state) do
-    uri = configuration.uri
-
-    # N.B. I've _never_ seen this match fail
-    # if it does, please open an issue
-    {:ok, conn} =
-      gun().open(
-        to_charlist(uri.host),
-        uri.port,
-        configuration.gun_open_options
-      )
-
-    stream_ref =
-      gun().ws_upgrade(
-        conn,
-        path(uri),
-        configuration.headers,
-        _opts = %{}
-      )
-
-    %State{state | conn: conn, stream_ref: stream_ref}
-  end
-
   @spec route_event(%State{}, event :: struct()) :: term()
   def route_event(%State{client_pid: pid}, event) do
     send(pid, event(event))

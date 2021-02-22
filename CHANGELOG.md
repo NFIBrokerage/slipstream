@@ -6,14 +6,24 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.5.3 - 2020-02-11
+## 0.5.4 - 2021-02-19
+
+### Fixed
+
+- Slipstream will now gracefully handle failures from `:gun.open/3`
+    - errors will result in an invocation of a client's
+      `c:Slipstream.handle_disconnect/2` callback (if the client is a module)
+      or return an error tuple from `await_connect/2` in the case of a
+      synchronous client
+
+## 0.5.3 - 2021-02-11
 
 ### Changed
 
 - Synchronous functions are now grouped under "Synchronous Functions" in the
   documentation
 
-## 0.5.2 - 2020-02-10
+## 0.5.2 - 2021-02-10
 
 ### Fixed
 
@@ -24,7 +34,7 @@ Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
     - this has not manifested itself as a bug as far as we are aware, but this
       fix should properly clean up the timer when it is no longer needed
 
-## 0.5.1 - 2020-02-08
+## 0.5.1 - 2021-02-08
 
 ### Added
 

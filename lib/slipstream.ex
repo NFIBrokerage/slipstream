@@ -1140,7 +1140,7 @@ defmodule Slipstream do
         {:ok, Socket.apply_event(socket, event)}
 
       event(%Events.ChannelConnectFailed{} = event) ->
-        {:error, Events.ChannelConnectFailed.to_reason(event)}
+        {:error, event.reason}
     after
       timeout -> {:error, :timeout}
     end
