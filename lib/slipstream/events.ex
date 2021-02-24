@@ -3,7 +3,7 @@ defmodule Slipstream.Events do
 
   require Logger
 
-  alias Phoenix.Socket.Message
+  alias Slipstream.Message
 
   alias __MODULE__.{
     MessageReceived,
@@ -29,7 +29,7 @@ defmodule Slipstream.Events do
   information about the `ref` fields on messages and whether or not they belong
   to joins or leaves.
 
-  `server_message` is either a `%Phoenix.Socket.Message{}` or `:ping` or `:pong`.
+  `server_message` is either a `%Slipstream.Message{}` or `:ping` or `:pong`.
   `connection_state` is the GenServer state of the connection process.
   """
   @spec map(atom() | %Message{}, %State{}) :: struct()

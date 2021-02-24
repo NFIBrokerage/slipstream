@@ -7,7 +7,7 @@ defmodule Slipstream.Connection.Impl do
   @moduledoc false
 
   alias Slipstream.Connection.State
-  alias Phoenix.Socket.Message
+  alias Slipstream.Message
   import Slipstream.Signatures, only: [event: 1]
 
   # in test mode, we want to be able to swap out `:gun` for a mock
