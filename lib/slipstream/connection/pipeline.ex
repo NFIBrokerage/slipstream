@@ -5,8 +5,7 @@ defmodule Slipstream.Connection.Pipeline do
   import Slipstream.Signatures
   import Slipstream.Connection.Impl, only: [gun: 0, route_event: 2]
   alias Slipstream.Connection.{Impl, State, Telemetry}
-  alias Slipstream.{Commands, Events}
-  alias Phoenix.Socket.Message
+  alias Slipstream.{Commands, Events, Message}
 
   require Logger
 
