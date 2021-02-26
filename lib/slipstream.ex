@@ -1491,7 +1491,7 @@ defmodule Slipstream do
           ) do
         socket = TelemetryHelper.begin_connect(socket, cmd.config)
 
-        Slipstream.CommandRouter.route_command(cmd)
+        _ = Slipstream.CommandRouter.route_command(cmd)
 
         {:noreply, socket}
       end
@@ -1504,7 +1504,7 @@ defmodule Slipstream do
           ) do
         socket = TelemetryHelper.begin_join(socket, cmd.topic, cmd.payload)
 
-        Slipstream.CommandRouter.route_command(cmd)
+        _ = Slipstream.CommandRouter.route_command(cmd)
 
         {:noreply, socket}
       end
