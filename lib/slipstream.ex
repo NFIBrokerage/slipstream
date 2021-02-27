@@ -1231,9 +1231,9 @@ defmodule Slipstream do
   """
   @doc since: "0.1.0"
   @doc synchronicity: :synchronous
-  @spec await_join!(socket :: Socket.t(), timeout()) :: Socket.t()
-  def await_join!(socket, timeout \\ @default_timeout) do
-    case await_join(socket, timeout) do
+  @spec await_join!(socket :: Socket.t(), topic :: String.t(), timeout()) :: Socket.t()
+  def await_join!(socket, topic, timeout \\ @default_timeout) do
+    case await_join(socket, topic, timeout) do
       {:ok, socket} ->
         socket
 
