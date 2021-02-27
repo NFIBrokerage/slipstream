@@ -1199,9 +1199,6 @@ defmodule Slipstream do
       {:error, reason} when is_atom(reason) ->
         exit(reason)
 
-      {:error, reason} ->
-        raise "Could not await disconnection: #{inspect(reason)}"
-
         # coveralls-ignore-stop
     end
   end
