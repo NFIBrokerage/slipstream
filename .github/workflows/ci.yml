@@ -71,6 +71,9 @@ jobs:
     - name: Credo
       run: mix credo
 
+    - name: Dialyzer
+      run: mix dialyzer
+
   publish-hex-package:
     name: Publish Hex Package ⬆️☁️
     runs-on: ubuntu-16.04
