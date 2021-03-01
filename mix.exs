@@ -30,14 +30,19 @@ defmodule Slipstream.MixProject do
         "coveralls.github": :test,
         inch: :dev,
         bless: :test,
-        test: :test
+        test: :test,
+        dialyzer: :test
       ],
       test_coverage: [tool: ExCoveralls],
       package: package(),
       description: description(),
       source_url: "https://github.com/NFIBrokerage/slipstream",
       name: "Slipstream",
-      docs: docs()
+      docs: docs(),
+      dialyzer: [
+        ignore_warnings: ".dialyzer_ignore.exs",
+        list_unused_filters: true
+      ]
     ]
   end
 
@@ -73,7 +78,8 @@ defmodule Slipstream.MixProject do
       {:mox, "~> 1.0", only: [:dev, :test]},
       {:credo, "~> 1.5", only: :test},
       {:bless, "~> 1.0", only: :test},
-      {:excoveralls, "~> 0.7", only: :test}
+      {:excoveralls, "~> 0.7", only: :test},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 

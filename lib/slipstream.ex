@@ -1199,9 +1199,6 @@ defmodule Slipstream do
       {:error, reason} when is_atom(reason) ->
         exit(reason)
 
-      {:error, reason} ->
-        raise "Could not await disconnection: #{inspect(reason)}"
-
         # coveralls-ignore-stop
     end
   end
@@ -1231,9 +1228,10 @@ defmodule Slipstream do
   """
   @doc since: "0.1.0"
   @doc synchronicity: :synchronous
-  @spec await_join!(socket :: Socket.t(), timeout()) :: Socket.t()
-  def await_join!(socket, timeout \\ @default_timeout) do
-    case await_join(socket, timeout) do
+  @spec await_join!(socket :: Socket.t(), topic :: String.t(), timeout()) ::
+          Socket.t()
+  def await_join!(socket, topic, timeout \\ @default_timeout) do
+    case await_join(socket, topic, timeout) do
       {:ok, socket} ->
         socket
 
@@ -1270,18 +1268,16 @@ defmodule Slipstream do
   """
   @doc since: "0.1.0"
   @doc synchronicity: :synchronous
-  @spec await_leave!(socket :: Socket.t(), timeout()) :: Socket.t()
-  def await_leave!(socket, timeout \\ @default_timeout) do
-    case await_leave(socket, timeout) do
+  @spec await_leave!(socket :: Socket.t(), topic :: String.t(), timeout()) ::
+          Socket.t()
+  def await_leave!(socket, topic, timeout \\ @default_timeout) do
+    case await_leave(socket, topic, timeout) do
       {:ok, socket} ->
         socket
 
       # coveralls-ignore-start
       {:error, reason} when is_atom(reason) ->
         exit(reason)
-
-      {:error, reason} ->
-        raise "Could not await leave: #{inspect(reason)}"
 
         # coveralls-ignore-stop
     end
