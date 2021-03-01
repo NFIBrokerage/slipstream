@@ -79,7 +79,7 @@ defmodule Slipstream.MixProject do
       {:credo, "~> 1.5", only: :test},
       {:bless, "~> 1.0", only: :test},
       {:excoveralls, "~> 0.7", only: :test},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev, :test, :docs], runtime: false}
     ]
   end
 
