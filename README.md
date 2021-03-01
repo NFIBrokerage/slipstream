@@ -3,6 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/NFIBrokerage/slipstream/badge.svg)](https://coveralls.io/github/NFIBrokerage/slipstream)
 [![hex.pm version](https://img.shields.io/hexpm/v/slipstream.svg)](https://hex.pm/packages/slipstream)
 [![hex.pm license](https://img.shields.io/hexpm/l/slipstream.svg)](https://github.com/NFIBrokerage/slipstream/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/NFIBrokerage/slipstream.svg)](https://github.com/NFIBrokerage/slipstream/commits/main)
 
 A slick websocket client for Phoenix channels
 
