@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: slipstream
+  description: A slick websocket client for Phoenix Channels
+  tags:
+  - phoenix
+  - channels
+  - websocket
+spec:
+  type: library
+  lifecycle: experimental
+  owner: team-baemax
+  system: networking
