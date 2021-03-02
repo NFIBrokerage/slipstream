@@ -2,7 +2,12 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: slipstream
-  description: A slick websocket client for Phoenix Channels
+  description: |
+    A slick websocket client for Phoenix Channels
+  annotations:
+    github.com/project-slug: NFIBrokerage/slipstream
+    backstage.io/source-ref: https://github.com/NFIBrokerage/slipstream
+    backstage.io/github-actions-id: https://github.com/NFIBrokerage/slipstream
   tags:
   - phoenix
   - channels
