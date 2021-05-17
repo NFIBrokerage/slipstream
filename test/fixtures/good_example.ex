@@ -90,13 +90,13 @@ defmodule Slipstream.GoodExample do
   end
 
   @impl Slipstream
-  # a graceful leave requested by leave/2 above ^
-  def handle_topic_close(topic, :left, socket) do
+  def handle_leave(topic, socket) do
     send(socket.assigns.test_proc, {__MODULE__, :left, topic})
 
     {:ok, socket}
   end
 
+  @impl Slipstream
   def handle_topic_close(topic, reason, socket) do
     send(socket.assigns.test_proc, {__MODULE__, :topic_closed, topic, reason})
 
