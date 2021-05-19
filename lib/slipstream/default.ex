@@ -35,13 +35,12 @@ defmodule Slipstream.Default do
   def handle_reply(_ref, _reply, socket), do: {:ok, socket}
 
   @impl Slipstream
-  def handle_topic_close(_topic, :left, socket) do
-    {:ok, socket}
-  end
-
   def handle_topic_close(topic, _message, socket) do
     {:ok, _socket} = rejoin(socket, topic)
   end
+
+  @impl Slipstream
+  def handle_leave(_topic, socket), do: {:ok, socket}
 
   def __no_op__(_event, socket), do: {:ok, socket}
 end

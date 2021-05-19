@@ -99,7 +99,7 @@ defmodule Slipstream.Callback do
   end
 
   defp _determine_callback(%Events.TopicLeft{} = event) do
-    callback :handle_topic_close, [event.topic, :left]
+    callback :handle_leave, [event.topic]
   end
 
   defp _determine_callback(%Events.TopicLeaveAccepted{} = event) do
