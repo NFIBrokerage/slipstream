@@ -159,6 +159,25 @@ defmodule Slipstream.Connection.Pipeline do
     end
   end
 
+  defp decode_message(
+         %{
+           raw_message:
+             {:gun_response, conn, stream_ref, :fin, status_code, resp_headers},
+           state: %{conn: conn, stream_ref: stream_ref}
+         } = p
+       ) do
+    failure_info = %{
+      status_code: status_code,
+      resp_headers: resp_headers
+    }
+
+    event = %Events.ChannelConnectFailed{
+      reason: {:connect_failure, failure_info}
+    }
+
+    put_message(p, event(event))
+  end
+
   # coveralls-ignore-start
   defp decode_message(%{raw_message: unknown_message} = p) do
     Logger.error(

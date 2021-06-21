@@ -19,6 +19,10 @@ defmodule SlipstreamWeb.UserSocket do
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
   @impl true
+  def connect(%{"reject" => "yes"}, _socket, _connect_info) do
+    :error
+  end
+
   def connect(_params, socket, _connect_info) do
     {:ok, socket}
   end

@@ -13,6 +13,21 @@ defmodule Slipstream.IntegrationTest do
   @client Slipstream.GoodExample
   @server SlipstreamWeb.TestChannel
 
+  describe "given c:Phoenix.Socket.connect/3 returns :error" do
+    setup do
+      [config: [uri: "ws://localhost:4001/socket/websocket?reject=yes"]]
+    end
+
+    test "the socket is disconnected with :connect_failure reason", c do
+      import Slipstream
+
+      assert {:error, {:connect_failure, %{status_code: 403}}} =
+               c.config
+               |> connect!()
+               |> await_connect(15_000)
+    end
+  end
+
   describe "given a connection has been established through the #{@client}" do
     setup do
       pid = start_supervised!({@client, self()})
