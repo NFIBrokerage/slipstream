@@ -6,6 +6,19 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.6.3 - 2021-06-21
+
+### Fixed
+
+- Failures to connect (via an `:error` return from `c:Phoenix.Socket.connect/3`)
+  now correctly trigger a `Slipstream.Events.ChannelConnectFailed` event
+    - when using the synchronous API, this will result in an error tuple with
+      `Slipstream.await_connect/2` in the format of
+      `{:error, {:connect_failure, %{resp_headers: resp_headers, status_code: status_code}}}`
+      where `status_code` will be `403`.
+    - when using the module-based API, this will invoke the
+      `c:Slipstream.handle_disconnect/2` callback with the same error tuple
+
 ## 0.6.2 - 2021-03-01
 
 ### Fixed
