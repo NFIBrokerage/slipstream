@@ -31,7 +31,8 @@ defmodule Slipstream.MixProject do
         inch: :dev,
         bless: :test,
         test: :test,
-        dialyzer: :test
+        dialyzer: :test,
+        docs: :docs
       ],
       test_coverage: [tool: ExCoveralls],
       package: package(),
