@@ -6,7 +6,36 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.6.3 - 2021-06-21
+## 0.7.0 - 2021-06-21
+
+### Added
+
+- Added `c:Slipstream.handle_leave/2`
+    - This is invoked when the server acknowledges that the client has left
+      the topic
+    - This was previously invoked as the more generic
+      `c:Slipstream.handle_topic_close/3`
+
+### Changed
+
+- Topic leaves are now handled not in `c:Slipstream.handle_topic_close/3`
+  but `c:Slipstream.handle_leave/2`
+    - **this is a breaking change**
+
+In order to migrate existing code, change any implementations of
+`c:Slipstream.handle_topic_close/3` with the `reason` of `:left` from
+
+```elixir
+def handle_topic_close(_topic, :left, socket)
+```
+
+To
+
+```elixir
+def handle_leave(_topic, socket)
+```
+
+Note that this callback has a default behavior of performing a no-op.
 
 ### Fixed
 

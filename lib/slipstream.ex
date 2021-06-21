@@ -210,10 +210,6 @@ defmodule Slipstream do
         end
 
         @impl Slipstream
-        def handle_topic_close(_topic, :left, socket) do
-          {:ok, socket}
-        end
-
         def handle_topic_close(topic, _reason, socket) do
           rejoin(socket, topic)
         end
@@ -635,19 +631,12 @@ defmodule Slipstream do
   @doc """
   Invoked when a join has concluded
 
-  This callback will be invoked in a few cases:
-
-  - the remote `Phoenix.Channel` crashes, e.g. by a raised error
-  - the client successfully leaves the topic with `leave/2`
-
-  In the case that the client has left the topic, `reason` will simply be
-  `:left`. If the remote channel crashes, the `reason` will be an error tuple
-  `{:error, params :: json_serializable()}` where `params` is the message
-  sent from the remote channel on chrash.
+  This callback will be invoked in the case that the remote channel crashes.
+  `reason` is an error tuple `{:error, params :: json_serializable()}` where
+  `params` is the message sent from the remote channel on crash.
 
   The default implementation of this callback attempts to re-join the
-  last-joined topic whenever `reason != :left`. If the reason is `:left`, the
-  default implementation will no-op by returning `{:ok, socket}`.
+  last-joined topic.
 
   ## Examples
 
@@ -666,6 +655,32 @@ defmodule Slipstream do
               | {:stop, stop_reason :: term(), new_socket}
             when new_socket: Socket.t()
 
+  @doc """
+  Invoked when a join has concluded by a leave request
+
+  This callback is invoked when the remote server acknowledges that the client
+  has disconnected as a result of calling `leave/2`.
+
+  The default implementation of this callback performs a no-op.
+
+  ## Examples
+
+      @impl Slipstream
+      def handle_leave(topic, socket) do
+        Logger.info("Successfully left topic " <> topic)
+
+        {:ok, socket}
+      end
+  """
+  @doc since: "0.7.0"
+  @callback handle_leave(
+              topic :: String.t(),
+              socket :: Socket.t()
+            ) ::
+              {:ok, new_socket}
+              | {:stop, stop_reason :: term(), new_socket}
+            when new_socket: Socket.t()
+
   @optional_callbacks init: 1,
                       handle_info: 2,
                       handle_cast: 2,
@@ -677,7 +692,8 @@ defmodule Slipstream do
                       handle_join: 3,
                       handle_message: 4,
                       handle_reply: 3,
-                      handle_topic_close: 3
+                      handle_topic_close: 3,
+                      handle_leave: 2
 
   # --- core functionality
 
