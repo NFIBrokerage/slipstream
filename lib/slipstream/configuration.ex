@@ -58,11 +58,10 @@ defmodule Slipstream.Configuration do
     ],
     mint_opts: [
       doc: """
-      A map of options to pass to `:gun.open/3`. See the `:gun` documentation
-      for more information. Note that `:gun` does not support websocket over
-      HTTP2 and that `:gun` naively prefers HTTP2 when connecting over TLS.
-      The `:protocols => [:http]` option will be merged in by default to allow
-      `"wss"` connections out of the box.
+      A keywordlist of options to pass to `Mint.HTTP.connect/4` when opening
+      connections. This can be used to set up custom TLS certificate
+      configuration. See the `Mint.HTTP.connect/4` documentation for available
+      options.
       """,
       type: :keyword_list,
       default: [protocols: [:http1]]
@@ -175,9 +174,12 @@ defmodule Slipstream.Configuration do
          {:port, port} when is_integer(port) and port > 0 <- {:port, uri.port} do
       {:ok, uri}
     else
+      # coveralls-ignore-start
       {:port, bad_port} ->
         {:error,
          "unparseable port value #{inspect(bad_port)}: please provide a positive-integer value"}
+
+      # coveralls-ignore-stop
 
       {:scheme, scheme} ->
         {:error,
@@ -185,9 +187,12 @@ defmodule Slipstream.Configuration do
     end
   end
 
+  # coveralls-ignore-start
   def parse_uri(unparsed) do
     {:error, "could not parse #{inspect(unparsed)} as a binary or URI struct"}
   end
+
+  # coveralls-ignore-stop
 
   defp assume_port(%URI{scheme: "ws", port: nil} = uri),
     do: %URI{uri | port: 80}
@@ -198,6 +203,7 @@ defmodule Slipstream.Configuration do
   defp assume_port(uri), do: uri
 
   @doc false
+  # coveralls-ignore-start
   def parse_pair_of_strings({key, value})
       when is_binary(key) and is_binary(value) do
     {:ok, {key, value}}
@@ -207,12 +213,5 @@ defmodule Slipstream.Configuration do
     {:error, "could not parse #{inspect(unparsed)} as a two-tuple of strings"}
   end
 
-  @doc false
-  def parse_gun_open_options(options) when is_map(options) do
-    {:ok, Map.merge(%{protocols: [:http]}, options)}
-  end
-
-  def parse_gun_open_options(unknown) do
-    {:error, "gun options must be a map, got #{inspect(unknown)}"}
-  end
+  # coveralls-ignore-stop
 end

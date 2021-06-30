@@ -105,12 +105,14 @@ defmodule Slipstream.Connection.Pipeline do
             {:ok, websocket, frames} ->
               {:cont, {:ok, put_in(state.websocket, websocket), acc ++ frames}}
 
+            # coveralls-ignore-start
             {:error, reason} ->
               {:halt, {:error, state, reason}}
           end
 
         _message, {:ok, state, acc} ->
           {:cont, {:ok, state, acc}}
+          # coveralls-ignore-stop
       end)
 
     case frames do
@@ -125,9 +127,12 @@ defmodule Slipstream.Connection.Pipeline do
         |> put_message(events)
 
       {:error, state, reason} ->
+        # coveralls-ignore-start
         p
         |> put_state(state)
         |> put_message(event(%Events.ChannelClosed{reason: reason}))
+
+        # coveralls-ignore-stop
     end
   end
 
@@ -165,12 +170,15 @@ defmodule Slipstream.Connection.Pipeline do
            {conn, Impl.websocket_upgrade(conn, config)} do
       put_state(p, %State{state | conn: conn, request_ref: ref})
     else
+      # coveralls-ignore-start
       {conn, {:error, reason}} ->
         Mint.HTTP.close(conn)
 
         p
         |> put_event(:channel_connect_failed, reason: reason)
         |> put_return({:stop, {:shutdown, :normal}, state})
+
+      # coveralls-ignore-stop
 
       {:error, reason} ->
         p
@@ -182,7 +190,10 @@ defmodule Slipstream.Connection.Pipeline do
   defp handle_message(%{message: messages} = p) when is_list(messages) do
     Enum.reduce_while(messages, p, fn
       _message, %{return: {:stop, _reason, _state}} = p ->
+        # coveralls-ignore-start
         {:halt, p}
+
+      # coveralls-ignore-stop
 
       message, p ->
         {:cont, handle_message(%{p | message: message})}
@@ -197,6 +208,7 @@ defmodule Slipstream.Connection.Pipeline do
     p
   end
 
+  # coveralls-ignore-start
   defp handle_message(
          %{message: command(%Commands.SendHeartbeat{}), state: state} = p
        ) do
@@ -223,6 +235,8 @@ defmodule Slipstream.Connection.Pipeline do
     end
   end
 
+  # coveralls-ignore-stop
+
   defp handle_message(
          %{message: command(%Commands.PushMessage{} = cmd), state: state} = p
        ) do
@@ -239,7 +253,9 @@ defmodule Slipstream.Connection.Pipeline do
       })
 
     case p do
+      # coveralls-ignore-start
       %{return: {:stop, _reason, _state}} = p -> p
+      # coveralls-ignore-stop
       p -> put_return(p, {:reply, ref, state})
     end
   end
@@ -289,7 +305,9 @@ defmodule Slipstream.Connection.Pipeline do
 
   # handle events
 
+  # coveralls-ignore-start
   defp handle_message(%{message: event(%Events.NoOp{})} = p), do: p
+  # coveralls-ignore-stop
 
   defp handle_message(
          %{
@@ -315,11 +333,13 @@ defmodule Slipstream.Connection.Pipeline do
     put_return(p, {:stop, :normal, state})
   end
 
+  # coveralls-ignore-start
   defp handle_message(%{message: event(%Events.PingReceived{data: data})} = p) do
     push_message(p, {:pong, data})
   end
 
   defp handle_message(%{message: event(%Events.PongReceived{})} = p), do: p
+  # coveralls-ignore-stop
 
   defp handle_message(%{message: event(%type{} = event), state: state} = p)
        when type in [Events.TopicJoinFailed, Events.TopicJoinClosed] do
@@ -342,7 +362,9 @@ defmodule Slipstream.Connection.Pipeline do
   defp handle_message(
          %{message: event(%Events.HeartbeatAcknowledged{}), state: state} = p
        ) do
+    # coveralls-ignore-start
     put_state(p, State.reset_heartbeat(state))
+    # coveralls-ignore-stop
   end
 
   defp handle_message(
@@ -368,6 +390,7 @@ defmodule Slipstream.Connection.Pipeline do
     put_state(p, state)
   end
 
+  # coveralls-ignore-start
   defp handle_message(
          %{message: event(%Events.ChannelClosed{} = event), state: state} = p
        ) do
@@ -385,6 +408,8 @@ defmodule Slipstream.Connection.Pipeline do
     |> put_state(state)
     |> put_return({:stop, :normal, state})
   end
+
+  # coveralls-ignore-stop
 
   # the rest of the events are routed to the client process
   defp handle_message(%{message: event(event), state: state} = p) do
@@ -490,10 +515,12 @@ defmodule Slipstream.Connection.Pipeline do
         put_state(p, state)
 
       {:error, reason} ->
+        # coveralls-ignore-start
         route_event p.state,
                     event(%Events.ChannelClosed{reason: {:send_failure, reason}})
 
         put_return(p, {:stop, :normal, p.state})
+        # coveralls-ignore-stop
     end
   end
 end

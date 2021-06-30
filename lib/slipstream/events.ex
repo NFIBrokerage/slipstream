@@ -55,6 +55,7 @@ defmodule Slipstream.Events do
     %MessageReceived{topic: topic, event: event, payload: payload}
   end
 
+  # coveralls-ignore-start
   def map(
         %Message{
           topic: "phoenix",
@@ -67,6 +68,8 @@ defmodule Slipstream.Events do
       when map_size(response) == 0 do
     %HeartbeatAcknowledged{ref: ref}
   end
+
+  # coveralls-ignore-stop
 
   # a reply in which join_ref == ref is a reply to a request to join a topic
   def map(

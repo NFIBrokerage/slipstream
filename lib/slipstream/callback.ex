@@ -102,9 +102,12 @@ defmodule Slipstream.Callback do
     callback :handle_leave, [event.topic]
   end
 
+  # coveralls-ignore-start
   defp _determine_callback(%Events.TopicLeaveAccepted{} = event) do
     callback :__no_op__, [event]
   end
+
+  # coveralls-ignore-stop
 
   defp _determine_callback(%Events.ReplyReceived{} = event) do
     callback :handle_reply, [event.ref, event.reply]
@@ -129,7 +132,10 @@ defmodule Slipstream.Callback do
     callback :handle_disconnect, [event.reason]
   end
 
+  # coveralls-ignore-start
   defp _determine_callback(event) do
     callback :handle_info, [event]
   end
+
+  # coveralls-ignore-stop
 end

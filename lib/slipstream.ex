@@ -1232,8 +1232,11 @@ defmodule Slipstream do
       event(%Events.TopicJoinSucceeded{topic: ^topic} = event) ->
         {:ok, Socket.apply_event(socket, event)}
 
+      # coveralls-ignore-start
       event(%Events.TopicJoinFailed{topic: ^topic} = event) ->
         {:error, Events.TopicJoinFailed.to_reason(event)}
+
+        # coveralls-ignore-stop
     after
       timeout -> {:error, :timeout}
     end

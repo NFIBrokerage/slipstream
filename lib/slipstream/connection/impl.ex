@@ -51,6 +51,7 @@ defmodule Slipstream.Connection.Impl do
     push_message({:text, encode(message, state)}, state)
   end
 
+  # coveralls-ignore-start
   def push_heartbeat(state) do
     %Message{
       topic: "phoenix",
@@ -60,6 +61,8 @@ defmodule Slipstream.Connection.Impl do
     }
     |> push_message(state)
   end
+
+  # coveralls-ignore-stop
 
   defp encode(%Message{} = message, state) do
     [
@@ -78,9 +81,12 @@ defmodule Slipstream.Connection.Impl do
     &module.encode!/1
   end
 
+  # coveralls-ignore-start
   def decode(message, state) do
     decode_fn(state).(message)
   end
+
+  # coveralls-ignore-stop
 
   defp decode_fn(state) do
     module = state.config.json_parser
@@ -116,7 +122,9 @@ defmodule Slipstream.Connection.Impl do
 
   def decode_message(:ping, _state), do: :ping
   def decode_message(:pong, _state), do: :pong
+  # coveralls-ignore-start
   def decode_message({:close, _, _} = message, _state), do: message
+  # coveralls-ignore-stop
 
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation
