@@ -1,4 +1,5 @@
 # Slipstream
+
 ![CI](https://github.com/NFIBrokerage/slipstream/workflows/CI/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/NFIBrokerage/slipstream/badge.svg)](https://coveralls.io/github/NFIBrokerage/slipstream)
 [![hex.pm version](https://img.shields.io/hexpm/v/slipstream.svg)](https://hex.pm/packages/slipstream)
@@ -11,7 +12,7 @@ See the [online documentation](https://hexdocs.pm/slipstream)
 
 ## Main Features
 
-- backed by `:gun` instead of `:websocket_client` (see [why](https://hexdocs.pm/slipstream/why_gun.html#content))
+- backed by [Mint.WebSocket](https://github.com/NFIBrokerage/mint_web_socket)
 - an `await_*` interface for a interacting [synchronously](https://hexdocs.pm/slipstream/Slipstream.html#module-synchronicity)
 - built-in [re-connect and re-join mechanisms](https://hexdocs.pm/slipstream/Slipstream.html#module-retry-mechanisms) matching `phoenix.js`
 - a [testing framework](https://hexdocs.pm/slipstream/Slipstream.SocketTest.html#content) for clients
@@ -24,7 +25,7 @@ Add slipstream to your dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:slipstream, "~> 0.5"}
+    {:slipstream, "~> 0.8"}
   ]
 end
 ```
