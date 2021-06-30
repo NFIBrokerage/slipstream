@@ -2,7 +2,7 @@ defmodule Slipstream.Connection do
   @moduledoc false
 
   # the Connection _is_ the socket client
-  # Connection interfaces with :gun and any module that implements the
+  # Connection interfaces with Mint.WebSocket and any module that implements the
   # Slipstream behaviour to offer websocket client functionality
 
   use GenServer, restart: :temporary

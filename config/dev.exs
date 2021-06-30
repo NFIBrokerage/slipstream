@@ -28,5 +28,3 @@ config :slipstream, Slipstream.TestModeClient,
   # N.B. this client will _not_ connect
   uri: "ws://localhost:54321/socket/websocket",
   test_mode?: true
-
-config :slipstream, :gun_client, :gun
