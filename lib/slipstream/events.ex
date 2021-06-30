@@ -36,8 +36,8 @@ defmodule Slipstream.Events do
   def map(server_message, connection_state)
 
   # coveralls-ignore-start
-  def map(:ping, _state), do: %PingReceived{}
-  def map(:pong, _state), do: %PongReceived{}
+  def map({:ping, data}, _state), do: %PingReceived{data: data}
+  def map({:pong, data}, _state), do: %PongReceived{data: data}
   def map({:close, _, _}, _state), do: %ChannelClosed{reason: :closed_by_remote}
 
   # coveralls-ignore-stop
