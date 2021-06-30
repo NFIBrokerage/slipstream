@@ -96,7 +96,8 @@ defmodule Slipstream.Connection.Pipeline do
 
   defp decode_message(
          %{raw_message: messages, state: %{request_ref: ref} = state} = p
-       ) when is_list(messages) do
+       )
+       when is_list(messages) do
     frames =
       Enum.reduce_while(messages, {:ok, state, []}, fn
         {:data, ^ref, data}, {:ok, state, acc} ->
@@ -200,7 +201,8 @@ defmodule Slipstream.Connection.Pipeline do
          %{message: command(%Commands.SendHeartbeat{}), state: state} = p
        ) do
     with nil <- state.heartbeat_ref,
-         {:ok, state} <- state |> State.next_heartbeat_ref()|> Impl.push_heartbeat() do
+         {:ok, state} <-
+           state |> State.next_heartbeat_ref() |> Impl.push_heartbeat() do
       put_state(p, state)
     else
       existing_heartbeat_ref when is_binary(existing_heartbeat_ref) ->
@@ -229,14 +231,12 @@ defmodule Slipstream.Connection.Pipeline do
     p =
       p
       |> put_state(state)
-      |> push_message(
-        %Message{
-          topic: cmd.topic,
-          event: cmd.event,
-          payload: cmd.payload,
-          ref: ref
-        }
-      )
+      |> push_message(%Message{
+        topic: cmd.topic,
+        event: cmd.event,
+        payload: cmd.payload,
+        ref: ref
+      })
 
     case p do
       %{return: {:stop, _reason, _state}} = p -> p
@@ -252,15 +252,13 @@ defmodule Slipstream.Connection.Pipeline do
 
     p
     |> put_state(state)
-    |> push_message(
-      %Message{
-        topic: cmd.topic,
-        event: "phx_join",
-        payload: cmd.payload,
-        ref: state.current_ref_str,
-        join_ref: state.current_ref_str
-      }
-    )
+    |> push_message(%Message{
+      topic: cmd.topic,
+      event: "phx_join",
+      payload: cmd.payload,
+      ref: state.current_ref_str,
+      join_ref: state.current_ref_str
+    })
   end
 
   defp handle_message(
@@ -271,14 +269,12 @@ defmodule Slipstream.Connection.Pipeline do
 
     p
     |> put_state(state)
-    |> push_message(
-      %Message{
-        topic: cmd.topic,
-        event: "phx_leave",
-        payload: %{},
-        ref: state.current_ref_str
-      }
-    )
+    |> push_message(%Message{
+      topic: cmd.topic,
+      event: "phx_leave",
+      payload: %{},
+      ref: state.current_ref_str
+    })
   end
 
   defp handle_message(

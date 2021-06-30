@@ -76,7 +76,10 @@ defmodule Slipstream.ConnectionTelemetryTest do
 
       assert_receive {:telemetry, [:slipstream, :connection, :handle, :stop],
                       %{duration: _},
-                      %{raw_message: {:tcp, _port, "HTTP/1.1 101 Switching Protocols" <> _}} = metadata}
+                      %{
+                        raw_message:
+                          {:tcp, _port, "HTTP/1.1 101 Switching Protocols" <> _}
+                      } = metadata}
 
       assert match?(%{message: event(%Events.ChannelConnected{})}, metadata)
     end
