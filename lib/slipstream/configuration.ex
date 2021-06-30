@@ -56,7 +56,7 @@ defmodule Slipstream.Configuration do
       type: {:list, :non_neg_integer},
       default: [100, 500, 1_000, 2_000, 5_000, 10_000]
     ],
-    gun_open_options: [
+    mint_opts: [
       doc: """
       A map of options to pass to `:gun.open/3`. See the `:gun` documentation
       for more information. Note that `:gun` does not support websocket over
@@ -64,8 +64,15 @@ defmodule Slipstream.Configuration do
       The `:protocols => [:http]` option will be merged in by default to allow
       `"wss"` connections out of the box.
       """,
-      type: {:custom, __MODULE__, :parse_gun_open_options, []},
-      default: %{protocols: [:http]}
+      type: :keyword_list,
+      default: [protocols: [:http1]]
+    ],
+    extensions: [
+      doc: """
+      A list of extensions to pass to `Mint.WebSocket.upgrade/4`.
+      """,
+      type: :any,
+      default: []
     ],
     test_mode?: [
       doc: """
