@@ -65,6 +65,7 @@ defmodule Slipstream.MixProject do
   defp deps do
     [
       {:mint_web_socket, path: "../mint_web_socket"},
+      {:connection, "~> 1.0"},
       {:telemetry, "~> 0.4"},
       {:jason, "~> 1.0", optional: true},
       {:nimble_options, "~> 0.1"},
