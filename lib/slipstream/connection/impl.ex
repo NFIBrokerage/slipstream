@@ -44,6 +44,14 @@ defmodule Slipstream.Connection.Impl do
          {:ok, conn} <-
            Mint.HTTP.stream_request_body(state.conn, state.request_ref, data) do
       {:ok, %State{state | conn: conn, websocket: websocket}}
+    else
+      # coveralls-ignore-start
+      {:error, %Mint.WebSocket{} = websocket, reason} ->
+        {:error, put_in(state.websocket, websocket), reason}
+
+      {:error, conn, reason} ->
+        {:error, put_in(state.conn, conn), reason}
+        # coveralls-ignore-stop
     end
   end
 
@@ -128,7 +136,7 @@ defmodule Slipstream.Connection.Impl do
 
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation
-  @spec path(URI.t()) :: charlist()
+  @spec path(URI.t()) :: String.t()
   def path(%URI{} = uri) do
     # select the v2 JSON serialization pattern
     query = URI.decode_query(uri.query || "", %{"vsn" => "2.0.0"})

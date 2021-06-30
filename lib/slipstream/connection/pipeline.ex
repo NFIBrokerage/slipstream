@@ -106,8 +106,8 @@ defmodule Slipstream.Connection.Pipeline do
               {:cont, {:ok, put_in(state.websocket, websocket), acc ++ frames}}
 
             # coveralls-ignore-start
-            {:error, reason} ->
-              {:halt, {:error, state, reason}}
+            {:error, websocket, reason} ->
+              {:halt, {:error, put_in(state.websocket, websocket), reason}}
           end
 
         _message, {:ok, state, acc} ->
@@ -166,12 +166,11 @@ defmodule Slipstream.Connection.Pipeline do
          %{message: :connect, state: %{config: config} = state} = p
        ) do
     with {:ok, conn} <- Impl.http_connect(config),
-         {_conn, {:ok, conn, ref}} <-
-           {conn, Impl.websocket_upgrade(conn, config)} do
+         {:ok, conn, ref} <- Impl.websocket_upgrade(conn, config) do
       put_state(p, %State{state | conn: conn, request_ref: ref})
     else
       # coveralls-ignore-start
-      {conn, {:error, reason}} ->
+      {:error, conn, reason} ->
         Mint.HTTP.close(conn)
 
         p
@@ -229,7 +228,7 @@ defmodule Slipstream.Connection.Pipeline do
 
       {:error, state, reason} ->
         route_event state,
-                    event(%Events.ChannelClosed{reason: {:send_failure, reason}})
+                    %Events.ChannelClosed{reason: {:send_failure, reason}}
 
         put_return(p, {:stop, :normal, state})
     end
@@ -514,12 +513,15 @@ defmodule Slipstream.Connection.Pipeline do
       {:ok, state} ->
         put_state(p, state)
 
-      {:error, reason} ->
+      {:error, state, reason} ->
         # coveralls-ignore-start
-        route_event p.state,
-                    event(%Events.ChannelClosed{reason: {:send_failure, reason}})
+        route_event state,
+                    %Events.ChannelClosed{reason: {:send_failure, reason}}
 
-        put_return(p, {:stop, :normal, p.state})
+        p
+        |> put_state(state)
+        |> put_return({:stop, :normal, state})
+
         # coveralls-ignore-stop
     end
   end
