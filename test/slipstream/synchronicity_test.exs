@@ -140,9 +140,9 @@ defmodule Slipstream.SynchronicityTest do
 
   test """
   when trying to connect to a port with nothing running on it,
-  the channel connection fails with timeout
+  the channel connection fails with :econnrefused
   """ do
-    assert {:error, :timeout} =
+    assert {:error, %Mint.TransportError{reason: :econnrefused}} =
              connect!(uri: "ws://localhost:4000/socket/websocket")
              |> await_connect()
   end
@@ -157,7 +157,5 @@ defmodule Slipstream.SynchronicityTest do
 
     assert reason.resp_headers |> is_list()
     assert reason.status_code == 404
-    assert reason.response == %{"errors" => %{"detail" => "Not Found"}}
-    assert reason.request_id |> is_binary()
   end
 end
