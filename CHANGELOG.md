@@ -6,11 +6,23 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.8.0 - [UNRELEASED]
+## 0.8.0 - 2021-07-01
 
 ### Changed
 
 - Switched out `:gun` for Mint.WebSocket as the low-level websocket client
+
+### Removed
+
+- Removed the `:gun_open_options` key from configuration
+    - Use the new `:mint_opts` key instead to configure TLS options
+
+### Added
+
+- Added the `:mint_opts` key to configuration for controlling the options
+  passed to `Mint.HTTP.connect/4`
+- Added the `:extensions` key to configuration for specifying
+  `Mint.WebSocket.Extension` configuration passed to `Mint.WebSocket.upgrade/4`
 
 ## 0.7.0 - 2021-06-21
 
