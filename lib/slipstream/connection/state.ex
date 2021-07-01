@@ -16,7 +16,8 @@ defmodule Slipstream.Connection.State do
     :client_ref,
     :config,
     :conn,
-    :stream_ref,
+    :websocket,
+    :request_ref,
     :join_params,
     :heartbeat_timer,
     :heartbeat_ref,
@@ -65,11 +66,14 @@ defmodule Slipstream.Connection.State do
      %__MODULE__{state | current_ref: ref, current_ref_str: to_string(ref)}}
   end
 
+  # coveralls-ignore-start
   def next_heartbeat_ref(state) do
     {ref, state} = next_ref(state)
 
     %__MODULE__{state | heartbeat_ref: ref}
   end
+
+  # coveralls-ignore-stop
 
   @doc """
   Resets the heartbeat ref to nil

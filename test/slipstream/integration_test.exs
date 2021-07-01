@@ -21,7 +21,7 @@ defmodule Slipstream.IntegrationTest do
     test "the socket is disconnected with :connect_failure reason", c do
       import Slipstream
 
-      assert {:error, {:connect_failure, %{status_code: 403}}} =
+      assert {:error, {:upgrade_failure, %{status_code: 403}}} =
                c.config
                |> connect!()
                |> await_connect(15_000)
@@ -184,32 +184,5 @@ defmodule Slipstream.IntegrationTest do
 
   defp join(pid, topic) do
     GenServer.cast(pid, {:join, topic, %{test_pid: pid_string()}})
-  end
-
-  test """
-  when the gun options are invalid,
-  then the client receives a ChannelConnectFailed event
-  """ do
-    import Slipstream
-
-    tls_opts = [
-      cacerts: [],
-      keyfile: "data/some-key.pem",
-      certfile: "data/some-cert.pem",
-      verify: :verify_peer,
-      server_name_indication: 'example.org'
-    ]
-
-    config = [
-      uri: "wss://0.0.0.0:4001/socket/websocket",
-      # N.B. in :gun ~> 1.0, this is :transport_opts and in :gun ~> 2.0 it's
-      # :tls_opts
-      gun_open_options: %{transport: :tls, tls_opts: tls_opts}
-    ]
-
-    assert {:error, {:options, {:tls_opts, ^tls_opts}}} =
-             config
-             |> connect!()
-             |> await_connect()
   end
 end

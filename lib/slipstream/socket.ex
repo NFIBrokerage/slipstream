@@ -206,13 +206,13 @@ defmodule Slipstream.Socket do
 
   The slipstream implementor module is not the same process as the GenServer
   which interfaces with the remote server for websocket communication. This
-  other process, the Slipstream.Connection process, interfaces with `:gun`
-  and communicates with the implementor module by puassing messages (mostly
-  with `Kernel.send/2`.
+  other process, the Slipstream.Connection process, interfaces with the
+  low-level WebSocket connection and communicates with the implementor module
+  by puassing messages (mostly with `Kernel.send/2`).
 
-  It can be useful to have access to this pid for niche purposes, like
-  sending a fake disconnect message or for debugging (e.g. with
-  `:sys.get_state/1`)
+  It can be useful to have access to this pid for testing or debugging
+  purposes, such as sending a fake disconnect message or for getting state
+  with `:sys.get_state/1`.
 
   ## Examples
 

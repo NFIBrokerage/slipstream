@@ -36,8 +36,8 @@ defmodule Slipstream.Events do
   def map(server_message, connection_state)
 
   # coveralls-ignore-start
-  def map(:ping, _state), do: %PingReceived{}
-  def map(:pong, _state), do: %PongReceived{}
+  def map({:ping, data}, _state), do: %PingReceived{data: data}
+  def map({:pong, data}, _state), do: %PongReceived{data: data}
   def map({:close, _, _}, _state), do: %ChannelClosed{reason: :closed_by_remote}
 
   # coveralls-ignore-stop
@@ -55,6 +55,7 @@ defmodule Slipstream.Events do
     %MessageReceived{topic: topic, event: event, payload: payload}
   end
 
+  # coveralls-ignore-start
   def map(
         %Message{
           topic: "phoenix",
@@ -67,6 +68,8 @@ defmodule Slipstream.Events do
       when map_size(response) == 0 do
     %HeartbeatAcknowledged{ref: ref}
   end
+
+  # coveralls-ignore-stop
 
   # a reply in which join_ref == ref is a reply to a request to join a topic
   def map(

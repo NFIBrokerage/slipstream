@@ -5,7 +5,7 @@ defmodule Slipstream do
   Slipstream is a websocket client for connection to `Phoenix.Channel`s.
   Slipstream is a bit different from existing websocket implementations in that:
 
-  - it's backed by `:gun` instead of `:websocket_client`
+  - it's backed by `Mint.WebSocket`
   - it has an `await_*` interface for performing actions synchronously
   - smart retry strategies for reconnection and rejoining work out-of-the-box
   - a testing framework for clients
@@ -1232,8 +1232,11 @@ defmodule Slipstream do
       event(%Events.TopicJoinSucceeded{topic: ^topic} = event) ->
         {:ok, Socket.apply_event(socket, event)}
 
+      # coveralls-ignore-start
       event(%Events.TopicJoinFailed{topic: ^topic} = event) ->
         {:error, Events.TopicJoinFailed.to_reason(event)}
+
+        # coveralls-ignore-stop
     after
       timeout -> {:error, :timeout}
     end

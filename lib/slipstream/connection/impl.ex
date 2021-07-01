@@ -10,26 +10,56 @@ defmodule Slipstream.Connection.Impl do
   alias Slipstream.Message
   import Slipstream.Signatures, only: [event: 1]
 
-  # in test mode, we want to be able to swap out `:gun` for a mock
-  # in dev/prod mode, we want to compile in `:gun` as the gun-client
-  if Mix.env() == :test do
-    def gun, do: Application.get_env(:slipstream, :gun_client, :gun)
-  else
-    @gun Application.get_env(:slipstream, :gun_client, :gun)
-    def gun, do: @gun
-  end
-
   @spec route_event(%State{}, event :: struct()) :: term()
   def route_event(%State{client_pid: pid}, event) do
     send(pid, event(event))
   end
 
-  # ---
-
-  def push_message(message, state) do
-    gun().ws_send(state.conn, {:text, encode(message, state)})
+  def http_connect(config) do
+    Mint.HTTP.connect(
+      map_scheme(config.uri.scheme),
+      config.uri.host,
+      config.uri.port,
+      config.mint_opts
+    )
   end
 
+  defp map_scheme("wss"), do: :https
+  defp map_scheme(_), do: :http
+
+  def websocket_upgrade(conn, config) do
+    Mint.WebSocket.upgrade(
+      conn,
+      path(config.uri),
+      config.headers,
+      extensions: config.extensions
+    )
+  end
+
+  # ---
+
+  def push_message(frame, state) when is_tuple(frame) do
+    with {:ok, websocket, data} <-
+           Mint.WebSocket.encode(state.websocket, frame),
+         {:ok, conn} <-
+           Mint.HTTP.stream_request_body(state.conn, state.request_ref, data) do
+      {:ok, %State{state | conn: conn, websocket: websocket}}
+    else
+      # coveralls-ignore-start
+      {:error, %Mint.WebSocket{} = websocket, reason} ->
+        {:error, put_in(state.websocket, websocket), reason}
+
+      {:error, conn, reason} ->
+        {:error, put_in(state.conn, conn), reason}
+        # coveralls-ignore-stop
+    end
+  end
+
+  def push_message(message, state) do
+    push_message({:text, encode(message, state)}, state)
+  end
+
+  # coveralls-ignore-start
   def push_heartbeat(state) do
     %Message{
       topic: "phoenix",
@@ -39,6 +69,8 @@ defmodule Slipstream.Connection.Impl do
     }
     |> push_message(state)
   end
+
+  # coveralls-ignore-stop
 
   defp encode(%Message{} = message, state) do
     [
@@ -54,19 +86,15 @@ defmodule Slipstream.Connection.Impl do
   defp encode_fn(state) do
     module = state.config.json_parser
 
-    if function_exported?(module, :encode_to_iodata!, 1) do
-      &module.encode_to_iodata!/1
-    else
-      # coveralls-ignore-start
-      &module.encode!/1
-
-      # coveralls-ignore-stop
-    end
+    &module.encode!/1
   end
 
+  # coveralls-ignore-start
   def decode(message, state) do
     decode_fn(state).(message)
   end
+
+  # coveralls-ignore-stop
 
   defp decode_fn(state) do
     module = state.config.json_parser
@@ -102,11 +130,13 @@ defmodule Slipstream.Connection.Impl do
 
   def decode_message(:ping, _state), do: :ping
   def decode_message(:pong, _state), do: :pong
+  # coveralls-ignore-start
   def decode_message({:close, _, _} = message, _state), do: message
+  # coveralls-ignore-stop
 
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation
-  @spec path(URI.t()) :: charlist()
+  @spec path(URI.t()) :: String.t()
   def path(%URI{} = uri) do
     # select the v2 JSON serialization pattern
     query = URI.decode_query(uri.query || "", %{"vsn" => "2.0.0"})
@@ -122,6 +152,5 @@ defmodule Slipstream.Connection.Impl do
       query: URI.encode_query(query)
     })
     |> URI.to_string()
-    |> to_charlist()
   end
 end

@@ -64,7 +64,7 @@ defmodule Slipstream.MixProject do
 
   defp deps do
     [
-      {:gun, "~> 1.0"},
+      {:mint_web_socket, "~> 0.1"},
       {:telemetry, "~> 0.4"},
       {:jason, "~> 1.0", optional: true},
       {:nimble_options, "~> 0.1"},
@@ -110,7 +110,6 @@ defmodule Slipstream.MixProject do
         "CHANGELOG.md",
         "guides/telemetry.md",
         "guides/implementation.md",
-        "guides/why_gun.md",
         "examples/README.md": [filename: "examples", title: "Examples"],
         "examples/graceful_startup/README.md": [
           filename: "graceful_startup_example",

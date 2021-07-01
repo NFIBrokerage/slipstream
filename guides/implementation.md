@@ -16,10 +16,9 @@ Slipstream starts two processes to run a websocket connection:
 - the client process (modules with `use Slipstream`)
 - the connection process
 
-The connection process is spawned and killed upon `Slipstream.connect/2` and
-`Slipstream.disconnect/1`, respectively. It directly interfaces with `:gun` in
-active mode, meaning that messages from `:gun` connections and requests are
-forwarded to the mailbox of the connection process.
+The connection process is spawned and killed upon `Slipstream.connect/2`
+and `Slipstream.disconnect/1`, respectively. It directly interfaces with
+the WebSocket connection via `Mint.WebSocket`.
 
 The client process is simply a GenServer that has `c:GenServer.handle_info/2`
 clauses injected to handle slipstream events. The entire purpose of the client
