@@ -6,6 +6,13 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.1 - 2021-07-06
+
+### Fixed
+
+- Properly emit the channel-closed event when `Mint.HTTP.stream/2` returns an
+  error tuple about the connection being closed
+
 ## 0.8.0 - 2021-07-01
 
 ### Changed
