@@ -18,7 +18,7 @@ defmodule SlipstreamWeb.UserSocket do
   #
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
-  @impl true
+  @impl Phoenix.Socket
   def connect(%{"reject" => "yes"}, _socket, _connect_info) do
     :error
   end
@@ -37,6 +37,6 @@ defmodule SlipstreamWeb.UserSocket do
   #     SlipstreamWeb.Endpoint.broadcast("user_socket:#{user.id}", "disconnect", %{})
   #
   # Returning `nil` makes this socket anonymous.
-  @impl true
+  @impl Phoenix.Socket
   def id(_socket), do: nil
 end
