@@ -18,7 +18,7 @@ defmodule Slipstream.IntegrationTest do
       [config: [uri: "ws://localhost:4001/socket/websocket?reject=yes"]]
     end
 
-    test "the socket is disconnected with :connect_failure reason", c do
+    test "the socket is disconnected with :upgrade_failure reason", c do
       import Slipstream
 
       assert {:error, {:upgrade_failure, %{status_code: 403}}} =
