@@ -31,7 +31,7 @@ env:
 jobs:
   refresh-docs-cache:
     name: Refresh Docs Cache
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     env:
       MIX_ENV: docs
 
@@ -46,7 +46,7 @@ jobs:
       run: echo "OTP_VERSION=$(grep -h erlang .tool-versions | awk '{ print $2 }')" >> $GITHUB_ENV
 
     - name: Setup Elixir and Erlang versions
-      uses: actions/setup-elixir@v1
+      uses: erlef/setup-beam@v1
       with:
         elixir-version: ${{ env.ELIXIR_VERSION }}
         otp-version: ${{ env.OTP_VERSION }}

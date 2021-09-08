@@ -8,7 +8,7 @@ env:
 jobs:
   bless:
     name: Bless
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     env:
       MIX_ENV: test
 
@@ -23,7 +23,7 @@ jobs:
       run: echo "OTP_VERSION=$(grep -h erlang .tool-versions | awk '{ print $2 }')" >> $GITHUB_ENV
 
     - name: Setup Elixir and Erlang versions
-      uses: actions/setup-elixir@v1
+      uses: erlef/setup-beam@v1
       with:
         elixir-version: ${{ env.ELIXIR_VERSION }}
         otp-version: ${{ env.OTP_VERSION }}
@@ -76,7 +76,7 @@ jobs:
 
   publish-hex-package:
     name: Publish Hex Package ⬆️☁️
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     env:
       MIX_ENV: docs
@@ -94,7 +94,7 @@ jobs:
       run: echo "OTP_VERSION=$(grep -h erlang .tool-versions | awk '{ print $2 }')" >> $GITHUB_ENV
 
     - name: Setup Elixir and Erlang versions
-      uses: actions/setup-elixir@v1
+      uses: erlef/setup-beam@v1
       with:
         elixir-version: ${{ env.ELIXIR_VERSION }}
         otp-version: ${{ env.OTP_VERSION }}
