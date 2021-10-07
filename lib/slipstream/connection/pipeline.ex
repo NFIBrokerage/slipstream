@@ -143,10 +143,10 @@ defmodule Slipstream.Connection.Pipeline do
         |> put_state(%State{p.state | conn: conn})
         |> decode_message()
 
-      {:error, conn, %Mint.TransportError{reason: :closed}} ->
+      {:error, conn, %Mint.TransportError{reason: :closed}, _} ->
         # coveralls-ignore-start
         p
-        |> put_state(put_in(p.state.conn, conn))
+        |> put_state(%{p.state | conn: conn})
         |> put_message(event(%Events.ChannelClosed{reason: :closed}))
 
       :unknown ->
