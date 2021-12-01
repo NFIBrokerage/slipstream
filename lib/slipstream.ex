@@ -43,7 +43,7 @@ defmodule Slipstream do
 
         @impl Slipstream
         def handle_continue(:start_ping, socket) do
-          timer = :timer.send_interval(self(), :request_metrics)
+          timer = :timer.send_interval(1000, self(), :request_metrics)
 
           {:noreply, assign(socket, :ping_timer, timer)}
         end
