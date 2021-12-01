@@ -374,7 +374,7 @@ defmodule Slipstream do
                 "validation failure: #{inspect(reason)}")
 
               :ignore
-          ned
+          end
         end
 
         ..
