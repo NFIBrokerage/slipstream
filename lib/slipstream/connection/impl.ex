@@ -17,18 +17,22 @@ defmodule Slipstream.Connection.Impl do
 
   def http_connect(config) do
     Mint.HTTP.connect(
-      map_scheme(config.uri.scheme),
+      map_http_scheme(config.uri.scheme),
       config.uri.host,
       config.uri.port,
       config.mint_opts
     )
   end
 
-  defp map_scheme("wss"), do: :https
-  defp map_scheme(_), do: :http
+  defp map_http_scheme("wss"), do: :https
+  defp map_http_scheme(_), do: :http
+
+  defp map_ws_scheme("wss"), do: :wss
+  defp map_ws_scheme(_), do: :ws
 
   def websocket_upgrade(conn, config) do
     Mint.WebSocket.upgrade(
+      map_ws_scheme(config.uri.scheme),
       conn,
       path(config.uri),
       config.headers,
@@ -42,7 +46,11 @@ defmodule Slipstream.Connection.Impl do
     with {:ok, websocket, data} <-
            Mint.WebSocket.encode(state.websocket, frame),
          {:ok, conn} <-
-           Mint.HTTP.stream_request_body(state.conn, state.request_ref, data) do
+           Mint.WebSocket.stream_request_body(
+             state.conn,
+             state.request_ref,
+             data
+           ) do
       {:ok, %State{state | conn: conn, websocket: websocket}}
     else
       # coveralls-ignore-start

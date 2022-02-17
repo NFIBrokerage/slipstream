@@ -137,7 +137,7 @@ defmodule Slipstream.Connection.Pipeline do
   end
 
   defp decode_message(p) do
-    case Mint.HTTP.stream(p.state.conn, p.raw_message) do
+    case Mint.WebSocket.stream(p.state.conn, p.raw_message) do
       {:ok, conn, messages} ->
         put_in(p.raw_message, messages)
         |> put_state(%State{p.state | conn: conn})
