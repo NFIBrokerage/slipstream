@@ -23,6 +23,7 @@ defmodule Slipstream.CommandRouter do
   import Slipstream.Signatures, only: [command: 1]
 
   @forwarded_command_types [
+    OpenConnection,
     JoinTopic,
     LeaveTopic,
     CollectGarbage,
@@ -32,11 +33,7 @@ defmodule Slipstream.CommandRouter do
   @spec route_command(struct()) :: any()
   def route_command(command)
 
-  def route_command(%OpenConnection{config: %Config{test_mode?: true}}) do
-    :ok
-  end
-
-  def route_command(%OpenConnection{} = cmd) do
+  def route_command(%OpenConnection{config: %Config{test_mode?: false}} = cmd) do
     DynamicSupervisor.start_child(
       Slipstream.ConnectionSupervisor,
       {Slipstream.Connection, cmd}
@@ -46,6 +43,8 @@ defmodule Slipstream.CommandRouter do
   # forward the commands to the connection process
   def route_command(%command_type{socket: socket} = cmd)
       when command_type in @forwarded_command_types do
+    IO.inspect command_type, label: "sending..."
+    IO.inspect socket
     Socket.send(socket, command(cmd))
   end
 

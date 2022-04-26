@@ -253,6 +253,35 @@ defmodule Slipstream.SocketTest do
   # --- macros asserting that a client has performed an action
 
   @doc """
+  Asserts that a client will request to connect to the remote server
+
+  `topic_expr` and `params_expr` are interpreted as match expressions, so they
+  may be literal values, pinned (`^`) bindings, or partial values such as
+  `"msg:" <> _` or `%{}` (which matches any map).
+
+  `reply` is meant to simulate the return value of the
+  `c:Phoenix.Channel.join/3` callback.
+
+  ## Examples
+
+      accept_connect(MyClient)
+      assert_join "rooms:lobby", %{}, :ok
+  """
+  @doc since: "0.2.0"
+  @spec assert_connect(timeout()) :: term()
+  defmacro assert_connect(
+             timeout \\ Application.fetch_env!(
+               :ex_unit,
+               :assert_receive_timeout
+             )
+           ) do
+    quote do
+      assert_receive command(%Slipstream.Commands.OpenConnection{}),
+                     unquote(timeout)
+    end
+  end
+
+  @doc """
   A convenience macro wrapping connection and a join response
 
   This macro is written for clients that join immediately after a connection has
