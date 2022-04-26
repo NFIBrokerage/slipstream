@@ -206,7 +206,10 @@ defmodule Slipstream do
 
         @impl Slipstream
         def handle_disconnect(_reason, socket) do
-          reconnect(socket)
+          case reconnect(socket) do
+            {:ok, socket} -> {:ok, socket}
+            {:error, reason} -> {:stop, reason, socket}
+          end
         end
 
         @impl Slipstream
@@ -534,7 +537,10 @@ defmodule Slipstream do
 
       @impl Slipstream
       def handle_disconnect(_reason, socket) do
-        {:ok, reconnect(socket)}
+        case reconnect(socket) do
+          {:ok, socket} -> {:ok, socket}
+          {:error, reason} -> {:stop, reason, socket}
+        end
       end
   """
   @doc since: "0.1.0"
@@ -817,7 +823,10 @@ defmodule Slipstream do
 
       @impl Slipstream
       def handle_disconnect(_reason, socket) do
-        {:ok, socket} = reconnect(socket)
+        case reconnect(socket) do
+          {:ok, socket} -> {:ok, socket}
+          {:error, reason} -> {:stop, reason, socket}
+        end
       end
 
   `reconnect/1` may return an `:error` tuple in the case that the socket passed
