@@ -145,7 +145,7 @@ defmodule Slipstream.Configuration do
   """
   @doc since: "0.1.0"
   @spec validate(Keyword.t()) ::
-          {:ok, t()} | {:error, %NimbleOptions.ValidationError{}}
+          {:ok, t()} | {:error, NimbleOptions.ValidationError.t()}
   def validate(opts) do
     case NimbleOptions.validate(opts, @definition) do
       {:ok, validated} -> {:ok, struct(__MODULE__, validated)}

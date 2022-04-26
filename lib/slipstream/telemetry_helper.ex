@@ -48,7 +48,7 @@ defmodule Slipstream.TelemetryHelper do
   connected with a `Slipstream.Events.ChannelConnected` event.
   """
   @doc since: "0.4.0"
-  @spec conclude_connect(Socket.t(), %Events.ChannelConnected{}) :: Socket.t()
+  @spec conclude_connect(Socket.t(), Events.ChannelConnected.t()) :: Socket.t()
   def conclude_connect(%{metadata: %{connect: start_metadata}} = socket, event)
       when is_map(start_metadata) and map_size(start_metadata) > 0 do
     metadata =
@@ -118,7 +118,7 @@ defmodule Slipstream.TelemetryHelper do
   connected with a `Slipstream.Events.TopicJoinSucceeded` event.
   """
   @doc since: "0.4.0"
-  @spec conclude_join(Socket.t(), %Events.TopicJoinSucceeded{}) :: Socket.t()
+  @spec conclude_join(Socket.t(), Events.TopicJoinSucceeded.t()) :: Socket.t()
   def conclude_join(socket, event) do
     case Map.fetch(socket.metadata.joins, event.topic) do
       {:ok, start_metadata} ->

@@ -1,6 +1,8 @@
 defmodule Slipstream.Events.ReplyReceived do
   @moduledoc false
 
+  @type t :: %__MODULE__{}
+
   # a message that says that a push from the client has been replied-to by
   # the server
 

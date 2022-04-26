@@ -1,6 +1,8 @@
 defmodule Slipstream.Events.HeartbeatAcknowledged do
   @moduledoc false
 
+  @type t :: %__MODULE__{}
+
   # a message that says that our heartbeat request has been acknowledged
 
   # the only important part of this message is the ref, which we can use to

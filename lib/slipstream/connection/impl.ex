@@ -10,7 +10,7 @@ defmodule Slipstream.Connection.Impl do
   alias Slipstream.Message
   import Slipstream.Signatures, only: [event: 1]
 
-  @spec route_event(%State{}, event :: struct()) :: term()
+  @spec route_event(State.t(), event :: struct()) :: term()
   def route_event(%State{client_pid: pid}, event) do
     send(pid, event(event))
   end
@@ -24,10 +24,14 @@ defmodule Slipstream.Connection.Impl do
     )
   end
 
+  # coveralls-ignore-start
   defp map_http_scheme("wss"), do: :https
+  # coveralls-ignore-stop
   defp map_http_scheme(_), do: :http
 
+  # coveralls-ignore-start
   defp map_ws_scheme("wss"), do: :wss
+  # coveralls-ignore-stop
   defp map_ws_scheme(_), do: :ws
 
   def websocket_upgrade(conn, config) do
@@ -136,9 +140,9 @@ defmodule Slipstream.Connection.Impl do
     end
   end
 
+  # coveralls-ignore-start
   def decode_message(:ping, _state), do: :ping
   def decode_message(:pong, _state), do: :pong
-  # coveralls-ignore-start
   def decode_message({:close, _, _} = message, _state), do: message
   # coveralls-ignore-stop
 

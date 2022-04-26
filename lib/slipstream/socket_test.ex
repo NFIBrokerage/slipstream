@@ -640,8 +640,8 @@ defmodule Slipstream.SocketTest do
             | {:ok, Slipstream.json_serializable()}
             | {:error, Slipstream.json_serializable()}
         ) ::
-          %Slipstream.Events.TopicJoinSucceeded{}
-          | %Slipstream.Events.TopicJoinFailed{}
+          Slipstream.Events.TopicJoinSucceeded.t()
+          | Slipstream.Events.TopicJoinFailed.t()
   def __map_join_reply__(reply)
 
   def __map_join_reply__(:ok), do: __map_join_reply__({:ok, %{}})

@@ -20,7 +20,7 @@ defmodule Slipstream.Connection.Pipeline do
 
   @type t :: %__MODULE__{}
 
-  @spec handle(raw_message :: term(), state :: %State{}) :: term()
+  @spec handle(raw_message :: term(), state :: State.t()) :: term()
   def handle(raw_message, state) do
     pipeline = %__MODULE__{
       raw_message: raw_message,
@@ -193,8 +193,8 @@ defmodule Slipstream.Connection.Pipeline do
 
   defp handle_message(%{message: messages} = p) when is_list(messages) do
     Enum.reduce_while(messages, p, fn
+      # coveralls-ignore-start
       _message, %{return: {:stop, _reason, _state}} = p ->
-        # coveralls-ignore-start
         {:halt, p}
 
       # coveralls-ignore-stop
@@ -479,7 +479,7 @@ defmodule Slipstream.Connection.Pipeline do
 
   # --- token API
 
-  @spec put_state(t(), %State{}) :: t()
+  @spec put_state(t(), State.t()) :: t()
   def put_state(p, state) do
     %__MODULE__{p | state: state}
   end

@@ -32,7 +32,7 @@ defmodule Slipstream.Events do
   `server_message` is either a `%Slipstream.Message{}` or `:ping` or `:pong`.
   `connection_state` is the GenServer state of the connection process.
   """
-  @spec map(atom() | %Message{}, %State{}) :: struct()
+  @spec map(atom() | Message.t(), State.t()) :: struct()
   def map(server_message, connection_state)
 
   # coveralls-ignore-start

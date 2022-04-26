@@ -3,6 +3,8 @@ defmodule Slipstream.Connection.State do
 
   alias Slipstream.TelemetryHelper
 
+  @type t :: %__MODULE__{}
+
   # a struct for storing the internal state of a Slipstream.Connection
   # process
 

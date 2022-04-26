@@ -765,9 +765,9 @@ defmodule Slipstream do
   """
   @doc since: "0.1.0"
   @spec connect(opts :: Keyword.t()) ::
-          {:ok, Socket.t()} | {:error, %NimbleOptions.ValidationError{}}
+          {:ok, Socket.t()} | {:error, NimbleOptions.ValidationError.t()}
   @spec connect(socket :: Socket.t(), opts :: Keyword.t()) ::
-          {:ok, Socket.t()} | {:error, %NimbleOptions.ValidationError{}}
+          {:ok, Socket.t()} | {:error, NimbleOptions.ValidationError.t()}
   def connect(socket \\ new_socket(), opts) do
     case Slipstream.Configuration.validate(opts) do
       {:ok, config} ->
@@ -1158,7 +1158,10 @@ defmodule Slipstream do
       event(%Events.ChannelConnectFailed{} = event) ->
         {:error, event.reason}
     after
-      timeout -> {:error, :timeout}
+      # coveralls-ignore-start
+      timeout ->
+        {:error, :timeout}
+        # coveralls-ignore-stop
     end
   end
 
@@ -1196,7 +1199,10 @@ defmodule Slipstream do
       event(%Events.ChannelClosed{} = event) ->
         {:ok, Socket.apply_event(socket, event)}
     after
-      timeout -> {:error, :timeout}
+      # coveralls-ignore-start
+      timeout ->
+        {:error, :timeout}
+        # coveralls-ignore-stop
     end
   end
 
@@ -1235,10 +1241,10 @@ defmodule Slipstream do
       # coveralls-ignore-start
       event(%Events.TopicJoinFailed{topic: ^topic} = event) ->
         {:error, Events.TopicJoinFailed.to_reason(event)}
-
-        # coveralls-ignore-stop
     after
-      timeout -> {:error, :timeout}
+      timeout ->
+        {:error, :timeout}
+        # coveralls-ignore-stop
     end
   end
 
@@ -1278,7 +1284,10 @@ defmodule Slipstream do
       event(%Events.TopicLeft{topic: ^topic} = event) ->
         {:ok, Socket.apply_event(socket, event)}
     after
-      timeout -> {:error, :timeout}
+      # coveralls-ignore-start
+      timeout ->
+        {:error, :timeout}
+        # coveralls-ignore-stop
     end
   end
 
@@ -1397,7 +1406,10 @@ defmodule Slipstream do
     receive do
       event(%Events.ReplyReceived{ref: ^ref} = event) -> event.reply
     after
-      timeout -> {:error, :timeout}
+      # coveralls-ignore-start
+      timeout ->
+        {:error, :timeout}
+        # coveralls-ignore-stop
     end
   end
 
