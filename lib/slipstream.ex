@@ -830,7 +830,8 @@ defmodule Slipstream do
   A reconnect may be awaited with `await_connect/2`.
   """
   @doc since: "0.1.0"
-  @spec reconnect(socket :: Socket.t()) :: {:ok, Socket.t()} | :error
+  @spec reconnect(socket :: Socket.t()) ::
+          {:ok, Socket.t()} | {:error, :no_config | :not_connected}
   def reconnect(socket) do
     with false <- Socket.connected?(socket),
          %Slipstream.Configuration{} = config <- socket.channel_config,
