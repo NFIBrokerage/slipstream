@@ -37,7 +37,7 @@ defmodule Slipstream.Configuration do
     reconnect_after_msec: [
       doc: """
       A list of times to reference for trying reconnection when
-      `Slipstream.reconnect/0` is used to request reconnection. The msec time
+      `Slipstream.reconnect/1` is used to request reconnection. The msec time
       will be fetched based on its position in the list with
       `Enum.at(reconnect_after_msec, try_number)`. If the number of tries
       exceeds the length of the list, the final value will be repeated.
@@ -48,7 +48,7 @@ defmodule Slipstream.Configuration do
     rejoin_after_msec: [
       doc: """
       A list of times to reference for trying to rejoin a topic when
-      `Slipstream.rejoin/0` is used. The msec time
+      `Slipstream.rejoin/3` is used. The msec time
       will be fetched based on its position in the list with
       `Enum.at(rejoin_after_msec, try_number)`. If the number of tries
       exceeds the length of the list, the final value will be repeated.
