@@ -1,6 +1,8 @@
 name: CI
 
-on: push
+on:
+  push:
+  pull_request:
 
 env:
   CUATRO_HEX_KEY: ${{ secrets.CUATRO_HEX_KEY }}
