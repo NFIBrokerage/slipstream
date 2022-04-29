@@ -13,32 +13,36 @@ defmodule MyApp.TokenRefreshClient do
   def init(config) do
     new_socket()
     |> assign(:config, config)
-    |> assign_token()
-    |> connect(config_with_token())
+    |> connect_with_token()
   end
 
-  defp assign_token(socket) do
-    token = "get_token_from_service"
-    assign(socket, :token, token)
-  end
+  defp make_new_token(socket), do: "get_new_token_here"
 
-  defp config_with_token(socket) do
-    uri = socket.assigns.config
-    |> Keyword.get(:uri)
-    |> URI.parse()
-    |> Map.put(:query, "token=#{socket.assigns.token}")
-    |> URI.to_string()
+  defp connect_with_token(socket) do
+    new_token = make_new_token()
 
-    Keyword.put(config, :uri, uri)
+    socket =
+      update(socket, :config, fn config ->
+        uri =
+          config
+          |> Keyword.get(:uri)
+          |> URI.parse()
+          |> Map.put(:query, "token=#{new_token}")
+          |> URI.to_string()
+
+        Keyword.put(config, :uri, uri)
+      end)
+
+    connect(socket, socket.assigns.config)
   end
 
   @impl Slipstream
-  def handle_disconnect(:403, socket) do
-    # token is no longer valid, refresh token and connect
+  def handle_disconnect({:error, {_, %{status_code: 403}}}, socket) do
+    connect_with_token(socket)
+  end
 
-    socket
-    |> assign_token()
-    |> connect(config_with_token())
+  @impl Slipstream
+  def handle_disconnect(_reason, socket) do
+    reconnect(socket)
   end
 end
-
