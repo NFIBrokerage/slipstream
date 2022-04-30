@@ -9,13 +9,13 @@ defmodule Slipstream.TokenRefreshTest do
     [client: client]
   end
 
-  describe "given the client is joined to multiple topics" do
+  describe "given the client connected" do
     setup c do
       accept_connect(c.client)
       :ok
     end
 
-    test "when the channel is disconnected, it reconnects and rejoins each topic",
+    test "when the client disconnects with 403, reconnects with a token in the uri",
          c do
       disconnect(c.client, {:error, {nil, %{status_code: 403}}})
       %{assigns: %{config: config}} = :sys.get_state(c.client)
