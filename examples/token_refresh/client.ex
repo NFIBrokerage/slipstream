@@ -16,7 +16,7 @@ defmodule MyApp.TokenRefreshClient do
     |> connect_with_token()
   end
 
-  defp make_new_token(socket), do: "get_new_token_here"
+  defp make_new_token, do: "get_new_token_here"
 
   defp connect_with_token(socket) do
     new_token = make_new_token()
