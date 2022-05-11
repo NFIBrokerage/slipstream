@@ -6,6 +6,11 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.0 - 2022-05-11
+
+This release represents stability in the API. There are no functional changes
+between this release and v0.8.5.
+
 ## 0.8.5 - 2022-04-26
 
 ### Changed
