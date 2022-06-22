@@ -149,15 +149,22 @@ defmodule Slipstream.Connection.Pipeline do
         |> put_state(%{p.state | conn: conn})
         |> put_message(event(%Events.ChannelClosed{reason: :closed}))
 
-      :unknown ->
+      {:error, conn, %Mint.TransportError{reason: reason}, _} ->
         Logger.error(
-          """
-          unknown message #{inspect(p.raw_message)} \
-          heard in #{inspect(__MODULE__)} \
-          please open an issue in NFIBrokerage/slipstream with this message and \
-          any available information. \
-          """
+          "Closing connection because of transport error: #{inspect(reason)}"
         )
+
+        p
+        |> put_state(%{p.state | conn: conn})
+        |> put_message(event(%Events.ChannelClosed{reason: reason}))
+
+      :unknown ->
+        Logger.error("""
+        unknown message #{inspect(p.raw_message)} \
+        heard in #{inspect(__MODULE__)} \
+        please open an issue in NFIBrokerage/slipstream with this message and \
+        any available information. \
+        """)
 
         put_message(p, event(%Events.NoOp{}))
         # coveralls-ignore-stop
@@ -422,14 +429,12 @@ defmodule Slipstream.Connection.Pipeline do
 
   # coveralls-ignore-start
   defp handle_message(%{message: message} = p) do
-    Logger.error(
-      """
-      #{inspect(__MODULE__)} received a message it is not setup to handle: \
-      #{inspect(message)}. \
-      Please open an issue in NFIBrokerage/slipstream with any available details \
-      leading to this logger message. \
-      """
-    )
+    Logger.error("""
+    #{inspect(__MODULE__)} received a message it is not setup to handle: \
+    #{inspect(message)}. \
+    Please open an issue in NFIBrokerage/slipstream with any available details \
+    leading to this logger message. \
+    """)
 
     p
   end
