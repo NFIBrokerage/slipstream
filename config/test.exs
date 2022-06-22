@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 config :slipstream, SlipstreamWeb.Endpoint,
   url: [host: "localhost"],
