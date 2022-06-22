@@ -152,13 +152,11 @@ defmodule Slipstream.Connection.Pipeline do
       :unknown ->
         Logger.error(
           """
-          unknown message #{inspect(p.raw_message)}
-          heard in #{inspect(__MODULE__)}
-          please open an issue in NFIBrokerage/slipstream with this message and
-          any available information.
+          unknown message #{inspect(p.raw_message)} \
+          heard in #{inspect(__MODULE__)} \
+          please open an issue in NFIBrokerage/slipstream with this message and \
+          any available information. \
           """
-          |> String.replace("\n", " ")
-          |> String.trim()
         )
 
         put_message(p, event(%Events.NoOp{}))
@@ -426,13 +424,11 @@ defmodule Slipstream.Connection.Pipeline do
   defp handle_message(%{message: message} = p) do
     Logger.error(
       """
-      #{inspect(__MODULE__)} received a message it is not setup to handle:
-      #{inspect(message)}.
-      Please open an issue in NFIBrokerage/slipstream with any available details
-      leading to this logger message.
+      #{inspect(__MODULE__)} received a message it is not setup to handle: \
+      #{inspect(message)}. \
+      Please open an issue in NFIBrokerage/slipstream with any available details \
+      leading to this logger message. \
       """
-      |> String.replace("\n", "")
-      |> String.trim()
     )
 
     p
