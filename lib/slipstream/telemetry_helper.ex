@@ -29,7 +29,7 @@ defmodule Slipstream.TelemetryHelper do
       start_time: DateTime.utc_now(),
       start_time_monotonic: :erlang.monotonic_time(),
       configuration: config,
-      socket: socket
+      socket: clean_socket(socket)
     }
 
     :telemetry.execute(
@@ -55,7 +55,7 @@ defmodule Slipstream.TelemetryHelper do
       start_metadata
       |> Map.merge(%{
         response_headers: event.response_headers,
-        socket: socket
+        socket: clean_socket(socket)
       })
       |> Map.delete(:start_time_monotonic)
 
@@ -97,7 +97,7 @@ defmodule Slipstream.TelemetryHelper do
     metadata = %{
       start_time: DateTime.utc_now(),
       start_time_monotonic: :erlang.monotonic_time(),
-      socket: socket,
+      socket: clean_socket(socket),
       topic: topic,
       params: params
     }
@@ -125,7 +125,7 @@ defmodule Slipstream.TelemetryHelper do
         metadata =
           start_metadata
           |> Map.merge(%{
-            socket: socket,
+            socket: clean_socket(socket),
             response: event.response
           })
           |> Map.delete(:start_time_monotonic)
@@ -163,7 +163,7 @@ defmodule Slipstream.TelemetryHelper do
       client: module,
       callback: function,
       arguments: args,
-      socket: List.last(args),
+      socket: clean_socket(List.last(args)),
       start_time: DateTime.utc_now()
     }
 
@@ -184,5 +184,13 @@ defmodule Slipstream.TelemetryHelper do
       )
 
     return_value
+  end
+
+  defp clean_socket(socket) do
+    # Clear metadata from the socket. The socket contains the metadata and
+    # the metadata contains the socket so if we repeatedly "begin" operations
+    # like connects or joins, we cause sharp memory growth in the client and
+    # connection processes.
+    %Slipstream.Socket{socket | metadata: %{}}
   end
 end
