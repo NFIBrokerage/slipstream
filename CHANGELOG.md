@@ -6,6 +6,16 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.2 - 2022-03-06
+
+### Fixed
+
+- Fixed a memory growth issue that could occur when a socket failed to join a
+  channel repeatedly.
+    - Memory usage of the Slipstream.Connection process and the client process
+      could grow sharply as the socket tried to rejoin the failed topic, with
+      higher memory usage per retry and per unjoined topic.
+
 ## 1.0.1 - 2022-06-22
 
 ### Fixed
