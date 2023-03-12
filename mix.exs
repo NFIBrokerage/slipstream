@@ -67,7 +67,7 @@ defmodule Slipstream.MixProject do
       {:mint_web_socket, "~> 1.0 or ~> 0.2"},
       {:telemetry, "~> 1.0 or ~> 0.4"},
       {:jason, "~> 1.0", optional: true},
-      {:nimble_options, "~> 0.1"},
+      {:nimble_options, "~> 1.0 or ~> 0.1"},
       # docs
       {:ex_doc, ">= 0.0.0", only: [:docs], runtime: false},
       {:inch_ex, "== 2.1.0-rc.1", only: [:docs]},
