@@ -72,7 +72,7 @@ defmodule Slipstream.MixProject do
       {:ex_doc, ">= 0.0.0", only: [:docs], runtime: false},
       {:inch_ex, "== 2.1.0-rc.1", only: [:docs]},
       # test
-      {:phoenix, "~> 1.0", only: [:dev, :test, :docs]},
+      {:phoenix, "~> 1.6.16", only: [:dev, :test, :docs]},
       {:cowlib, "~> 2.9", override: true, only: [:dev, :test]},
       {:phoenix_pubsub, "~> 2.0", override: true, only: [:docs, :dev, :test]},
       {:plug_cowboy, "~> 2.0", only: [:dev, :test]},

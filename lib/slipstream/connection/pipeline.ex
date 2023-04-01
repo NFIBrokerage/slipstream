@@ -298,7 +298,8 @@ defmodule Slipstream.Connection.Pipeline do
       topic: cmd.topic,
       event: "phx_leave",
       payload: %{},
-      ref: state.current_ref_str
+      ref: state.current_ref_str,
+      join_ref: state.joins[cmd.topic]
     })
   end
 
