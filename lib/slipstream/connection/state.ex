@@ -57,7 +57,7 @@ defmodule Slipstream.Connection.State do
   The `ref` passed between a client and phoenix server is a marker which
   can be used to link pushes to their replies. E.g. a heartbeat message from
   the client will include a ref which will match the associated heartbeat
-  reply from the server, when the heartbeat is sucessful.
+  reply from the server, when the heartbeat is successful.
 
   Refs are simply strings of incrementing integers.
   """

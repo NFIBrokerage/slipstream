@@ -177,7 +177,7 @@ defmodule Slipstream.Configuration do
       # coveralls-ignore-start
       {:port, bad_port} ->
         {:error,
-         "unparseable port value #{inspect(bad_port)}: please provide a positive-integer value"}
+         "unparsable port value #{inspect(bad_port)}: please provide a positive-integer value"}
 
       # coveralls-ignore-stop
 

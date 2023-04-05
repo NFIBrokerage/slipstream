@@ -54,7 +54,7 @@ end
 
 Now that we know when a token needs to be refreshed, let's add in some
 basic token logic to our client. First, we'll wrap `connect/2` with a
-custom function that retreives a token and modifies our config:
+custom function that retrieves a token and modifies our config:
 
 ```elixir
 defp make_new_token, do: "your_token_logic"

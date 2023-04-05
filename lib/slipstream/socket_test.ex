@@ -462,7 +462,7 @@ defmodule Slipstream.SocketTest do
   end
 
   @doc """
-  Asserts that the client will request to push a messsage to the server
+  Asserts that the client will request to push a message to the server
 
   Note that `topic_expr`, `event_expr`, `params_expr`, and `ref_expr` are all
   pattern expressions. Prior bindings may be used with the `^` pin operator,
