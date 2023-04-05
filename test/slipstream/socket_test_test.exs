@@ -171,7 +171,7 @@ defmodule Slipstream.SocketTestTest do
       refute_push ^topic, ^event, ^params
     end
 
-    test "we may capture when the client attepts to leave", c do
+    test "we may capture when the client attempts to leave", c do
       topic = c.topic
       GenServer.cast(@fixture, {:leave, topic})
       # N.B. bindings made with these macros can be used after the assert_ macro

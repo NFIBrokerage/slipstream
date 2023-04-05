@@ -2,7 +2,7 @@ defmodule Slipstream.PidHelpers do
   @moduledoc """
   Helpers for dealing with pids
 
-  Most of the tests for slipstream involve processes sending eachother messages.
+  Most of the tests for slipstream involve processes sending each other messages.
   Some of these pids are sent over-the-wire as strings, so we need helper
   functions to serialize and deserialize them.
   """

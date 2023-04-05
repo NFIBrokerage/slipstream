@@ -150,7 +150,7 @@ defmodule Slipstream.IntegrationTest do
       assert_receive {@client, :left, ^topic}, @timeout
     end
 
-    test "trying to join a non-existant topic fails", c do
+    test "trying to join a non-existent topic fails", c do
       topic = "test:no function clause matching"
 
       :ok = join(c.pid, topic)
