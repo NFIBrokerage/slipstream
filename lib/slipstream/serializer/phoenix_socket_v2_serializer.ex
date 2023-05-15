@@ -60,21 +60,39 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
     end
   end
 
-  def decode!(binary, opts \\ [])
+  def decode!(binary, opts) do
+    try do
+      case Keyword.fetch!(opts, :opcode) do
+        :text -> decode_text!(binary)
+        :binary -> decode_binary!(binary)
+      end
+    rescue
+      exception in [Jason.DecodeError, KeyError] ->
+        reraise(
+          Serializer.DecodeError,
+          [message: exception.message],
+          __STACKTRACE__
+        )
 
-  def decode!(
-        <<
-          @push::size(8),
-          join_ref_size::size(8),
-          topic_size::size(8),
-          event_size::size(8),
-          join_ref::binary-size(join_ref_size),
-          topic::binary-size(topic_size),
-          event::binary-size(event_size),
-          data::binary
-        >>,
-        _opts
-      ) do
+      exception in [FunctionClauseError] ->
+        reraise(
+          Serializer.DecodeError,
+          [message: FunctionClauseError.message(exception)],
+          __STACKTRACE__
+        )
+    end
+  end
+
+  defp decode_binary!(<<
+         @push::size(8),
+         join_ref_size::size(8),
+         topic_size::size(8),
+         event_size::size(8),
+         join_ref::binary-size(join_ref_size),
+         topic::binary-size(topic_size),
+         event::binary-size(event_size),
+         data::binary
+       >>) do
     %Message{
       topic: topic,
       event: event,
@@ -84,21 +102,18 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
     }
   end
 
-  def decode!(
-        <<
-          @reply::size(8),
-          join_ref_size::size(8),
-          ref_size::size(8),
-          topic_size::size(8),
-          status_size::size(8),
-          join_ref::binary-size(join_ref_size),
-          ref::binary-size(ref_size),
-          topic::binary-size(topic_size),
-          status::binary-size(status_size),
-          data::binary
-        >>,
-        _opts
-      ) do
+  defp decode_binary!(<<
+         @reply::size(8),
+         join_ref_size::size(8),
+         ref_size::size(8),
+         topic_size::size(8),
+         status_size::size(8),
+         join_ref::binary-size(join_ref_size),
+         ref::binary-size(ref_size),
+         topic::binary-size(topic_size),
+         status::binary-size(status_size),
+         data::binary
+       >>) do
     %Message{
       topic: topic,
       event: "phx_reply",
@@ -108,32 +123,23 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
     }
   end
 
-  def decode!(binary, opts) do
-    try do
-      case Jason.decode!(binary, opts) do
-        [join_ref, ref, topic, event, payload | _] ->
-          %Message{
-            join_ref: join_ref,
-            ref: ref,
-            topic: topic,
-            event: event,
-            payload: payload
-          }
+  defp decode_text!(binary) do
+    case Jason.decode!(binary) do
+      [join_ref, ref, topic, event, payload | _] ->
+        %Message{
+          join_ref: join_ref,
+          ref: ref,
+          topic: topic,
+          event: event,
+          payload: payload
+        }
 
-        # coveralls-ignore-start
-        # this may occur if the remote websocket server does not support the v2
-        # transport packets
-        decoded_json when is_map(decoded_json) ->
-          Message.from_map!(decoded_json)
-          # coveralls-ignore-stop
-      end
-    rescue
-      exception in [Jason.DecodeError, KeyError] ->
-        reraise(
-          Serializer.DecodeError,
-          [message: exception.message],
-          __STACKTRACE__
-        )
+      # coveralls-ignore-start
+      # this may occur if the remote websocket server does not support the v2
+      # transport packets
+      decoded_json when is_map(decoded_json) ->
+        Message.from_map!(decoded_json)
+        # coveralls-ignore-stop
     end
   end
 

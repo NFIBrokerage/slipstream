@@ -101,7 +101,7 @@ defmodule Slipstream.Connection.Impl do
     module = state.config.serializer
 
     try do
-      module.decode!(message)
+      module.decode!(message, opcode: encoding)
     rescue
       # coveralls-ignore-start
       _ in [Serializer.DecodeError] ->
