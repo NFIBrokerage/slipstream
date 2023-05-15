@@ -1030,7 +1030,7 @@ defmodule Slipstream do
           socket :: Socket.t(),
           topic :: String.t(),
           event :: String.t(),
-          params :: json_serializable(),
+          params :: json_serializable() | {:binary, binary()},
           timeout :: timeout()
         ) :: {:ok, push_reference()} | {:error, reason :: term()}
   def push(

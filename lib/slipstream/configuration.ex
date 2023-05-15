@@ -34,6 +34,13 @@ defmodule Slipstream.Configuration do
       type: :atom,
       default: Jason
     ],
+    binary_parser: [
+      doc: """
+      A binary parser module which exports at least `encode!/1` and `decode!/2`.
+      """,
+      type: :atom,
+      default: Slipstream.Serializer.PhoenixSocketV2Serializer
+    ],
     reconnect_after_msec: [
       doc: """
       A list of times to reference for trying reconnection when
@@ -134,6 +141,7 @@ defmodule Slipstream.Configuration do
           heartbeat_interval_msec: non_neg_integer(),
           headers: [{String.t(), String.t()}],
           json_parser: module(),
+          binary_parser: module(),
           reconnect_after_msec: [non_neg_integer()],
           rejoin_after_msec: [non_neg_integer()]
         }

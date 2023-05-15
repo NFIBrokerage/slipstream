@@ -31,12 +31,22 @@ defmodule SlipstreamWeb.TestChannel do
   end
 
   # responds to the request
+  def handle_in("ping", {:binary, _}, socket) do
+    {:reply, {:ok, {:binary, <<2, 3>>}}, socket}
+  end
+
   def handle_in("ping", _params, socket) do
     {:reply, {:ok, %{"pong" => "pong"}}, socket}
   end
 
   # responds, but not with a reply
   # just an async send
+  def handle_in("push to me", {:binary, _}, socket) do
+    push(socket, "foo", {:binary, <<2, 3>>})
+
+    {:noreply, socket}
+  end
+
   def handle_in("push to me", _params, socket) do
     push(socket, "foo", %{"bar" => "baz"})
 

@@ -121,6 +121,23 @@ defmodule Slipstream.SynchronicityTest do
                await_message!(^topic, "foo", %{})
     end
 
+    test "a binary message may be received synchronously", c do
+      topic = c.topic
+      event = "push to me"
+      params = {:binary, <<0, 1>>}
+      expected_payload = {:binary, <<2, 3>>}
+
+      push!(c.socket, topic, event, params)
+
+      assert {:ok, ^topic, "foo", ^expected_payload} =
+               await_message(^topic, "foo", ^expected_payload)
+
+      push!(c.socket, topic, event, params)
+
+      assert {:ok, ^topic, "foo", ^expected_payload} =
+               await_message(^topic, "foo", ^expected_payload)
+    end
+
     test "a reply can be received synchronously", c do
       topic = c.topic
       event = "ping"
@@ -132,6 +149,23 @@ defmodule Slipstream.SynchronicityTest do
                |> await_reply()
 
       assert {:ok, %{"pong" => "pong"}} =
+               c.socket
+               |> push!(topic, event, params)
+               |> await_reply!()
+    end
+
+    test "a binary reply can be received synchronously", c do
+      topic = c.topic
+      event = "ping"
+      params = {:binary, <<0, 1>>}
+      expected_payload = {:binary, <<2, 3>>}
+
+      assert {:ok, ^expected_payload} =
+               c.socket
+               |> push!(topic, event, params)
+               |> await_reply()
+
+      assert {:ok, ^expected_payload} =
                c.socket
                |> push!(topic, event, params)
                |> await_reply!()

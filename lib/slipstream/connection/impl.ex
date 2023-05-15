@@ -67,6 +67,10 @@ defmodule Slipstream.Connection.Impl do
     end
   end
 
+  def push_message(%Message{payload: {:binary, _}} = message, state) do
+    push_message({:binary, encode(message, state)}, state)
+  end
+
   def push_message(message, state) do
     push_message({:text, encode(message, state)}, state)
   end
@@ -83,6 +87,11 @@ defmodule Slipstream.Connection.Impl do
   end
 
   # coveralls-ignore-stop
+
+  defp encode(%Message{payload: {:binary, _}} = message, state) do
+    module = state.config.binary_parser
+    module.encode!(message)
+  end
 
   defp encode(%Message{} = message, state) do
     [
@@ -114,9 +123,15 @@ defmodule Slipstream.Connection.Impl do
     &module.decode/1
   end
 
+  def decode_message({:binary, message}, state)
+      when is_binary(message) do
+    module = state.config.binary_parser
+    module.decode!(message)
+  end
+
   # try decoding as json
-  def decode_message({encoding, message}, state)
-      when encoding in [:text, :binary] and is_binary(message) do
+  def decode_message({:text, message}, state)
+      when is_binary(message) do
     case decode_fn(state).(message) do
       {:ok, [join_ref, ref, topic, event, payload | _]} ->
         %Message{
