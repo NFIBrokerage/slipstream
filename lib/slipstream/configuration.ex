@@ -27,16 +27,9 @@ defmodule Slipstream.Configuration do
       type: {:list, {:custom, __MODULE__, :parse_pair_of_strings, []}},
       default: []
     ],
-    json_parser: [
+    serializer: [
       doc: """
-      A JSON parser module which exports at least `encode/1` and `decode/2`.
-      """,
-      type: :atom,
-      default: Jason
-    ],
-    binary_parser: [
-      doc: """
-      A binary parser module which exports at least `encode!/1` and `decode!/2`.
+      A serializer module which exports at least `encode!/1` and `decode!/2`.
       """,
       type: :atom,
       default: Slipstream.Serializer.PhoenixSocketV2Serializer
@@ -140,8 +133,7 @@ defmodule Slipstream.Configuration do
           uri: %URI{},
           heartbeat_interval_msec: non_neg_integer(),
           headers: [{String.t(), String.t()}],
-          json_parser: module(),
-          binary_parser: module(),
+          serializer: module(),
           reconnect_after_msec: [non_neg_integer()],
           rejoin_after_msec: [non_neg_integer()]
         }

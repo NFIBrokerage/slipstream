@@ -8,6 +8,8 @@ defmodule Slipstream.Connection.Impl do
 
   alias Slipstream.Connection.State
   alias Slipstream.Message
+  alias Slipstream.Serializer
+
   import Slipstream.Signatures, only: [event: 1]
 
   @spec route_event(State.t(), event :: struct()) :: term()
@@ -88,69 +90,22 @@ defmodule Slipstream.Connection.Impl do
 
   # coveralls-ignore-stop
 
-  defp encode(%Message{payload: {:binary, _}} = message, state) do
-    module = state.config.binary_parser
+  defp encode(%Message{} = message, state) do
+    module = state.config.serializer
     module.encode!(message)
   end
 
-  defp encode(%Message{} = message, state) do
-    [
-      message.join_ref,
-      message.ref,
-      message.topic,
-      message.event,
-      message.payload
-    ]
-    |> encode_fn(state).()
-  end
-
-  defp encode_fn(state) do
-    module = state.config.json_parser
-
-    &module.encode!/1
-  end
-
-  # coveralls-ignore-start
-  def decode(message, state) do
-    decode_fn(state).(message)
-  end
-
-  # coveralls-ignore-stop
-
-  defp decode_fn(state) do
-    module = state.config.json_parser
-
-    &module.decode/1
-  end
-
-  def decode_message({:binary, message}, state)
-      when is_binary(message) do
-    module = state.config.binary_parser
-    module.decode!(message)
-  end
-
   # try decoding as json
-  def decode_message({:text, message}, state)
-      when is_binary(message) do
-    case decode_fn(state).(message) do
-      {:ok, [join_ref, ref, topic, event, payload | _]} ->
-        %Message{
-          join_ref: join_ref,
-          ref: ref,
-          topic: topic,
-          event: event,
-          payload: payload
-        }
+  def decode_message({encoding, message}, state)
+      when encoding in [:text, :binary] and is_binary(message) do
+    module = state.config.serializer
 
+    try do
+      module.decode!(message)
+    rescue
       # coveralls-ignore-start
-      # this may occur if the remote websocket server does not support the v2
-      # transport packets
-      {:ok, decoded_json} when is_map(decoded_json) ->
-        Message.from_map!(decoded_json)
-
-      {:error, _any} ->
+      _ in [Serializer.DecodeError] ->
         message
-
         # coveralls-ignore-stop
     end
   end
