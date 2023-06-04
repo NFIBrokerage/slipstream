@@ -1,4 +1,8 @@
 defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
+  @moduledoc """
+  A client-side implementation that corresponds to the server-side Phoenix.Socket.V2.JSONSerializer.
+  """
+
   @behaviour Slipstream.Serializer
 
   alias Slipstream.Message
