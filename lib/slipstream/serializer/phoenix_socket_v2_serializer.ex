@@ -55,10 +55,20 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
       ]
       |> Jason.encode!(opts)
     rescue
+      # coveralls-ignore-start
       exception in [Jason.EncodeError] ->
         reraise(
           Serializer.EncodeError,
           [message: exception.message],
+          __STACKTRACE__
+        )
+
+      # coveralls-ignore-stop
+
+      exception in [Protocol.UndefinedError] ->
+        reraise(
+          Serializer.EncodeError,
+          [message: inspect(exception)],
           __STACKTRACE__
         )
     end
@@ -71,12 +81,15 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
         :binary -> decode_binary!(binary)
       end
     rescue
+      # coveralls-ignore-start
       exception in [Jason.DecodeError, KeyError] ->
         reraise(
           Serializer.DecodeError,
           [message: exception.message],
           __STACKTRACE__
         )
+
+      # coveralls-ignore-stop
 
       exception in [FunctionClauseError] ->
         reraise(
