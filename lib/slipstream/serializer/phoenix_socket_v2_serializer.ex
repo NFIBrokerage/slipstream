@@ -11,8 +11,6 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
   @push 0
   @reply 1
 
-  def encode!(binary, opts \\ [])
-
   def encode!(%Message{payload: {:binary, data}} = message, _opts) do
     try do
       join_ref = to_string(message.join_ref)
@@ -44,7 +42,7 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
     end
   end
 
-  def encode!(%Message{} = message, opts) do
+  def encode!(%Message{} = message, [json_parser: json_parser] = _opts) do
     try do
       [
         message.join_ref,
@@ -53,50 +51,51 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
         message.event,
         message.payload
       ]
-      |> Jason.encode!(opts)
+      |> json_parser.encode!()
     rescue
-      # coveralls-ignore-start
-      exception in [Jason.EncodeError] ->
-        reraise(
-          Serializer.EncodeError,
-          [message: exception.message],
-          __STACKTRACE__
-        )
-
-      # coveralls-ignore-stop
-
       exception in [Protocol.UndefinedError] ->
         reraise(
           Serializer.EncodeError,
           [message: inspect(exception)],
           __STACKTRACE__
         )
-    end
-  end
 
-  def decode!(binary, opts) do
-    try do
-      case Keyword.fetch!(opts, :opcode) do
-        :text -> decode_text!(binary)
-        :binary -> decode_binary!(binary)
-      end
-    rescue
       # coveralls-ignore-start
-      exception in [Jason.DecodeError, KeyError] ->
+      maybe_json_parser_exception ->
         reraise(
-          Serializer.DecodeError,
-          [message: exception.message],
+          Serializer.EncodeError,
+          [message: maybe_json_parser_exception.message],
           __STACKTRACE__
         )
 
-      # coveralls-ignore-stop
+        # coveralls-ignore-stop
+    end
+  end
 
+  def decode!(binary, [opcode: opcode, json_parser: json_parser] = _opts) do
+    try do
+      case opcode do
+        :text -> decode_text!(binary, json_parser: json_parser)
+        :binary -> decode_binary!(binary)
+      end
+    rescue
+      # for binary doesn't match decode_binary!/1 function pattern match
       exception in [FunctionClauseError] ->
         reraise(
           Serializer.DecodeError,
           [message: FunctionClauseError.message(exception)],
           __STACKTRACE__
         )
+
+      # coveralls-ignore-start
+      maybe_json_parser_exception ->
+        reraise(
+          Serializer.DecodeError,
+          [message: inspect(maybe_json_parser_exception)],
+          __STACKTRACE__
+        )
+
+        # coveralls-ignore-stop
     end
   end
 
@@ -140,8 +139,8 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
     }
   end
 
-  defp decode_text!(binary) do
-    case Jason.decode!(binary) do
+  defp decode_text!(binary, json_parser: json_parser) do
+    case json_parser.decode!(binary) do
       [join_ref, ref, topic, event, payload | _] ->
         %Message{
           join_ref: join_ref,

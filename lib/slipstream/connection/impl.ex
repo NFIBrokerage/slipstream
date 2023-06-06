@@ -92,16 +92,18 @@ defmodule Slipstream.Connection.Impl do
 
   defp encode(%Message{} = message, state) do
     module = state.config.serializer
-    module.encode!(message)
+    module.encode!(message, json_parser: state.config.json_parser)
   end
 
-  # try decoding as json
   def decode_message({encoding, message}, state)
       when encoding in [:text, :binary] and is_binary(message) do
     module = state.config.serializer
 
     try do
-      module.decode!(message, opcode: encoding)
+      module.decode!(message,
+        opcode: encoding,
+        json_parser: state.config.json_parser
+      )
     rescue
       # coveralls-ignore-start
       _ in [Serializer.DecodeError] ->
