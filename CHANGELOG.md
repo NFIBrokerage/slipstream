@@ -6,6 +6,27 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.1.0 - 2023-06-12
+
+### Added
+
+- Added configuration for a serializer module with the default module
+  implementing `Phoenix.Socket.V2.JSONSerializer` (Phoenix's default
+  serializer).
+- Added support for sending and receiving binary data.
+
+### Changed
+
+- The `:json_parser` key previously required a module that exported
+  `encode!/1` and `decode/1`. This key now requires a module that
+  implements `encode!/1` and `decode!/1`.
+    - This was previously documented as requiring `encode/1` but this
+      was a typo in the documentation.
+    - Note that many popular JSON parser/generator libraries share
+      these function signatures (`encode/1`, `encode!/1`, `decode/1` and
+      `decode!/1`), so it is unlikely that you will need to make any
+      changes in your code.
+
 ## 1.0.4 - 2023-04-02
 
 ### Fixed
