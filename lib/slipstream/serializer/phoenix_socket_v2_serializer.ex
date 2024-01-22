@@ -10,6 +10,7 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
 
   @push 0
   @reply 1
+  @broadcast 2
 
   def encode!(%Message{payload: {:binary, data}} = message, _opts) do
     try do
@@ -136,6 +137,23 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
       payload: %{"response" => {:binary, data}, "status" => status},
       ref: ref,
       join_ref: join_ref
+    }
+  end
+
+  defp decode_binary!(<<
+         @broadcast::size(8),
+         topic_size::size(8),
+         event_size::size(8),
+         topic::binary-size(topic_size),
+         event::binary-size(event_size),
+         data::binary
+       >>) do
+    %Message{
+      topic: topic,
+      event: event,
+      payload: {:binary, data},
+      ref: nil,
+      join_ref: nil
     }
   end
 
