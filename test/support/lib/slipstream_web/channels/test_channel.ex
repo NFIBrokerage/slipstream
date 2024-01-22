@@ -65,6 +65,28 @@ defmodule SlipstreamWeb.TestChannel do
     raise "oooooooohnnnnnnnnnnnnnoooooooooooooooooooooooooooooo"
   end
 
+  def handle_in("broadcast", _params, socket) do
+    :ok =
+      SlipstreamWeb.Endpoint.broadcast!(
+        socket.assigns.topic,
+        "broadcast event",
+        %{hello: "everyone!"}
+      )
+
+    {:noreply, socket}
+  end
+
+  def handle_in("binary broadcast", _params, socket) do
+    :ok =
+      SlipstreamWeb.Endpoint.broadcast!(
+        socket.assigns.topic,
+        "broadcast event",
+        {:binary, "🏴‍☠️"}
+      )
+
+    {:noreply, socket}
+  end
+
   def handle_in("stop", _params, socket) do
     {:stop, :normal, socket}
   end

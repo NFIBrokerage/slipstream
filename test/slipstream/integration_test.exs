@@ -119,6 +119,32 @@ defmodule Slipstream.IntegrationTest do
                      @timeout
     end
 
+    test "a regular broadcast may be received from the server", c do
+      topic = c.good_topic
+
+      :ok = join(c.pid, topic)
+      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+
+      :ok = GenServer.cast(c.pid, {:push, topic, "broadcast", %{}})
+
+      assert_receive {@client, :received_message, ^topic, "broadcast event",
+                      %{"hello" => "everyone!"}},
+                     @timeout
+    end
+
+    test "a binary broadcast may be received from the server", c do
+      topic = c.good_topic
+
+      :ok = join(c.pid, topic)
+      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+
+      :ok = GenServer.cast(c.pid, {:push, topic, "binary broadcast", %{}})
+
+      assert_receive {@client, :received_message, ^topic, "broadcast event",
+                      {:binary, "🏴‍☠️"}},
+                     @timeout
+    end
+
     test "a connection may be disconnected", c do
       topic = c.good_topic
 
