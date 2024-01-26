@@ -6,6 +6,15 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.1.1 - 2024-01-26
+
+### Fixed
+
+- Added deserialization clauses to the default (de)serializer for binary
+  broadcast messages.
+    - Broadcasts like `MyAppWeb.Endpoint.broadcast!(topic, event, {:binary, <<1, 2, 3>>})`
+      improperly arrived as a message in `c:Slipstream.handle_info/2` prior to this fix.
+
 ## 1.1.0 - 2023-06-12
 
 ### Added
