@@ -170,10 +170,17 @@ defmodule Slipstream do
 
   ## Retry Mechanisms
 
-  Slipstream emulates the official `phoenix.js` package with its reconnection
-  and re-join features. `Slipstream.Configuration` allows configuration of the
-  back-off times with the `:reconnect_after_msec` and `:rejoin_after_msec`
-  lists, respectively.
+  There are two levels at which retry logic may be needed: for maintaining a
+  websocket connection and for retrying messages to which the server replies
+  with an error or does not reply.
+  Slipstream does not implement message retries because the needs of applications
+  will vary; if you need retries, you can build the logic you need using
+  `push/4`, `c:handle_reply/3`, and something like `Process.send_after/4`.
+
+  To maintain a websocket connection, Slipstream emulates the official
+  `phoenix.js` package with its reconnection and re-join features.
+  `Slipstream.Configuration` allows configuration of the back-off times with
+  the `:reconnect_after_msec` and `:rejoin_after_msec` lists, respectively.
 
   To take advantage of these built-in mechanisms, a client must be written
   in the asynchronous GenServer-like manner and must use the `reconnect/1` and
