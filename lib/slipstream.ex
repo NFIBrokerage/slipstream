@@ -999,15 +999,22 @@ defmodule Slipstream do
   Although this request to the remote server is asynchronous, the call to the
   transport process to transmit the push is synchronous and will exert
   back-pressure on calls to `push/4`, as `push/4` blocks until the message
-  has been sent by the transport.
+  has been written to the network socket by the transport.
+
+  An `{:ok, ref}` return from `push/4` does not mean the message has been
+  delivered to the phoenix channel or even that it has been sent on the
+  network; it only means that the connection was alive as of the most recent
+  heartbeat and that the given data was therefore written to the network socket
+  using `:gen_tcp.send/2` or `:ssl.send/2`.
+
+  The only way to confirm that a message was delivered to the phoenix channel
+  is if the channel replies to the message. In order to link push requests to
+  their replies, store the `ref` string returned from the call to `push/4` and
+  match on it in `c:handle_reply/3`.
 
   If you are pushing especially large messages, you may need to adjust the
   `timeout` argument so that the GenServer call does not exit with `:timeout`.
   The default value is `5_000` msec (5 seconds).
-
-  A phoenix channel may decide to reply to a message sent with `push/2`. In
-  order to link push requests to their replies, store the `ref` string returned
-  from the call to `push/4` and match on it in `c:handle_reply/3`.
 
   ## Examples
 
