@@ -74,7 +74,6 @@ defmodule Slipstream.SocketTest do
       defmodule MyApp.MyClientTest do
         use Slipstream.SocketTest
 
-
         setup do
           client = start_supervised!(MyApp.Myclient, uri: "wss://test.com", test_mode?: true)
           %{client: client}
