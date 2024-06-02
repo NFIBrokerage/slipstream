@@ -64,6 +64,21 @@ defmodule Slipstream.SocketTest do
   the server. The remaining functions allow you to emulate actions on behalf
   of a hypothetical server.
 
+  ## Starting the client
+
+  When working with `accept_conect/1` and `connect_and_assert_join/5`, you may
+  either pass the name of the GenServer to test, or a pid. If starting the client
+  yourself, make sure that you pass the `test_mode?: true` option, otherwise the
+  Slipstream client will attempt to connect to the configured uri.
+
+      defmodule MyApp.MyClientTest do
+        use Slipstream.SocketTest
+
+        setup do
+          client = start_supervised!(MyApp.Myclient, uri: "wss://test.com", test_mode?: true)
+          %{client: client}
+        end
+
   ## Timeouts
 
   The `assert_*` and `refute_*` macros from this module default to ExUnit
