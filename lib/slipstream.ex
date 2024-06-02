@@ -429,7 +429,7 @@ defmodule Slipstream do
       def handle_continue(:my_continue, state) do
         # do something with state
 
-        {:norelpy, state}
+        {:noreply, state}
       end
 
   This provides a way to schedule work to occur immediately after
