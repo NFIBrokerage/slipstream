@@ -65,7 +65,7 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
       maybe_json_parser_exception ->
         reraise(
           Serializer.EncodeError,
-          [message: maybe_json_parser_exception.message],
+          [message: Exception.message(maybe_json_parser_exception)],
           __STACKTRACE__
         )
 
