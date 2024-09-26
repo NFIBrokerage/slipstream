@@ -6,12 +6,16 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## UNREALEASED
+## 1.1.2 - 2024-09-26
 
 ### Added
 
 - Clarified and enhanced `Slipstream.push/4` docs
 - Clarified and enhanced `Slipstream` module docs around retries
+
+### Fixed
+
+- Fixed a type error on Elixir 1.17+ about an unknown `.message` key.
 
 ## 1.1.1 - 2024-01-26
 
