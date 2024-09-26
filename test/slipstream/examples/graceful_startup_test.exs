@@ -12,7 +12,7 @@ defmodule Slipstream.GracefulStartupTest do
 
     test "the client does not start up" do
       log =
-        capture_log([level: :warn], fn ->
+        capture_log([level: :warning], fn ->
           assert start_supervised(@client) == {:ok, :undefined}
         end)
 

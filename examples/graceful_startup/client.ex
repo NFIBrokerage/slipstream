@@ -19,7 +19,7 @@ defmodule MyApp.GracefulStartupClient do
       {:ok, socket}
     else
       :error ->
-        Logger.warn("""
+        Logger.warning("""
         Could not start #{inspect(__MODULE__)} because it is not configured
         """)
 

@@ -15,5 +15,5 @@ defmodule Slipstream.PidHelpers do
 
   # N.B. this is a re-implementation of Iex.Helpers.pid/1
   # I thought this was a Kernel function :P
-  def pid(str), do: :erlang.list_to_pid('<#{str}>')
+  def pid(str), do: :erlang.list_to_pid(~c"<#{str}>")
 end
