@@ -200,13 +200,13 @@ defmodule Slipstream.Configuration do
     {:error, "could not parse #{inspect(unparsed)} as a binary or URI struct"}
   end
 
-  # coveralls-ignore-stop
-
   defp assume_port(%URI{scheme: "ws", port: nil} = uri),
     do: %URI{uri | port: 80}
 
   defp assume_port(%URI{scheme: "wss", port: nil} = uri),
     do: %URI{uri | port: 443}
+
+  # coveralls-ignore-stop
 
   defp assume_port(uri), do: uri
 
