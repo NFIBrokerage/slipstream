@@ -526,12 +526,15 @@ defmodule Slipstream do
 
       @impl Slipstream
       def handle_connect(socket) do
-        {:noreply, socket}
+        {:ok, socket}
       end
   """
   @doc since: "0.1.0"
   @callback handle_connect(socket :: Socket.t()) ::
               {:ok, new_socket}
+              | {:noreply, new_socket}
+              | {:noreply, new_socket,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:stop, reason :: term(), new_socket}
             when new_socket: Socket.t()
 
@@ -553,6 +556,9 @@ defmodule Slipstream do
   @doc since: "0.1.0"
   @callback handle_disconnect(reason :: term(), socket :: Socket.t()) ::
               {:ok, new_socket}
+              | {:noreply, new_socket}
+              | {:noreply, new_socket,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:stop, stop_reason :: term(), new_socket}
             when new_socket: Socket.t()
 
@@ -575,6 +581,9 @@ defmodule Slipstream do
               socket :: Socket.t()
             ) ::
               {:ok, new_socket}
+              | {:noreply, new_socket}
+              | {:noreply, new_socket,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:stop, reason :: term(), new_socket}
             when new_socket: Socket.t()
 
@@ -605,6 +614,9 @@ defmodule Slipstream do
               socket :: Socket.t()
             ) ::
               {:ok, new_socket}
+              | {:noreply, new_socket}
+              | {:noreply, new_socket,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:stop, reason :: term(), new_socket}
             when new_socket: Socket.t()
 
@@ -638,6 +650,9 @@ defmodule Slipstream do
               socket :: Socket.t()
             ) ::
               {:ok, new_socket}
+              | {:noreply, new_socket}
+              | {:noreply, new_socket,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:stop, reason :: term(), new_socket}
             when new_socket: Socket.t()
 
@@ -665,6 +680,9 @@ defmodule Slipstream do
               socket :: Socket.t()
             ) ::
               {:ok, new_socket}
+              | {:noreply, new_socket}
+              | {:noreply, new_socket,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:stop, stop_reason :: term(), new_socket}
             when new_socket: Socket.t()
 
@@ -691,6 +709,9 @@ defmodule Slipstream do
               socket :: Socket.t()
             ) ::
               {:ok, new_socket}
+              | {:noreply, new_socket}
+              | {:noreply, new_socket,
+                 timeout() | :hibernate | {:continue, term()}}
               | {:stop, stop_reason :: term(), new_socket}
             when new_socket: Socket.t()
 

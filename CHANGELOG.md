@@ -6,6 +6,23 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## UNRELEASED
+
+### Fixed
+
+- Fixed callback return types to include `{:noreply, new_socket}` and
+  `{:noreply, new_socket, _rest}` (for returning timeouts or triggering
+  `handle_continue/2` for example). These return types were always
+  supported but not declared in the callback, so the dialyzer would
+  complain if these values were returned.
+    - `c:Slipstream.handle_connect/1`
+    - `c:Slipstream.handle_disconnect/2`
+    - `c:Slipstream.handle_join/3`
+    - `c:Slipstream.handle_message/4`
+    - `c:Slipstream.handle_reply/3`
+    - `c:Slipstream.handle_topic_close/3`
+    - `c:Slipstream.handle_leave/2`
+
 ## 1.1.2 - 2024-09-26
 
 ### Added
