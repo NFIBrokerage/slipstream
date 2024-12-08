@@ -2,14 +2,12 @@
 
 Often times, the socket server you want to connect to requires some form
 of token authentication. Sometimes these tokens expire and need to be
-refreshed before a reconnect happens. `Slipstream.connect/2` is helpful
-to use in place of `Slipstream.reconnect/1` if you need to modify your
-connection configuration before reconnecting.
+refreshed before a reconnect happens. The `Slipstream.refresh_connection_config/2` callback is there to make it easy to update connection configuration before reconnecting.
 
 ## Tutorial
 
 In this tutorial, we'll build a basic Slipstream client that can handle
-a 403 from our websocket and reconnect successfully.
+refresh a disconnection from our websocket and reconnect successfully.
 
 Let's begin with a fresh client
 
@@ -34,71 +32,42 @@ end
 ```
 
 Notice that we simply `reconnect/2` inside of the `handle_disconnect/2`
-callback. This is the perfect place to handle an expired token. The 
-`reason` value will contain information about why we disconnected. In
-this case, we're looking for a Mint error with a `403` status code. The 
-error will roughly look like this:
+callback.
 
-```elixir
-{:error, {_upgrade_failure, %{status_code: 403}}}
-```
-
-Let's update our `handle_disconnect/2` callback to handle that situation.
+Now that we know when a token needs to be refreshed, let's add in the callback to our client.
 
 ```elixir
 @impl Slipstream
-def handle_disconnect({:error, {_, %{status_code: 403}}}, socket) do
-  # get new token and then attempt to reconnect
+def refresh_connection_config(_socket, config) do
+  update_uri(config)
 end
-```
 
-Now that we know when a token needs to be refreshed, let's add in some
-basic token logic to our client. First, we'll wrap `connect/2` with a
-custom function that retrieves a token and modifies our config:
+defp update_uri(config) do
+  uri =
+    config
+    |> Keyword.get(:uri)
+    |> URI.parse()
+    |> Map.put(:query, "token=#{make_new_token()}")
+    |> URI.to_string()
 
-```elixir
-defp make_new_token, do: "your_token_logic"
-
-defp connect_with_token(socket) do
-  new_token = make_new_token()
-
-  socket =
-    update(socket, :config, fn config ->
-      uri =
-        config
-        |> Keyword.get(:uri)
-        |> URI.parse()
-        |> Map.put(:query, "token=#{new_token}")
-        |> URI.to_string()
-
-      Keyword.put(config, :uri, uri)
-    end)
-
-  connect(socket, socket.assigns.config)
+  Keyword.put(config, :uri, uri)
 end
+
+defp make_new_token(), do: "get_new_token_here"
 ```
 
 The `config` on the socket can be unwrapped with the `URI` module. Then, we
 simply append our token onto the query and change it back into a string.
 This gives us a clean API to ensure our connections always contain a token.
-Let's update our `init/1` and `handle_disconnect/2` callbacks to use this
-new function:
+Let's update our `init/1` to use this new function:
 
 ```elixir
 def init(config) do
+  config = update_uri(config)
+
   new_socket()
   |> assign(:config, config)
-  |> connect_with_token()
-end
-
-@impl Slipstream
-def handle_disconnect({:error, {_, %{status_code: 403}}}, socket) do
-  connect_with_token(socket)
-end
-
-@impl Slipstream
-def handle_disconnect(_reason, socket) do
-  reconnect(socket)
+  |> connect(config)
 end
 ```
 
