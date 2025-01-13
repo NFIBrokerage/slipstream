@@ -28,183 +28,240 @@ defmodule Slipstream.IntegrationTest do
     end
   end
 
-  describe "given a connection has been established through the #{@client}" do
-    setup do
-      pid = start_supervised!({@client, self()})
-      assert_receive {@client, :connected}, @timeout
+  defmodule EtfSerializer do
+    alias Slipstream.Message
 
-      [pid: pid, good_topic: "test:good", bad_topic: "test:bad"]
+    @behaviour Slipstream.Serializer
+
+    @impl true
+    def encode!(%Message{} = msg, _opts) do
+      data = [
+        msg.join_ref,
+        msg.ref,
+        msg.topic,
+        msg.event,
+        stringify_keys(msg.payload)
+      ]
+
+      {:binary, :erlang.term_to_binary(data)}
     end
 
-    test "joining a good channel works", c do
-      topic = c.good_topic
+    @impl true
+    def decode!(binary, _opts) do
+      [join_ref, ref, topic, event, payload] = :erlang.binary_to_term(binary)
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+      payload =
+        case payload do
+          {:binary, data} -> {:binary, data}
+          other -> stringify_keys(other)
+        end
+
+      %Message{
+        join_ref: join_ref,
+        ref: ref,
+        topic: topic,
+        event: event,
+        payload: payload
+      }
     end
 
-    test "duplicate joins do not result in an actual duplicate join", c do
-      topic = c.good_topic
+    defp stringify_keys(payload), do: Jason.encode!(payload) |> Jason.decode!()
+  end
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+  for message_type <- [:normal, :binary] do
+    describe "#{message_type}: given a connection has been established through the #{@client}" do
+      @describetag message_type: message_type
+      setup c do
+        opts =
+          case c.message_type do
+            :normal ->
+              [uri: "ws://localhost:4001/socket/websocket", pid: self()]
 
-      :ok = join(c.pid, topic)
-      refute_receive {@client, :joined, ^topic, _reply}, @timeout
-    end
+            :binary ->
+              [
+                uri: "ws://localhost:4001/socket/etf/websocket",
+                pid: self(),
+                serializer: EtfSerializer
+              ]
+          end
 
-    test "once a channel is joined it can be left", c do
-      topic = c.good_topic
+        pid = start_supervised!({@client, opts})
+        assert_receive {@client, :connected}, @timeout
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+        [pid: pid, good_topic: "test:good", bad_topic: "test:bad"]
+      end
 
-      :ok = GenServer.cast(c.pid, {:leave, topic})
-      assert_receive {@client, :left, ^topic}, @timeout
-    end
+      test "joining a good channel works", c do
+        topic = c.good_topic
 
-    test "once a channel is left, you cannot duplicate the leave", c do
-      topic = c.good_topic
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
+      end
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+      test "duplicate joins do not result in an actual duplicate join", c do
+        topic = c.good_topic
 
-      :ok = GenServer.cast(c.pid, {:leave, topic})
-      assert_receive {@client, :left, ^topic}, @timeout
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-      :ok = GenServer.cast(c.pid, {:leave, topic})
-      refute_receive {@client, :left, ^topic}, @timeout
-    end
+        :ok = join(c.pid, topic)
+        refute_receive {@client, :joined, ^topic, _reply}, @timeout
+      end
 
-    test "a message may be pushed to the remote", c do
-      topic = c.good_topic
+      test "once a channel is joined it can be left", c do
+        topic = c.good_topic
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "quicksand", %{}})
-      assert_receive {@server, :in, ^topic, "quicksand", %{}}, @timeout
-    end
+        :ok = GenServer.cast(c.pid, {:leave, topic})
+        assert_receive {@client, :left, ^topic}, @timeout
+      end
 
-    test "if a topic is not yet joined, you may not push a message", c do
-      topic = c.good_topic
+      test "once a channel is left, you cannot duplicate the leave", c do
+        topic = c.good_topic
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "quicksand", %{}})
-      refute_receive {@server, :in, ^topic, "quicksand", %{}}, @timeout
-    end
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-    test "a message may be received from the server", c do
-      topic = c.good_topic
+        :ok = GenServer.cast(c.pid, {:leave, topic})
+        assert_receive {@client, :left, ^topic}, @timeout
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+        :ok = GenServer.cast(c.pid, {:leave, topic})
+        refute_receive {@client, :left, ^topic}, @timeout
+      end
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "push to me", %{}})
+      test "a message may be pushed to the remote", c do
+        topic = c.good_topic
 
-      assert_receive {@client, :received_message, ^topic, "foo",
-                      %{"bar" => "baz"}},
-                     @timeout
-    end
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-    test "a reply may be received from the server", c do
-      topic = c.good_topic
+        :ok = GenServer.cast(c.pid, {:push, topic, "quicksand", %{}})
+        assert_receive {@server, :in, ^topic, "quicksand", %{}}, @timeout
+      end
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+      test "if a topic is not yet joined, you may not push a message", c do
+        topic = c.good_topic
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "ping", %{}})
+        :ok = GenServer.cast(c.pid, {:push, topic, "quicksand", %{}})
+        refute_receive {@server, :in, ^topic, "quicksand", %{}}, @timeout
+      end
 
-      assert_receive {@client, :received_reply, _ref,
-                      {:ok, %{"pong" => "pong"}}},
-                     @timeout
-    end
+      test "a message may be received from the server", c do
+        topic = c.good_topic
 
-    test "a regular broadcast may be received from the server", c do
-      topic = c.good_topic
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+        :ok = GenServer.cast(c.pid, {:push, topic, "push to me", %{}})
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "broadcast", %{}})
+        assert_receive {@client, :received_message, ^topic, "foo",
+                        %{"bar" => "baz"}},
+                       @timeout
+      end
 
-      assert_receive {@client, :received_message, ^topic, "broadcast event",
-                      %{"hello" => "everyone!"}},
-                     @timeout
-    end
+      test "a reply may be received from the server", c do
+        topic = c.good_topic
 
-    test "a binary broadcast may be received from the server", c do
-      topic = c.good_topic
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+        :ok = GenServer.cast(c.pid, {:push, topic, "ping", %{}})
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "binary broadcast", %{}})
+        assert_receive {@client, :received_reply, _ref,
+                        {:ok, %{"pong" => "pong"}}},
+                       @timeout
+      end
 
-      assert_receive {@client, :received_message, ^topic, "broadcast event",
-                      {:binary, "🏴‍☠️"}},
-                     @timeout
-    end
+      test "a regular broadcast may be received from the server", c do
+        topic = c.good_topic
 
-    test "a connection may be disconnected", c do
-      topic = c.good_topic
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+        :ok = GenServer.cast(c.pid, {:push, topic, "broadcast", %{}})
 
-      :ok = GenServer.cast(c.pid, :disconnect)
-      assert_receive {@client, :disconnected, reason}, @timeout
-      assert reason == :client_disconnect_requested
-    end
+        assert_receive {@client, :received_message, ^topic, "broadcast event",
+                        %{"hello" => "everyone!"}},
+                       @timeout
+      end
 
-    test "if the remote server raises, we handle a topic disconnect event", c do
-      topic = c.good_topic
+      test "a binary broadcast may be received from the server", c do
+        topic = c.good_topic
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "raise", %{}})
-      assert_receive {@client, :topic_closed, ^topic, {:error, %{}}}, @timeout
-    end
+        :ok = GenServer.cast(c.pid, {:push, topic, "binary broadcast", %{}})
 
-    test "if the remote server stops, we handle a left event", c do
-      topic = c.good_topic
+        assert_receive {@client, :received_message, ^topic, "broadcast event",
+                        {:binary, "🏴‍☠️"}},
+                       @timeout
+      end
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+      test "a connection may be disconnected", c do
+        topic = c.good_topic
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "stop", %{}})
-      assert_receive {@client, :left, ^topic}, @timeout
-    end
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-    test "trying to join a non-existent topic fails", c do
-      topic = "test:no function clause matching"
+        :ok = GenServer.cast(c.pid, :disconnect)
+        assert_receive {@client, :disconnected, reason}, @timeout
+        assert reason == :client_disconnect_requested
+      end
 
-      :ok = join(c.pid, topic)
+      test "if the remote server raises, we handle a topic disconnect event",
+           c do
+        topic = c.good_topic
 
-      assert_receive {@client, :topic_closed, ^topic,
-                      {:failed_to_join, %{"reason" => "join crashed"}}},
-                     @timeout
-    end
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-    test "trying to join a bad topic fails", c do
-      topic = c.bad_topic
+        :ok = GenServer.cast(c.pid, {:push, topic, "raise", %{}})
+        assert_receive {@client, :topic_closed, ^topic, {:error, %{}}}, @timeout
+      end
 
-      :ok = join(c.pid, topic)
+      test "if the remote server stops, we handle a left event", c do
+        topic = c.good_topic
 
-      assert_receive {@client, :topic_closed, ^topic,
-                      {:failed_to_join, %{"bad" => "join"}}},
-                     @timeout
-    end
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
 
-    test "we may receive a reply which is just an atom", c do
-      topic = c.good_topic
+        :ok = GenServer.cast(c.pid, {:push, topic, "stop", %{}})
+        assert_receive {@client, :left, ^topic}, @timeout
+      end
 
-      :ok = join(c.pid, topic)
-      assert_receive {@client, :joined, ^topic, _reply}, @timeout
+      test "trying to join a non-existent topic fails", c do
+        topic = "test:no function clause matching"
 
-      :ok = GenServer.cast(c.pid, {:push, topic, "ack", %{}})
+        :ok = join(c.pid, topic)
 
-      assert_receive {@client, :received_reply, _ref, :ok}, @timeout
+        assert_receive {@client, :topic_closed, ^topic,
+                        {:failed_to_join, %{"reason" => "join crashed"}}},
+                       @timeout
+      end
+
+      test "trying to join a bad topic fails", c do
+        topic = c.bad_topic
+
+        :ok = join(c.pid, topic)
+
+        assert_receive {@client, :topic_closed, ^topic,
+                        {:failed_to_join, %{"bad" => "join"}}},
+                       @timeout
+      end
+
+      test "we may receive a reply which is just an atom", c do
+        topic = c.good_topic
+
+        :ok = join(c.pid, topic)
+        assert_receive {@client, :joined, ^topic, _reply}, @timeout
+
+        :ok = GenServer.cast(c.pid, {:push, topic, "ack", %{}})
+
+        assert_receive {@client, :received_reply, _ref, :ok}, @timeout
+      end
     end
   end
 

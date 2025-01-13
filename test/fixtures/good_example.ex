@@ -5,16 +5,17 @@ defmodule Slipstream.GoodExample do
 
   use Slipstream, restart: :transient
 
-  @config Application.compile_env!(:slipstream, __MODULE__)
-
   def start_link(opts) do
     Slipstream.start_link(__MODULE__, opts)
   end
 
   @impl Slipstream
-  def init(test_proc) do
+  def init(opts) do
+    {test_proc, opts} = Keyword.pop!(opts, :pid)
+    opts = Keyword.put_new(opts, :uri, "ws://localhost:4001/socket/websocket")
+
     socket =
-      @config
+      opts
       |> connect!()
       |> assign(:test_proc, test_proc)
 

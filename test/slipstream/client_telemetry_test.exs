@@ -45,7 +45,7 @@ defmodule Slipstream.ClientTelemetryTest do
     end
 
     test "when we connect and disconnect, we get expected telemetry" do
-      start_supervised!({@client, self()})
+      start_supervised!({@client, pid: self()})
       assert_receive {@client, :connected}
 
       assert_receive {:telemetry, [:slipstream, :client, :connect, :start],
@@ -66,7 +66,7 @@ defmodule Slipstream.ClientTelemetryTest do
 
     test "when we join a channel, we get expected telemetry" do
       topic = "test:good"
-      pid = start_supervised!({@client, self()})
+      pid = start_supervised!({@client, pid: self()})
       assert_receive {@client, :connected}
       join(pid, topic)
       assert_receive {@client, :joined, ^topic, %{}}
@@ -88,7 +88,7 @@ defmodule Slipstream.ClientTelemetryTest do
 
     test "when we receive a message, we get expected telemetry" do
       topic = "test:good"
-      pid = start_supervised!({@client, self()})
+      pid = start_supervised!({@client, pid: self()})
       assert_receive {@client, :connected}
       join(pid, topic)
       assert_receive {@client, :joined, ^topic, %{}}

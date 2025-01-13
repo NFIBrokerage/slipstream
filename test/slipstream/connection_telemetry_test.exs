@@ -45,7 +45,7 @@ defmodule Slipstream.ConnectionTelemetryTest do
     end
 
     test "when we connect and disconnect, we get expected telemetry" do
-      start_supervised!({@client, self()})
+      start_supervised!({@client, [pid: self()]})
       assert_receive {@client, :connected}
 
       assert_receive {:telemetry, [:slipstream, :connection, :connect, :start],
@@ -68,7 +68,7 @@ defmodule Slipstream.ConnectionTelemetryTest do
     end
 
     test "when we successfully connect, we handle mint messages" do
-      start_supervised!({@client, self()})
+      start_supervised!({@client, pid: self()})
       assert_receive {@client, :connected}
 
       assert_receive {:telemetry, [:slipstream, :connection, :connect, :start],
