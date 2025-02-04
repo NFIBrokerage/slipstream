@@ -5,8 +5,13 @@ defmodule Slipstream.Serializer do
 
   @doc """
   Encodes `Slipstream.Message` structs to binary.
+
+  Should return either a binary (string) when using a text based protocol
+  or `{:binary, binary}` for cases where a binary protocol is used over
+  the wire (such as MessagePack).
   """
-  @callback encode!(Slipstream.Message.t(), options :: Keyword.t()) :: binary()
+  @callback encode!(Slipstream.Message.t(), options :: Keyword.t()) ::
+              binary() | {:binary, binary()}
 
   @doc """
   Decodes binary into `Slipstream.Message` struct.

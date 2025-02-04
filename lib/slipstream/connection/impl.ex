@@ -77,7 +77,13 @@ defmodule Slipstream.Connection.Impl do
   end
 
   def push_message(message, state) do
-    push_message({:text, encode(message, state)}, state)
+    message =
+      case encode(message, state) do
+        {:binary, message} -> {:binary, message}
+        message when is_binary(message) -> {:text, message}
+      end
+
+    push_message(message, state)
   end
 
   # coveralls-ignore-start
