@@ -30,9 +30,6 @@ def deps do
 end
 ```
 
-> We've been using Slipstream in production for the better part of a year.
-> The interface is stable and a v1.0.0 release is imminent!
-
 ## Documentation
 
 Documentation is automatically published to
