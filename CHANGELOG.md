@@ -6,6 +6,13 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.2.0 - 2025-02-04
+
+### Added
+
+- Added support for `{:binary, binary()}` types in the serializer encode
+  callback for pushing binary WebSocket frames to the server.
+
 ## 1.1.3 - 2024-12-04
 
 ### Fixed
