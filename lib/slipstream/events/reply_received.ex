@@ -17,4 +17,8 @@ defmodule Slipstream.Events.ReplyReceived do
       when status in ["ok", "error"] do
     {String.to_atom(status), response}
   end
+
+  def to_reply(%{"status" => "binary", "response" => response}) do
+    response
+  end
 end
