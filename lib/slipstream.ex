@@ -376,7 +376,7 @@ defmodule Slipstream do
           config = Application.fetch_env!(:my_app, __MODULE__)
 
           case connect(config) do
-            {:ok socket} ->
+            {:ok, socket} ->
               {:ok, socket}
 
             {:error, reason} ->
