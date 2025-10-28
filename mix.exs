@@ -20,7 +20,6 @@ defmodule Slipstream.MixProject do
       # current elixir version meets the requirements.
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: extra_compilers(Mix.env()) ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       preferred_cli_env: [
@@ -52,9 +51,6 @@ defmodule Slipstream.MixProject do
 
   defp elixirc_paths(_), do: ["lib"]
 
-  defp extra_compilers(env) when env in [:test, :dev, :docs], do: [:phoenix]
-  defp extra_compilers(_), do: []
-
   def application do
     [
       mod: {Slipstream.Application, []},
@@ -72,7 +68,8 @@ defmodule Slipstream.MixProject do
       {:ex_doc, ">= 0.0.0", only: [:docs], runtime: false},
       {:inch_ex, "== 2.1.0-rc.1", only: [:docs]},
       # test
-      {:phoenix, "~> 1.6.16", only: [:dev, :test, :docs]},
+      {:phoenix, "~> 1.8", only: [:dev, :test, :docs]},
+      {:phoenix_view, "~> 2.0", only: [:dev, :test, :docs]},
       {:cowlib, "~> 2.9", override: true, only: [:dev, :test]},
       {:phoenix_pubsub, "~> 2.0", override: true, only: [:docs, :dev, :test]},
       {:plug_cowboy, "~> 2.0", only: [:dev, :test]},
