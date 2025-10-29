@@ -38,4 +38,36 @@ defmodule Slipstream.Serializer.PhoenixSocketV2SerializerTest do
       end)
     end
   end
+
+  describe "encode!/2 and decode!/2 round-trip" do
+    test "binary payload messages encode and decode correctly" do
+      original_message = %Message{
+        topic: "test:topic",
+        event: "test_event",
+        payload: {:binary, <<1, 2, 3, 4>>},
+        ref: "123",
+        join_ref: "456"
+      }
+
+      encoded = encode!(original_message, json_parser: Jason)
+      decoded = decode!(encoded, opcode: :binary, json_parser: Jason)
+
+      assert decoded == original_message
+    end
+
+    test "text/JSON payload messages encode and decode correctly" do
+      original_message = %Message{
+        topic: "test:topic",
+        event: "test_event",
+        payload: %{"foo" => "bar", "baz" => 123},
+        ref: "123",
+        join_ref: "456"
+      }
+
+      encoded = encode!(original_message, json_parser: Jason)
+      decoded = decode!(encoded, opcode: :text, json_parser: Jason)
+
+      assert decoded == original_message
+    end
+  end
 end

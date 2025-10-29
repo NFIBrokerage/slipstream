@@ -103,9 +103,11 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
   defp decode_binary!(<<
          @push::size(8),
          join_ref_size::size(8),
+         ref_size::size(8),
          topic_size::size(8),
          event_size::size(8),
          join_ref::binary-size(join_ref_size),
+         ref::binary-size(ref_size),
          topic::binary-size(topic_size),
          event::binary-size(event_size),
          data::binary
@@ -114,7 +116,7 @@ defmodule Slipstream.Serializer.PhoenixSocketV2Serializer do
       topic: topic,
       event: event,
       payload: {:binary, data},
-      ref: nil,
+      ref: ref,
       join_ref: join_ref
     }
   end
