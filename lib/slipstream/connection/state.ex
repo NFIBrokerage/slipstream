@@ -85,7 +85,7 @@ defmodule Slipstream.Connection.State do
   in state is nil, that means we have not received a reply to our heartbeat
   request and that the server is potentially stuck or otherwise not responding.
   """
-  def reset_heartbeat(%__MODULE{} = state) do
+  def reset_heartbeat(%__MODULE__{} = state) do
     %{state | heartbeat_ref: nil}
   end
 
