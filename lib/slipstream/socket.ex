@@ -255,10 +255,10 @@ defmodule Slipstream.Socket do
   @spec apply_event(t(), struct()) :: t()
   def apply_event(socket, event)
 
-  def apply_event(socket, %Events.ChannelConnected{} = event) do
+  def apply_event(%__MODULE__{} = socket, %Events.ChannelConnected{} = event) do
     socket = TelemetryHelper.conclude_connect(socket, event)
 
-    %__MODULE__{
+    %{
       socket
       | channel_pid: event.pid,
         channel_config: event.config || socket.channel_config,
@@ -266,14 +266,17 @@ defmodule Slipstream.Socket do
     }
   end
 
-  def apply_event(socket, %Events.TopicJoinSucceeded{topic: topic} = event) do
+  def apply_event(
+        %__MODULE__{} = socket,
+        %Events.TopicJoinSucceeded{topic: topic} = event
+      ) do
     socket
     |> TelemetryHelper.conclude_join(event)
     |> put_in([Access.key(:joins), topic, Access.key(:status)], :joined)
     |> put_in([Access.key(:joins), topic, Access.key(:rejoin_counter)], 0)
   end
 
-  def apply_event(socket, %event{topic: topic})
+  def apply_event(%__MODULE__{} = socket, %event{topic: topic})
       when event in [
              Events.TopicLeft,
              Events.TopicJoinFailed,
@@ -282,13 +285,13 @@ defmodule Slipstream.Socket do
     put_in(socket, [Access.key(:joins), topic, Access.key(:status)], :closed)
   end
 
-  def apply_event(socket, %Events.ChannelClosed{}) do
-    %__MODULE__{
+  def apply_event(%__MODULE__{} = socket, %Events.ChannelClosed{}) do
+    %{
       socket
       | channel_pid: nil,
         joins:
-          Enum.into(socket.joins, %{}, fn {topic, join} ->
-            {topic, %Join{join | status: :closed}}
+          Enum.into(socket.joins, %{}, fn {topic, %Join{} = join} ->
+            {topic, %{join | status: :closed}}
           end)
     }
   end

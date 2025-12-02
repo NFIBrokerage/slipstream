@@ -61,18 +61,18 @@ defmodule Slipstream.Connection.State do
 
   Refs are simply strings of incrementing integers.
   """
-  def next_ref(state) do
+  def next_ref(%__MODULE__{} = state) do
     ref = state.current_ref + 1
 
     {to_string(ref),
-     %__MODULE__{state | current_ref: ref, current_ref_str: to_string(ref)}}
+     %{state | current_ref: ref, current_ref_str: to_string(ref)}}
   end
 
   # coveralls-ignore-start
-  def next_heartbeat_ref(state) do
+  def next_heartbeat_ref(%__MODULE__{} = state) do
     {ref, state} = next_ref(state)
 
-    %__MODULE__{state | heartbeat_ref: ref}
+    %{state | heartbeat_ref: ref}
   end
 
   # coveralls-ignore-stop
@@ -85,8 +85,8 @@ defmodule Slipstream.Connection.State do
   in state is nil, that means we have not received a reply to our heartbeat
   request and that the server is potentially stuck or otherwise not responding.
   """
-  def reset_heartbeat(state) do
-    %__MODULE__{state | heartbeat_ref: nil}
+  def reset_heartbeat(%__MODULE{} = state) do
+    %{state | heartbeat_ref: nil}
   end
 
   @doc """

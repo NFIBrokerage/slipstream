@@ -49,7 +49,10 @@ defmodule Slipstream.TelemetryHelper do
   """
   @doc since: "0.4.0"
   @spec conclude_connect(Socket.t(), Events.ChannelConnected.t()) :: Socket.t()
-  def conclude_connect(%{metadata: %{connect: start_metadata}} = socket, event)
+  def conclude_connect(
+        %Socket{metadata: %{connect: start_metadata}} = socket,
+        event
+      )
       when is_map(start_metadata) and map_size(start_metadata) > 0 do
     metadata =
       start_metadata
@@ -67,7 +70,7 @@ defmodule Slipstream.TelemetryHelper do
       metadata
     )
 
-    %Socket{socket | metadata: Map.delete(socket.metadata, :connect)}
+    %{socket | metadata: Map.delete(socket.metadata, :connect)}
   end
 
   # technically speaking this case doesn't make any sense... you need to connect
@@ -186,11 +189,11 @@ defmodule Slipstream.TelemetryHelper do
     return_value
   end
 
-  defp clean_socket(socket) do
+  defp clean_socket(%Slipstream.Socket{} = socket) do
     # Clear metadata from the socket. The socket contains the metadata and
     # the metadata contains the socket so if we repeatedly "begin" operations
     # like connects or joins, we cause sharp memory growth in the client and
     # connection processes.
-    %Slipstream.Socket{socket | metadata: %{}}
+    %{socket | metadata: %{}}
   end
 end

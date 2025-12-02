@@ -22,7 +22,7 @@ defmodule Slipstream.Connection do
 
     metadata = Telemetry.begin(initial_state)
 
-    state = %State{initial_state | metadata: metadata}
+    %State{} = state = %{initial_state | metadata: metadata}
 
     {:ok, state, {:continue, :connect}}
   end

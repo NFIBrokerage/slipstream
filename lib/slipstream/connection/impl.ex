@@ -48,7 +48,7 @@ defmodule Slipstream.Connection.Impl do
 
   # ---
 
-  def push_message(frame, state) when is_tuple(frame) do
+  def push_message(frame, %State{} = state) when is_tuple(frame) do
     case Mint.WebSocket.encode(state.websocket, frame) do
       {:ok, websocket, data} ->
         case Mint.WebSocket.stream_request_body(
@@ -57,7 +57,7 @@ defmodule Slipstream.Connection.Impl do
                data
              ) do
           {:ok, conn} ->
-            {:ok, %State{state | conn: conn, websocket: websocket}}
+            {:ok, %{state | conn: conn, websocket: websocket}}
 
           # coveralls-ignore-start
           {:error, conn, reason} ->
