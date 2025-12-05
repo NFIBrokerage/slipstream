@@ -127,6 +127,8 @@ defmodule Slipstream.Connection.Impl do
   def decode_message({:close, _, _} = message, _state), do: message
   # coveralls-ignore-stop
 
+  @dialyzer {:nowarn_function, path: 1}
+
   # this method of getting the path of a URI (including query) is maybe a bit
   # unorthodox, but I think it's better than string manipulation
   @spec path(URI.t()) :: String.t()
@@ -134,16 +136,18 @@ defmodule Slipstream.Connection.Impl do
     # select the v2 JSON serialization pattern
     query = URI.decode_query(uri.query || "", %{"vsn" => "2.0.0"})
 
-    uri
-    |> Map.merge(%{
-      authority: nil,
-      host: nil,
-      port: nil,
-      scheme: nil,
-      userinfo: nil,
-      path: uri.path || "/",
-      query: URI.encode_query(query)
+    URI.to_string(%{
+      uri
+      | host: nil,
+        port: nil,
+        scheme: nil,
+        userinfo: nil,
+        path: uri.path || "/",
+        query: URI.encode_query(query),
+        # NOTE: this field is deprecated. It must be blanked out here
+        # so that `to_string/1` gives just the path. But it makes the
+        # dialyzer unhappy.
+        authority: nil
     })
-    |> URI.to_string()
   end
 end
