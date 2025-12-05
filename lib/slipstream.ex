@@ -828,7 +828,7 @@ defmodule Slipstream do
   @spec connect!(socket :: Socket.t(), opts :: Keyword.t()) :: Socket.t()
   def connect!(%Socket{} = socket \\ new_socket(), opts) do
     config = Slipstream.Configuration.validate!(opts)
-    %Socket{} = socket = TelemetryHelper.begin_connect(socket, config)
+    socket = TelemetryHelper.begin_connect(socket, config)
 
     route_command %Commands.OpenConnection{config: config, socket: socket}
 
@@ -869,7 +869,7 @@ defmodule Slipstream do
   @doc since: "0.1.0"
   @spec reconnect(socket :: Socket.t()) ::
           {:ok, Socket.t()} | {:error, :no_config | :not_connected}
-  def reconnect(socket) do
+  def reconnect(%Socket{} = socket) do
     with false <- Socket.connected?(socket),
          %Slipstream.Configuration{} = config <- socket.channel_config,
          {time, socket} <- Socket.next_reconnect_time(socket) do

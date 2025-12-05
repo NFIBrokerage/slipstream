@@ -18,11 +18,10 @@ defmodule Slipstream.Connection do
         socket: %Slipstream.Socket{socket_pid: socket_pid},
         config: config
       }) do
-    initial_state = State.new(config, socket_pid)
+    %State{} = initial_state = State.new(config, socket_pid)
 
     metadata = Telemetry.begin(initial_state)
-
-    %State{} = state = %{initial_state | metadata: metadata}
+    state = %{initial_state | metadata: metadata}
 
     {:ok, state, {:continue, :connect}}
   end
