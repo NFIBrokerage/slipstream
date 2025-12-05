@@ -13,7 +13,7 @@ defmodule Slipstream.RejoinOnReconnectTest do
     setup c do
       accept_connect(c.client)
 
-      Enum.each(c.topics, &c.client.join/1)
+      Enum.each(c.topics, fn topic -> c.client.join(topic) end)
 
       assert_join "foo", %{}, :ok
       assert_join "bar", %{}, :ok

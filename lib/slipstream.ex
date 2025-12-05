@@ -802,14 +802,14 @@ defmodule Slipstream do
           {:ok, Socket.t()} | {:error, NimbleOptions.ValidationError.t()}
   @spec connect(socket :: Socket.t(), opts :: Keyword.t()) ::
           {:ok, Socket.t()} | {:error, NimbleOptions.ValidationError.t()}
-  def connect(socket \\ new_socket(), opts) do
+  def connect(%Socket{} = socket \\ new_socket(), opts) do
     case Slipstream.Configuration.validate(opts) do
       {:ok, config} ->
         socket = TelemetryHelper.begin_connect(socket, config)
 
         route_command %Commands.OpenConnection{config: config, socket: socket}
 
-        {:ok, %Socket{socket | channel_config: config}}
+        {:ok, %{socket | channel_config: config}}
 
       {:error, reason} ->
         {:error, reason}
@@ -826,13 +826,13 @@ defmodule Slipstream do
   @doc since: "0.1.0"
   @spec connect!(opts :: Keyword.t()) :: Socket.t()
   @spec connect!(socket :: Socket.t(), opts :: Keyword.t()) :: Socket.t()
-  def connect!(socket \\ new_socket(), opts) do
+  def connect!(%Socket{} = socket \\ new_socket(), opts) do
     config = Slipstream.Configuration.validate!(opts)
     socket = TelemetryHelper.begin_connect(socket, config)
 
     route_command %Commands.OpenConnection{config: config, socket: socket}
 
-    %Socket{socket | channel_config: config}
+    %{socket | channel_config: config}
   end
 
   @doc """
@@ -869,7 +869,7 @@ defmodule Slipstream do
   @doc since: "0.1.0"
   @spec reconnect(socket :: Socket.t()) ::
           {:ok, Socket.t()} | {:error, :no_config | :not_connected}
-  def reconnect(socket) do
+  def reconnect(%Socket{} = socket) do
     with false <- Socket.connected?(socket),
          %Slipstream.Configuration{} = config <- socket.channel_config,
          {time, socket} <- Socket.next_reconnect_time(socket) do

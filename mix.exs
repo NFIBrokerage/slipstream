@@ -22,17 +22,6 @@ defmodule Slipstream.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      preferred_cli_env: [
-        credo: :test,
-        coveralls: :test,
-        "coveralls.html": :test,
-        "coveralls.github": :test,
-        inch: :dev,
-        bless: :test,
-        test: :test,
-        dialyzer: :test,
-        docs: :docs
-      ],
       test_coverage: [tool: ExCoveralls],
       package: package(),
       description: description(),
@@ -42,6 +31,22 @@ defmodule Slipstream.MixProject do
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore.exs",
         list_unused_filters: true
+      ]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
+        credo: :test,
+        coveralls: :test,
+        "coveralls.html": :test,
+        "coveralls.github": :test,
+        inch: :dev,
+        bless: :test,
+        test: :test,
+        dialyzer: :test,
+        docs: :docs
       ]
     ]
   end

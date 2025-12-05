@@ -58,7 +58,7 @@ defmodule Slipstream.Callback do
     # note that `args` needs to be a compile-time list for this to work
     arity = length(args) + 1
 
-    unless {name, arity} in @known_callbacks do
+    if {name, arity} not in @known_callbacks do
       raise CompileError,
         file: __CALLER__.file,
         line: __CALLER__.line,
