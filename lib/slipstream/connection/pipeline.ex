@@ -258,7 +258,8 @@ defmodule Slipstream.Connection.Pipeline do
         topic: cmd.topic,
         event: cmd.event,
         payload: cmd.payload,
-        ref: ref
+        ref: ref,
+        join_ref: state.joins[cmd.topic]
       })
 
     case p do
