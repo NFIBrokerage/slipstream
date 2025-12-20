@@ -226,7 +226,7 @@ defmodule Slipstream do
       end
   """
 
-  alias Slipstream.{Commands, Events, Socket, TelemetryHelper}
+  alias Slipstream.{Commands, Events, Socket, TelemetryHelper, Configuration}
   import Slipstream.CommandRouter, only: [route_command: 1]
   import Slipstream.Signatures, only: [event: 1, command: 1]
 
@@ -715,6 +715,28 @@ defmodule Slipstream do
               | {:stop, stop_reason :: term(), new_socket}
             when new_socket: Socket.t()
 
+  @doc """
+  Invoked when a socket reconnection is triggered via `reconnect/1`.
+
+  This callback allows for connection config properties to be updated,
+  useful for cases where authentication tokens or headers might have
+  expired.
+
+  ## Examples
+
+      @impl Slipstream
+      def refresh_connection_config(socket, config) do
+        config
+        |> Map.put(:headers, generate_headers(socket))
+        |> Map.put(:url, update_uri(socket))
+      end
+  """
+  @doc since: "1.1.2"
+  @callback refresh_connection_config(
+              socket :: Socket.t(),
+              config :: Configuration.t()
+            ) :: Configuration.t()
+
   @optional_callbacks init: 1,
                       handle_info: 2,
                       handle_cast: 2,
@@ -727,7 +749,8 @@ defmodule Slipstream do
                       handle_message: 4,
                       handle_reply: 3,
                       handle_topic_close: 3,
-                      handle_leave: 2
+                      handle_leave: 2,
+                      refresh_connection_config: 2
 
   # --- core functionality
 
@@ -1529,8 +1552,6 @@ defmodule Slipstream do
         |> Supervisor.child_spec(unquote(Macro.escape(opts)))
       end
 
-      defoverridable child_spec: 1
-
       require Slipstream.Signatures
 
       import Slipstream
@@ -1553,6 +1574,9 @@ defmodule Slipstream do
         Slipstream.Callback.dispatch(__MODULE__, event, socket)
       end
 
+      @impl Slipstream
+      def refresh_connection_config(socket, config), do: config
+
       # this matches on time-delay commands like those emitted from
       # reconnect/1 and rejoin/3
       def handle_info(
@@ -1561,7 +1585,11 @@ defmodule Slipstream do
             ),
             socket
           ) do
-        socket = TelemetryHelper.begin_connect(socket, cmd.config)
+        config = refresh_connection_config(socket, cmd.config)
+
+        socket = TelemetryHelper.begin_connect(socket, config)
+
+        cmd = %{cmd | config: config}
 
         _ = Slipstream.CommandRouter.route_command(cmd)
 
@@ -1580,6 +1608,8 @@ defmodule Slipstream do
 
         {:noreply, socket}
       end
+
+      defoverridable child_spec: 1, refresh_connection_config: 2
     end
   end
 end
